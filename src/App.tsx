@@ -1,4 +1,4 @@
-import { useState } from "react";
+ï»¿import { useState } from "react";
 import "./App.css";
 
 function App() {
@@ -30,7 +30,7 @@ function App() {
                   <path d="M12 20l6 6 10-12" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h1>TauriApp</h1>
+              <h1>Bioma Ambiental</h1>
             </div>
             <p className="subtitle">Bem-vindo de volta</p>
           </div>
@@ -45,7 +45,7 @@ function App() {
                 </svg>
                 <input
                   id="email"
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
@@ -67,7 +67,7 @@ function App() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   required
                 />
                 <button
@@ -117,7 +117,7 @@ function App() {
           </form>
 
           <div className="login-footer">
-            <p>Não tem uma conta? <a href="#" className="signup-link">Criar conta</a></p>
+            <p>NÃ£o tem uma conta? <a href="#" className="signup-link">Criar conta</a></p>
           </div>
         </div>
 
