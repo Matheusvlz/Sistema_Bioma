@@ -1,24 +1,39 @@
 ﻿import { useState } from "react";
 import "./App.css";
+import { core } from "@tauri-apps/api";
 
 function App() {
-  const [email, setEmail] = useState("");
+  const [usuario, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simular login
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    setIsLoading(false);
-    alert(`Login realizado com sucesso!\nEmail: ${email}`);
-  };
+  
+const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
 
-  return (
+  try {
+    const resposta = await core.invoke<{ success: boolean }>("fazer_login", {
+      usuario,
+      senha: password,
+    });
+
+    if (resposta.success) {
+      alert("Login realizado com sucesso!");
+      // Aqui você pode redirecionar ou fazer outra ação
+    } else {
+      alert("Falha no login. Verifique usuário e senha.");
+    }
+  } catch (err) {
+    alert("Erro no backend: " + String(err));
+  }
+
+  setIsLoading(false);
+};
+
+
+return (
     <div className="app">
       <div className="login-container">
         <div className="login-card">
@@ -46,7 +61,7 @@ function App() {
                 <input
                   id="email"
                   type="text"
-                  value={email}
+                  value={usuario}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   required
@@ -130,5 +145,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;
