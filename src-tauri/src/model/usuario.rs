@@ -37,3 +37,7 @@ pub fn obter_usuario() -> Option<Usuario> {
 pub fn usuario_logado() -> Option<Usuario> {
     obter_usuario()
 }
+#[command]
+pub fn verificar_autenticacao() -> bool {
+    obter_usuario().is_some()
+}
