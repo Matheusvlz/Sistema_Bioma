@@ -1,8 +1,8 @@
-use serde::{Deserialize, Serialize};
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use tauri::command;
 
-use crate::model::usuario::{Usuario, salvar_usuario};
+use crate::model::usuario::{salvar_usuario, Usuario};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct UsuarioResponse {
@@ -52,16 +52,16 @@ pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
     match parsed {
         Ok(usuario) => {
             salvar_usuario(Usuario {
-    success: usuario.success,
-    id: usuario.id,
-    nome: usuario.nome,
-    privilegio: usuario.privilegio,
-    empresa: usuario.empresa,
-    ativo: usuario.ativo,
-    nome_completo: usuario.nome_completo,
-    cargo: usuario.cargo,
-    numero_doc: usuario.numero_doc,
-});
+                success: usuario.success,
+                id: usuario.id,
+                nome: usuario.nome,
+                privilegio: usuario.privilegio,
+                empresa: usuario.empresa,
+                ativo: usuario.ativo,
+                nome_completo: usuario.nome_completo,
+                cargo: usuario.cargo,
+                numero_doc: usuario.numero_doc,
+            });
 
             LoginStatus { success: true }
         }
