@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useState, useEffect } from "react";
 import "./App.css";
 import { core } from "@tauri-apps/api";
 import { Modal } from "./components/Modal";
@@ -35,7 +35,19 @@ function App() {
 
     setIsLoading(false);
   };
+ 
+  useEffect(() => {
+    const verificarLogin = async () => {
+      try {
+        const usuarioLogado = await core.invoke<Usuario | null>("usuario_logado");
+        setIsLoggedIn(usuarioLogado !== null && usuarioLogado.success);
+      } catch (err) {
+        console.error("Falha na verificação de login:", err);
+      }
+    };
 
+    verificarLogin();
+  }, []);
   if (isLoggedIn) {
     return (
       <>

@@ -373,7 +373,7 @@ body {
     }
 }
 
-/* Animações de entrada */
+/* Animaï¿½ï¿½es de entrada */
 .form-group {
     animation: fadeInUp 0.6s ease-out;
     animation-fill-mode: both;
@@ -409,4 +409,5 @@ body {
         opacity: 1;
         transform: translateY(0);
     }
+    
 }
