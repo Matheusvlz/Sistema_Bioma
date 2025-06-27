@@ -1,0 +1,139 @@
+
+          /* Estilos personalizados para o calendário moderno */
+          .react-calendar {
+            width: 100% !important;
+            background: transparent !important;
+            border: none !important;
+            font-family: inherit !important;
+            border-radius: 12px !important;
+          }
+          
+          .react-calendar__navigation {
+            display: flex !important;
+            height: 44px !important;
+            margin-bottom: 1rem !important;
+            background: rgba(255, 255, 255, 0.8) !important;
+            border-radius: 12px !important;
+            padding: 0 0.5rem !important;
+          }
+          
+          .react-calendar__navigation button {
+            min-width: 44px !important;
+            background: none !important;
+            border: none !important;
+            color: #166534 !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            border-radius: 8px !important;
+            transition: all 0.2s ease !important;
+          }
+          
+          .react-calendar__navigation button:hover {
+            background: rgba(34, 197, 94, 0.1) !important;
+            transform: scale(1.05) !important;
+          }
+          
+          .react-calendar__navigation button:disabled {
+            background-color: transparent !important;
+            opacity: 0.5 !important;
+          }
+          
+          .react-calendar__month-view__weekdays {
+            text-align: center !important;
+            text-transform: uppercase !important;
+            font-weight: 600 !important;
+            font-size: 0.75rem !important;
+            color: #166534 !important;
+            margin-bottom: 0.5rem !important;
+          }
+          
+          .react-calendar__month-view__weekdays__weekday {
+            padding: 0.75rem 0.25rem !important;
+            background: rgba(255, 255, 255, 0.6) !important;
+            border-radius: 8px !important;
+            margin: 0 2px !important;
+          }
+          
+          .react-calendar__month-view__days__day {
+            position: relative !important;
+            background: rgba(255, 255, 255, 0.8) !important;
+            border: none !important;
+            border-radius: 12px !important;
+            margin: 2px !important;
+            padding: 0.75rem 0.25rem !important;
+            font-weight: 500 !important;
+            color: #374151 !important;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
+            min-height: 40px !important;
+          }
+          
+          .react-calendar__month-view__days__day:hover {
+            background: rgba(34, 197, 94, 0.1) !important;
+            transform: scale(1.05) !important;
+            color: #166534 !important;
+          }
+          
+          .react-calendar__tile--active {
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+            color: white !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+          }
+          
+          .react-calendar__tile--active:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+            transform: scale(1.05) !important;
+          }
+          
+          .react-calendar__tile--now {
+            background: rgba(34, 197, 94, 0.15) !important;
+            color: #166534 !important;
+            font-weight: 600 !important;
+            border: 2px solid #22c55e !important;
+          }
+          
+          .react-calendar__tile--now:hover {
+            background: rgba(34, 197, 94, 0.2) !important;
+          }
+          
+          .react-calendar__month-view__days__day--neighboringMonth {
+            color: #9ca3af !important;
+            background: rgba(255, 255, 255, 0.4) !important;
+          }
+          
+          /* Animações para os cards */
+          .stat-card:hover {
+            transform: translateY(-4px) !important;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.06) !important;
+          }
+          
+          .project-item {
+            transition: all 0.3s ease !important;
+            border-radius: 12px !important;
+            padding: 1rem !important;
+            margin: 0.5rem 0 !important;
+            background: rgba(255, 255, 255, 0.5) !important;
+          }
+          
+          .project-item:hover {
+            background: rgba(34, 197, 94, 0.05) !important;
+            transform: translateX(4px) !important;
+          }
+          
+          .progress-bar {
+            width: 100% !important;
+            height: 6px !important;
+            background: #e5e7eb !important;
+            border-radius: 3px !important;
+            overflow: hidden !important;
+            margin-top: 0.5rem !important;
+          }
+          
+          .progress-fill {
+            height: 100% !important;
+            background: linear-gradient(90deg, #22c55e, #16a34a) !important;
+            border-radius: 3px !important;
+            transition: width 0.3s ease !important;
+          }
+    
