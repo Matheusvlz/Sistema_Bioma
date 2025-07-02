@@ -3,8 +3,17 @@ import { Calendar } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { Layout } from '../components/Layout';
 import './styles/inicio_style.css';
-import { core } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { CustomSelect, OptionType } from '../components/CustomSelect';
+
+// Import partial screens - their props will now be more specific
+import { ColetaScreen } from './partial_inicio/Case_Coleta';
+import { AtendimentoScreen } from './partial_inicio/Case_Atendimento';
+import { X9Screen } from './partial_inicio/Case_X9';
+import { MBScreen } from './partial_inicio/Case_MB';
+import { FQScreen } from './partial_inicio/Case_FQ';
+import { QualidadeScreen } from './partial_inicio/Case_Qualidade';
+import { FinanceiroScreen } from './partial_inicio/Case_Financeiro';
 
 import {
   AlertTriangle,
@@ -12,14 +21,13 @@ import {
   Clock,
   Calendar as CalendarIcon,
   Flag,
-  TrendingUp,
   Users,
-  Target
 } from 'lucide-react';
 
-type Value = Date | null;
 
-type Projeto = {
+type CalendarValue = Date | null;
+
+export interface Projeto {
   id: number;
   nome: string;
   responsavel: string;
@@ -28,24 +36,115 @@ type Projeto = {
   dataEntrega: string;
   progresso: number;
   atencoes: number;
-};
+}
 
-type TelaPermitida = {
+export interface MicrobiologiaPendenteItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  tempo?: string;
+  passou: boolean;
+  fantasia?: string;
+  razao?: string;
+}
+
+export interface MicrobiologiaLiberacaoPendenteItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  fantasia?: string;
+  razao?: string;
+}
+
+export interface MBResponse {
+  pendencias_prazo: MicrobiologiaPendenteItem[];
+  total_pendencias_prazo: number;
+  pendencias_liberacao: MicrobiologiaLiberacaoPendenteItem[];
+  total_pendencias_liberacao: number;
+}
+
+export interface TelaPermitida {
   id: number;
   nome: string;
-};
+}
 
-// Componente StatCard memoizado
-const StatCard = memo<{
+export interface AgendamentoComCliente {
+  descricao?: string;
+  data?: string;
+  hora?: string;
+  recibo_gerado?: boolean;
+  recibo_assinado?: boolean;
+  cliente_nome?: string;
+  cliente_cod?: number;
+}
+
+export interface ColetaResponse {
+  total_agendamentos: number;
+  total_recibos_gerados: number;
+  agendamentos: AgendamentoComCliente[];
+}
+
+export interface AtendimentoItem {
+  id: number;
+  numero?: number;
+  prefixo?: string;
+  data_coleta?: string;
+  cliente?: string;
+}
+
+// Ensure AllResponseData can handle a message string
+export type AllResponseData = ColetaResponse | AtendimentoItem[] | MBResponse | string;
+
+export interface RespostaTela<T> {
+  telas: TelaPermitida[];
+  dados: T;
+  // Make sure this matches the backend's serialized name (camelCase)
+  firstScreenName?: string;
+}
+
+// --- Component Props for shared components ---
+
+export interface StatCardProps {
   icon: React.ReactNode;
   title: string;
   value: number;
   gradient: string;
   borderColor: string;
   textColor: string;
-}>(({ icon, title, value, gradient, borderColor, textColor }) => (
-  <div 
-    className="stat-card" 
+}
+
+export interface ProjectItemProps {
+  projeto: Projeto;
+}
+
+interface CalendarTileContentProps {
+  date: Date;
+  datasEntrega: string[];
+}
+
+interface ProximasEntregasProps {
+  projetos: Projeto[];
+}
+
+// --- Constantes para Estilos e Cores ---
+const CORES = {
+  prioridade: {
+    alta: '#ef4444',
+    media: '#f59e0b',
+    baixa: '#22c55e',
+  },
+  status: {
+    concluido: { bg: '#dcfce7', color: '#166534', text: 'Concluído' },
+    andamento: { bg: '#dbeafe', color: '#1e40af', text: 'Em Andamento' },
+    planejamento: { bg: '#f3f4f6', color: '#374151', text: 'Planejamento' }
+  }
+} as const;
+
+// --- Exported Common Components (StatCard, ProjectItem) ---
+
+export const StatCard = memo<StatCardProps>(({ icon, title, value, gradient, borderColor, textColor }) => (
+  <div
+    className="stat-card"
     style={{
       background: gradient,
       borderRadius: '16px',
@@ -68,39 +167,23 @@ const StatCard = memo<{
     </p>
   </div>
 ));
+StatCard.displayName = 'StatCard';
 
-// Componente ProjectItem memoizado
-const ProjectItem = memo<{ projeto: Projeto }>(({ projeto }) => {
-  const formatarData = useCallback((data: string) => new Date(data).toLocaleDateString('pt-BR'), []);
-  
-  const getPrioridadeColor = useCallback((prioridade: Projeto['prioridade']) => {
-    const colors = {
-      alta: '#ef4444',
-      media: '#f59e0b',
-      baixa: '#22c55e',
-    };
-    return colors[prioridade];
+export const ProjectItem = memo<ProjectItemProps>(({ projeto }) => {
+  const formatarData = useCallback((data: string): string => {
+    return new Date(data).toLocaleDateString('pt-BR');
   }, []);
 
-  const getStatusIcon = useCallback((status: Projeto['status']) => {
+  const getStatusIcon = useCallback((status: Projeto['status']): React.ReactNode => {
     switch (status) {
-      case 'concluido':
-        return <CheckCircle size={16} color="#22c55e" />;
-      case 'andamento':
-        return <Clock size={16} color="#3b82f6" />;
-      default:
-        return <Flag size={16} color="#6b7280" />;
+      case 'concluido': return <CheckCircle size={16} color="#22c55e" />;
+      case 'andamento': return <Clock size={16} color="#3b82f6" />;
+      default: return <Flag size={16} color="#6b7280" />;
     }
   }, []);
 
-  const getStatusBadge = useCallback((status: Projeto['status']) => {
-    const styles = {
-      concluido: { bg: '#dcfce7', color: '#166534', text: 'Concluído' },
-      andamento: { bg: '#dbeafe', color: '#1e40af', text: 'Em Andamento' },
-      planejamento: { bg: '#f3f4f6', color: '#374151', text: 'Planejamento' }
-    };
-    
-    const style = styles[status];
+  const getStatusBadge = useCallback((status: Projeto['status']): React.ReactNode => {
+    const style = CORES.status[status];
     return (
       <span style={{
         backgroundColor: style.bg,
@@ -127,8 +210,8 @@ const ProjectItem = memo<{ projeto: Projeto }>(({ projeto }) => {
             <strong style={{ color: '#111827', fontSize: '1.1rem' }}>{projeto.nome}</strong>
             {getStatusBadge(projeto.status)}
           </div>
-          <div style={{ 
-            fontSize: '0.9rem', 
+          <div style={{
+            fontSize: '0.9rem',
             color: '#6b7280',
             display: 'flex',
             alignItems: 'center',
@@ -138,23 +221,23 @@ const ProjectItem = memo<{ projeto: Projeto }>(({ projeto }) => {
             {projeto.responsavel}
           </div>
           <div className="progress-bar">
-            <div 
+            <div
               className="progress-fill"
               style={{ width: `${projeto.progresso}%` }}
             />
           </div>
-          <div style={{ 
-            fontSize: '0.8rem', 
-            color: '#22c55e', 
+          <div style={{
+            fontSize: '0.8rem',
+            color: '#22c55e',
             fontWeight: '500',
             marginTop: '0.25rem'
           }}>
             {projeto.progresso}% concluído
           </div>
         </div>
-        
-        <div style={{ 
-          display: 'flex', 
+
+        <div style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-end',
           gap: '0.5rem',
@@ -186,57 +269,90 @@ const ProjectItem = memo<{ projeto: Projeto }>(({ projeto }) => {
     </div>
   );
 });
+ProjectItem.displayName = 'ProjectItem';
 
-// Componentes de calendário memoizados
-const CalendarTileContent = memo<{ date: Date; datasEntrega: string[] }>(({ date, datasEntrega }) => {
-  if (datasEntrega.includes(date.toDateString())) {
-    return (
-      <div style={{
-        position: 'absolute',
-        bottom: '2px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '6px',
-        height: '6px',
-        backgroundColor: '#22c55e',
-        borderRadius: '50%',
-        boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8)'
-      }} />
-    );
-  }
-  return null;
+const CalendarTileContent = memo<CalendarTileContentProps>(({ date, datasEntrega }) => {
+  const isEntregaDate = datasEntrega.includes(date.toDateString());
+  if (!isEntregaDate) return null;
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: '2px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '6px',
+      height: '6px',
+      backgroundColor: '#22c55e',
+      borderRadius: '50%',
+      boxShadow: '0 0 0 2px rgba(255, 255, 255, 0.8)'
+    }} />
+  );
 });
+CalendarTileContent.displayName = 'CalendarTileContent';
 
-const ProximasEntregas = memo<{ projetos: Projeto[] }>(({ projetos }) => {
+const ProximasEntregas = memo<ProximasEntregasProps>(({ projetos }) => {
   const proximasEntregas = useMemo(() => {
     const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
     return projetos
-      .filter(p => new Date(p.dataEntrega) >= hoje)
+      .filter(p => {
+        const dataEntrega = new Date(p.dataEntrega);
+        dataEntrega.setHours(0, 0, 0, 0);
+        return dataEntrega >= hoje;
+      })
       .sort((a, b) => new Date(a.dataEntrega).getTime() - new Date(b.dataEntrega).getTime())
       .slice(0, 3);
   }, [projetos]);
 
-  const getPrioridadeColor = useCallback((prioridade: Projeto['prioridade']) => {
-    const colors = {
-      alta: '#ef4444',
-      media: '#f59e0b',
-      baixa: '#22c55e',
-    };
-    return colors[prioridade];
+  const getPrioridadeColor = useCallback((prioridade: Projeto['prioridade']): string => {
+    return CORES.prioridade[prioridade];
   }, []);
 
-  const formatarData = useCallback((data: string) => new Date(data).toLocaleDateString('pt-BR'), []);
+  const formatarData = useCallback((data: string): string => {
+    return new Date(data).toLocaleDateString('pt-BR');
+  }, []);
+
+  if (proximasEntregas.length === 0) {
+    return (
+      <div style={{
+        marginTop: '2rem',
+        padding: '1.5rem',
+        background: 'rgba(255, 255, 255, 0.8)',
+        borderRadius: '12px',
+        border: '1px solid rgba(34, 197, 94, 0.2)',
+        textAlign: 'center'
+      }}>
+        <h4 style={{
+          marginBottom: '1rem',
+          color: '#166534',
+          fontSize: '1.1rem',
+          fontWeight: '600',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          justifyContent: 'center'
+        }}>
+          <Clock size={18} />
+          Próximas Entregas
+        </h4>
+        <p style={{ color: '#6b7280', fontSize: '0.9rem' }}>
+          Nenhuma entrega programada
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div style={{ 
+    <div style={{
       marginTop: '2rem',
       padding: '1.5rem',
       background: 'rgba(255, 255, 255, 0.8)',
       borderRadius: '12px',
       border: '1px solid rgba(34, 197, 94, 0.2)'
     }}>
-      <h4 style={{ 
-        marginBottom: '1rem', 
+      <h4 style={{
+        marginBottom: '1rem',
         color: '#166534',
         fontSize: '1.1rem',
         fontWeight: '600',
@@ -247,11 +363,11 @@ const ProximasEntregas = memo<{ projetos: Projeto[] }>(({ projetos }) => {
         <Clock size={18} />
         Próximas Entregas
       </h4>
-      
-      {proximasEntregas.map(p => (
-        <div key={p.id} style={{ 
-          fontSize: '0.9rem', 
-          color: '#374151', 
+
+      {proximasEntregas.map(projeto => (
+        <div key={projeto.id} style={{
+          fontSize: '0.9rem',
+          color: '#374151',
           marginBottom: '0.75rem',
           padding: '0.75rem',
           background: 'rgba(34, 197, 94, 0.05)',
@@ -264,16 +380,16 @@ const ProximasEntregas = memo<{ projetos: Projeto[] }>(({ projetos }) => {
           <div style={{
             width: '8px',
             height: '8px',
-            backgroundColor: getPrioridadeColor(p.prioridade),
+            backgroundColor: getPrioridadeColor(projeto.prioridade),
             borderRadius: '50%',
             flexShrink: 0
           }} />
           <div>
             <div style={{ fontWeight: '600', color: '#166534' }}>
-              {formatarData(p.dataEntrega)}
+              {formatarData(projeto.dataEntrega)}
             </div>
             <div style={{ fontSize: '0.8rem', color: '#6b7280' }}>
-              {p.nome}
+              {projeto.nome}
             </div>
           </div>
         </div>
@@ -281,141 +397,219 @@ const ProximasEntregas = memo<{ projetos: Projeto[] }>(({ projetos }) => {
     </div>
   );
 });
+ProximasEntregas.displayName = 'ProximasEntregas';
+
 
 export const Inicio: React.FC = () => {
-  const [dataSelecionada, setDataSelecionada] = useState<Value>(new Date());
-  const [telasPermitidas, setTelasPermitidas] = useState<TelaPermitida[]>([]);
+  const [dataSelecionada, setDataSelecionada] = useState<CalendarValue>(new Date());
+  // The main response data from the backend, which now holds the currently active screen's data
+  const [currentScreenResponse, setCurrentScreenResponse] = useState<RespostaTela<AllResponseData> | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  // This state holds the name of the currently displayed screen (e.g., "COLETA", "ATENDIMENTO")
+  const [activeScreenName, setActiveScreenName] = useState<string | null>(null);
+  // This state holds the selected option for the CustomSelect component
+  const [selectedTelaOption, setSelectedTelaOption] = useState<OptionType | null>(null);
 
-  // Dados mockados - idealmente viriam de um contexto ou hook
-  const projetos: Projeto[] = useMemo(() => [
-    {
-      id: 1,
-      nome: 'Sistema de Gestão',
-      responsavel: 'Ana Silva',
-      status: 'andamento',
-      prioridade: 'alta',
-      dataEntrega: '2025-07-15',
-      progresso: 75,
-      atencoes: 2,
-    },
-    {
-      id: 2,
-      nome: 'App Mobile',
-      responsavel: 'João Santos',
-      status: 'concluido',
-      prioridade: 'media',
-      dataEntrega: '2025-06-20',
-      progresso: 100,
-      atencoes: 0,
-    },
-    {
-      id: 3,
-      nome: 'Website Corporativo',
-      responsavel: 'Maria Costa',
-      status: 'andamento',
-      prioridade: 'alta',
-      dataEntrega: '2025-08-01',
-      progresso: 45,
-      atencoes: 1,
-    }
-  ], []);
+  const projetosParaCalendarioEProximasEntregas: Projeto[] = useMemo(() => {
+    // This array is for calendar/deliveries. It remains static here as per previous discussion,
+    // but in a real app, you might fetch relevant projects for this section.
+    return [
+      { id: 1, nome: 'Sistema de Gestão', responsavel: 'Ana Silva', status: 'andamento', prioridade: 'alta', dataEntrega: '2025-07-15', progresso: 75, atencoes: 2 },
+      { id: 2, nome: 'App Mobile', responsavel: 'João Santos', status: 'concluido', prioridade: 'media', dataEntrega: '2025-06-20', progresso: 100, atencoes: 0 },
+      { id: 3, nome: 'Website Corporativo', responsavel: 'Maria Costa', status: 'andamento', prioridade: 'alta', dataEntrega: '2025-08-01', progresso: 45, atencoes: 1 },
+      { id: 4, nome: 'API de Integração', responsavel: 'Pedro Oliveira', status: 'planejamento', prioridade: 'baixa', dataEntrega: '2025-09-15', progresso: 15, atencoes: 0 }
+    ];
+  }, []);
 
-  // Estatísticas computadas memoizadas
-  const estatisticas = useMemo(() => ({
-    total: projetos.length,
-    andamento: projetos.filter(p => p.status === 'andamento').length,
-    concluidos: projetos.filter(p => p.status === 'concluido').length,
-    comAtencao: projetos.filter(p => p.atencoes > 0).length
-  }), [projetos]);
-
-  // Datas de entrega memoizadas para o calendário
-  const datasEntrega = useMemo(() => 
-    projetos.map(p => new Date(p.dataEntrega).toDateString()), 
-    [projetos]
+  const datasEntrega = useMemo(() =>
+    projetosParaCalendarioEProximasEntregas.map(p => new Date(p.dataEntrega).toDateString()),
+    [projetosParaCalendarioEProximasEntregas]
   );
 
-  // Options para CustomSelect memoizadas
-  const telasOptions: OptionType[] = useMemo(() => 
+  // This `telasPermitidas` will come from the initial `get_data_inicio` call
+  const telasPermitidas: TelaPermitida[] = useMemo(() => {
+    return currentScreenResponse?.telas || [];
+  }, [currentScreenResponse]);
+
+  const telasOptions: OptionType[] = useMemo(() =>
     telasPermitidas.map(tela => ({
       id: tela.id,
       label: tela.nome
-    })), 
+    })),
     [telasPermitidas]
   );
 
+  // --- Initial Data Fetch (on component mount) ---
   useEffect(() => {
     let mounted = true;
-    
-    const buscarTelasPermitidas = async () => {
+
+    const fetchInitialData = async (): Promise<void> => {
       try {
-        const resultado = await core.invoke<TelaPermitida[]>("get_data_inicio");
+        setLoading(true);
+        setError(null);
+
+        // Call the "get_data_inicio" command to get initial data and allowed screens
+        const result = await invoke<RespostaTela<AllResponseData>>("get_data_inicio");
+
         if (mounted) {
-          setTelasPermitidas(resultado);
+          // Correctly map `first_screen_name` from backend (Rust) to `firstScreenName` (JS/TS)
+          const adjustedResult = {
+              ...result,
+              firstScreenName: result.first_screen_name // Use the `first_screen_name` property
+          };
+          setCurrentScreenResponse(adjustedResult); // Store the entire response
+
+          if (adjustedResult.firstScreenName) { // Use adjusted property
+            setActiveScreenName(adjustedResult.firstScreenName);
+            // Set the initial selected option for the CustomSelect
+            const initialOption = adjustedResult.telas.find(t => t.nome === adjustedResult.firstScreenName);
+            if (initialOption) {
+              setSelectedTelaOption({ id: initialOption.id, label: initialOption.nome });
+            }
+          } else if (adjustedResult.telas.length > 0) {
+            // If backend doesn't provide firstScreenName, default to the first available
+            setActiveScreenName(adjustedResult.telas[0].nome);
+            setSelectedTelaOption({ id: adjustedResult.telas[0].id, label: adjustedResult.telas[0].nome });
+          }
+          console.log("Initial data from backend:", adjustedResult);
         }
-      } catch (err) {
-        console.error("Erro ao buscar telas:", err);
+      } catch (err: any) {
+        console.error("Error fetching initial data:", err);
+        if (mounted) {
+          setCurrentScreenResponse(null);
+          setError(`Falha ao carregar dados: ${err.message || String(err)}`);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
-    buscarTelasPermitidas();
-    
+    fetchInitialData();
+
     return () => {
       mounted = false;
     };
+  }, []); // Empty dependency array means this runs once on mount
+
+  // --- Handle Tela Selection from ComboBox ---
+  const handleSelectTela = useCallback(async (selectedOption: OptionType): Promise<void> => {
+    console.log("Tela selecionada:", selectedOption);
+    setActiveScreenName(selectedOption.label); // Update the active screen name immediately
+    setSelectedTelaOption(selectedOption); // Update the selected option in the combobox
+
+    try {
+      setLoading(true); // Indicate loading for the new screen's data
+      setError(null);
+
+      // Call the new Tauri command to fetch data for the specific selected screen
+      const result = await invoke<RespostaTela<AllResponseData>>("get_data_for_screen", { screenName: selectedOption.label });
+
+      // Update only the `dados` and `firstScreenName` (which will be `currentScreenName` from Rust)
+      // while keeping the original `telas` list from the initial fetch.
+      // This ensures the dropdown options don't disappear.
+      setCurrentScreenResponse(prev => {
+        if (prev) {
+          return {
+            ...prev,
+            dados: result.dados, // Update the data payload
+            // Use result.first_screen_name if it exists, otherwise fall back to selectedOption.label
+            firstScreenName: result.first_screen_name || selectedOption.label
+          };
+        }
+        return result; // Fallback if prev is null (shouldn't happen if initial fetch worked)
+      });
+
+      console.log(`Data for screen ${selectedOption.label}:`, result);
+
+    } catch (err: any) {
+      console.error(`Error fetching data for ${selectedOption.label}:`, err);
+      setError(`Failed to load data for ${selectedOption.label}: ${err.message || String(err)}`);
+      // Optionally, revert to previous data or clear it on error
+      setCurrentScreenResponse(prev => prev ? { ...prev, dados: "Erro ao carregar dados." as AllResponseData } : null);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const handleSelectTela = useCallback((selected: OptionType) => {
-    console.log("Tela selecionada:", selected);
-  }, []);
-
-  const handleCalendarChange = useCallback((value: Value) => {
-    setDataSelecionada(value);
-  }, []);
-
-  // Função memoizada para renderizar tile content
-  const tileContent = useCallback(({ date }: { date: Date }) => (
+  const tileContent = useCallback(({ date }: { date: Date }): React.ReactNode => (
     <CalendarTileContent date={date} datasEntrega={datasEntrega} />
   ), [datasEntrega]);
 
-  // Estilos constantes
-  const containerStyle: React.CSSProperties = useMemo(() => ({
+  const containerStyle = useMemo((): React.CSSProperties => ({
     display: 'grid',
     gridTemplateColumns: '2fr 1fr',
     gap: '2rem',
     maxWidth: '1400px',
     margin: '0 auto',
-    paddingBottom: '2rem',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    paddingBottom: '2rem'
   }), []);
 
-  const modernCardStyle: React.CSSProperties = useMemo(() => ({
-    background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-    borderRadius: '16px',
-    padding: '2rem',
-    boxShadow: '0 10px 25px rgba(0,0,0,0.08), 0 4px 10px rgba(0,0,0,0.03)',
-    border: '1px solid rgba(255,255,255,0.2)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    position: 'relative' as const,
-    overflow: 'hidden' as const
-  }), []);
+  const renderScreenContent = () => {
+    const currentScreenData = currentScreenResponse?.dados;
 
-  const calendarContainerStyle: React.CSSProperties = useMemo(() => ({
-    ...modernCardStyle,
-    position: 'sticky' as const,
-    top: '1rem',
-    background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
-    border: '1px solid #bbf7d0'
-  }), [modernCardStyle]);
+    // Show a loading message or spinner if data is being fetched for the current screen
+    if (loading && currentScreenData === undefined) { // Check for undefined to distinguish initial load vs subsequent loads
+        return <p>Carregando dados do módulo...</p>;
+    }
+
+    if (error) {
+        return <p style={{ color: 'red' }}>Erro ao carregar dados: {error}</p>;
+    }
+
+    switch (activeScreenName) { // Use activeScreenName here
+      case "COLETA":
+        // Type check to ensure currentScreenData matches ColetaResponse
+        if (typeof currentScreenData !== 'string' && !Array.isArray(currentScreenData) && currentScreenData !== undefined) {
+          return <ColetaScreen coleta={currentScreenData as ColetaResponse} />;
+        }
+        return <p>Dados de Coleta indisponíveis ou no formato incorreto.</p>;
+      case "ATENDIMENTO":
+        // Type check to ensure currentScreenData matches AtendimentoItem[]
+        if (Array.isArray(currentScreenData)) {
+          return <AtendimentoScreen atendimentos={currentScreenData as AtendimentoItem[]} />;
+        }
+        return <p>Dados de Atendimento indisponíveis ou no formato incorreto.</p>;
+      case "X9":
+        // Placeholder for X9. Replace with actual component and data handling.
+        return <X9Screen /* data={currentScreenData as X9Type} */ />;
+      case "MB":
+        if (typeof currentScreenData === 'object' && currentScreenData && 'total_pendencias_prazo' in currentScreenData) {
+          return <MBScreen mb={currentScreenData as MBResponse} />;
+        }
+        return <p>Dados de MB indisponíveis ou no formato incorreto.</p>;
+      case "FQ":
+        // Placeholder for FQ. Replace with actual component and data handling.
+        return <FQScreen /* data={currentScreenData as FQType} */ />;
+      case "QUALIDADE":
+        // Placeholder for Qualidade. Replace with actual component and data handling.
+        return <QualidadeScreen /* data={currentScreenData as QualidadeType} */ />;
+      case "FINANCEIRO":
+        // Placeholder for Financeiro. Replace with actual component and data handling.
+        return <FinanceiroScreen /* data={currentScreenData as FinanceiroType} */ />;
+      default:
+        // Default content if no specific screen is selected or recognized
+        if (currentScreenData && typeof currentScreenData === 'string') {
+            return <p>{currentScreenData}</p>; // Display message from backend
+        }
+        return (
+          <div>
+            <p>Selecione uma opção no menu suspenso para exibir o conteúdo.</p>
+          </div>
+        );
+    }
+  };
 
   return (
     <Layout>
       <div style={containerStyle}>
         <div>
-          {/* Header moderno */}
           <div style={{ marginBottom: '2rem' }}>
-            <h1 style={{ 
-              fontSize: '2.5rem', 
-              fontWeight: '700', 
+            <h1 style={{
+              fontSize: '2.5rem',
+              fontWeight: '700',
               background: 'linear-gradient(135deg, #166534 0%, #22c55e 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
@@ -424,113 +618,64 @@ export const Inicio: React.FC = () => {
               Dashboard Geral
             </h1>
             <p style={{ color: '#6b7280', fontSize: '1.1rem' }}>
-              Gerencie seus projetos com eficiência e estilo
+              Gerencie seus dados e operações
             </p>
           </div>
-          
-          {/* Custom Select */}
-          <div className="custom-select-wrapper">
-            {telasPermitidas.length > 1 ? (
-              <CustomSelect 
+
+          <div className="custom-select-wrapper" style={{ marginBottom: '2rem' }}>
+            {loading && !currentScreenResponse ? ( // Only show "Carregando opções..." on initial load
+              <div>Carregando opções...</div>
+            ) : error && !currentScreenResponse ? ( // Only show initial error if no data was loaded at all
+              <div style={{ color: 'red' }}>Erro: {error}</div>
+            ) : telasPermitidas.length > 0 ? (
+              <CustomSelect
                 options={telasOptions}
                 onSelect={handleSelectTela}
                 placeholder="Selecione uma tela"
+                initialSelectedOption={selectedTelaOption}
               />
-            ) : telasPermitidas.length === 1 ? (
-              <div style={{
-                backgroundColor: '#f0fdf4',
-                padding: '0.75rem 1rem',
-                borderRadius: '0.75rem',
-                color: '#166534',
-                fontWeight: 500,
-                border: '2px solid #16a34a',
-                display: 'inline-block'
-              }}>
-                {telasPermitidas[0].nome}
-              </div>
-            ) : null}
+            ) : (
+              <div>Nenhuma tela disponível.</div>
+            )}
           </div>
 
-          {/* Cards de estatísticas */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-            gap: '1.5rem',
-            marginBottom: '2rem'
-          }}>
-            <StatCard
-              icon={<Target size={24} color="#22c55e" />}
-              title="Total de Análises"
-              value={estatisticas.total}
-              gradient="linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)"
-              borderColor="#bbf7d0"
-              textColor="#166534"
-            />
-            <StatCard
-              icon={<TrendingUp size={24} color="#3b82f6" />}
-              title="Em Andamento"
-              value={estatisticas.andamento}
-              gradient="linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)"
-              borderColor="#93c5fd"
-              textColor="#1e40af"
-            />
-            <StatCard
-              icon={<CheckCircle size={24} color="#0ea5e9" />}
-              title="Concluídos"
-              value={estatisticas.concluidos}
-              gradient="linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)"
-              borderColor="#7dd3fc"
-              textColor="#0c4a6e"
-            />
-            <StatCard
-              icon={<AlertTriangle size={24} color="#f59e0b" />}
-              title="Com Atenção"
-              value={estatisticas.comAtencao}
-              gradient="linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)"
-              borderColor="#fcd34d"
-              textColor="#92400e"
-            />
-          </div>
+          {renderScreenContent()}
 
-          {/* Lista de projetos */}
-          <div style={modernCardStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <Users size={24} color="#166534" style={{ marginRight: '0.75rem' }} />
-              <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: '#166534', margin: 0 }}>
-                Análises Recentes
-              </h2>
-            </div>
-            
-            {projetos.map(projeto => (
-              <ProjectItem key={projeto.id} projeto={projeto} />
-            ))}
-          </div>
         </div>
 
-        {/* Coluna lateral: calendário */}
         <div>
-          <div style={calendarContainerStyle}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <div className="calendar-container">
+            <div className="calendar-header">
               <CalendarIcon size={24} color="#166534" style={{ marginRight: '0.75rem' }} />
-              <h2 style={{
-                fontSize: '1.5rem',
-                fontWeight: '600',
-                color: '#166534',
-                margin: 0
-              }}>
-                Calendário
-              </h2>
+              <h2>Calendário</h2>
             </div>
-            
+
             <Calendar
-              onChange={handleCalendarChange}
               value={dataSelecionada}
               locale="pt-BR"
-              calendarType="iso8601"
+              calendarType="gregory"
               tileContent={tileContent}
+              formatMonthYear={(locale, date) =>
+                date.toLocaleDateString('pt-BR', {
+                  month: 'long',
+                  year: 'numeric',
+                })
+              }
+              formatShortWeekday={(locale, date) =>
+                date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
+              }
+              showNeighboringMonth={false}
+              prev2Label={null}
+              next2Label={null}
+              navigationLabel={({ date }) =>
+                date.toLocaleDateString('pt-BR', {
+                  month: 'long',
+                  year: 'numeric',
+                })
+              }
             />
 
-            <ProximasEntregas projetos={projetos} />
+            <ProximasEntregas projetos={projetosParaCalendarioEProximasEntregas} />
           </div>
         </div>
       </div>

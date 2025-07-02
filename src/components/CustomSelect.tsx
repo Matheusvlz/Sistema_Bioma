@@ -9,7 +9,7 @@ export type OptionType = {
 interface CustomSelectProps {
   options: OptionType[];
   onSelect: (selected: OptionType) => void;
-  initialValue?: OptionType;
+  initialValue?: OptionType; 
   placeholder?: string;
   className?: string;
 }
