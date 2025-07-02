@@ -1,4 +1,4 @@
-import { RouterProvider, useRouter } from "./routes/Router";
+﻿import { RouterProvider, useRouter } from "./routes/Router";
 import { routes } from "./routes/route";
 import "./App.css";
 

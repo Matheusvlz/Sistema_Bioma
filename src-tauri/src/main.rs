@@ -20,7 +20,11 @@ use controller::geral::cadastrarcliente_controller::{
 };
 
 
-fn main() {
+use controller::inicio_controller::get_data_inicio;
+use controller::inicio_controller::get_data_for_screen;
+fn main() 
+{
+    dotenvy::dotenv().ok(); 
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             fazer_login,
@@ -33,7 +37,9 @@ fn main() {
             verificar_autenticacao,
             cliente_categoria,
             consultor,
-            setor_portal 
+            setor_portal,
+            get_data_inicio,
+            get_data_for_screen
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

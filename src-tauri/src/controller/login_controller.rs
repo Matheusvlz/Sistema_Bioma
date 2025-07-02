@@ -28,10 +28,14 @@ struct LoginRequest {
     senha: String,
 }
 
+
 #[command]
 pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
     let client = Client::new();
     let login_data = LoginRequest { usuario, senha };
+
+    //let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    //let login_url = format!("{}/login", api_url);
 
     let res = match client
         .post("http://127.0.0.1:8082/login")

@@ -1,0 +1,77 @@
+.custom-select-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 1rem;
+  z-index: 10;
+}
+
+.custom-select-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  z-index: 100;
+}
+
+.custom-select-header {
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  border: 2px solid #16a34a;
+  background-color: #f0fdf4;
+  color: #166534;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  will-change: border-color, background-color;
+}
+
+.custom-select-header:hover {
+  border-color: #22c55e;
+  background-color: #dcfce7;
+}
+
+.custom-select-arrow {
+  transition: transform 0.2s ease;
+  will-change: transform;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: #ffffff;
+  border: 2px solid #16a34a;
+  border-radius: 0.75rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.custom-select-option {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background-color: transparent;
+  color: #166534;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.custom-select-option:hover {
+  background-color: #bbf7d0;
+}
+
+.option-selected {
+  background-color: #dcfce7;
+  font-weight: 600;
+}
