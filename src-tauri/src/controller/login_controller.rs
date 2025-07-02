@@ -34,7 +34,7 @@ pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
     let login_data = LoginRequest { usuario, senha };
 
     let res = match client
-        .post("http://192.168.15.26:8082/login")
+        .post("http://127.0.0.1:8082/login")
         .json(&login_data)
         .send()
         .await

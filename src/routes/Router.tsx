@@ -11,10 +11,22 @@ import {
   FaClipboardCheck,
   FaMoneyBillWave,
   FaGlobeAmericas,
-  FaUserCog
+  FaUserCog,
+  FaUsers,
+  FaBuilding,
+  FaHandshake,
+  FaWallet
 } from 'react-icons/fa';
 
-type Route = 'login' | 'inicio' | 'reports' | 'settings' | 'laboratorio' | 'frota' | 'agenda' | 'qualidade' | 'financeiro' | 'geral' | 'administracao';
+type Route = 'login' | 'inicio' | 'reports' | 'settings' | 'laboratorio' | 'frota' | 'agenda' | 'qualidade' | 'financeiro' | 'geral' | 'administracao' |
+  // Subrotas de Clientes
+  'cadastrar-clientes' | 'visualizar-cliente' | 'cadastrar-categoria' | 'cadastro-usuario-portal' | 'cadastrar-setor-usuario' | 'cadastrar-consultor' | 'cadastrar-laboratorio-terceirizado' |
+  // Subrotas de Estruturas
+  'estrutura-tipo' | 'estrutura-grupo' | 'estrutura-matriz' | 'estrutura-unidade' | 'estrutura-parametro' | 'estrutura-pg-coleta' | 'estrutura-pop' | 'estrutura-tecnica' | 'estrutura-identificacao' | 'estrutura-metodologia' | 'estrutura-legislacao' | 'estrutura-categoria' | 'estrutura-forma-contato' | 'estrutura-observacao' | 'estrutura-submatriz' |
+  // Subrotas de Relacionamentos
+  'rel-parametro-pop' | 'rel-limite-quantificacao' | 'rel-legislacao-parametro' | 'rel-pacote-parametro' | 'rel-tecnica-etapa' |
+  // Subrotas de Contas
+  'cadastrar-calculo' | 'visualizar-calculo';
 
 interface RouterContextType {
   currentRoute: Route;
@@ -56,7 +68,37 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
       'qualidade': FaClipboardCheck,
       'financeiro': FaMoneyBillWave,
       'geral': FaGlobeAmericas,
-      'administracao': FaUserCog
+      ///////////////////////////////////////////////
+      'administracao': FaUserCog,
+      'cadastrar-clientes': FaUsers,
+      'visualizar-cliente': FaUsers,
+      'cadastrar-categoria': FaUsers,
+      'cadastro-usuario-portal': FaUsers,
+      'cadastrar-setor-usuario': FaUsers,
+      'cadastrar-consultor': FaUsers,
+      'cadastrar-laboratorio-terceirizado': FaUsers,
+      'estrutura-tipo': FaBuilding,
+      'estrutura-grupo': FaBuilding,
+      'estrutura-matriz': FaBuilding,
+      'estrutura-unidade': FaBuilding,
+      'estrutura-parametro': FaBuilding,
+      'estrutura-pg-coleta': FaBuilding,
+      'estrutura-pop': FaBuilding,
+      'estrutura-tecnica': FaBuilding,
+      'estrutura-identificacao': FaBuilding,
+      'estrutura-metodologia': FaBuilding,
+      'estrutura-legislacao': FaBuilding,
+      'estrutura-categoria': FaBuilding,
+      'estrutura-forma-contato': FaBuilding,
+      'estrutura-observacao': FaBuilding,
+      'estrutura-submatriz': FaBuilding,
+      'rel-parametro-pop': FaHandshake,
+      'rel-limite-quantificacao': FaHandshake,
+      'rel-legislacao-parametro': FaHandshake,
+      'rel-pacote-parametro': FaHandshake,
+      'rel-tecnica-etapa': FaHandshake,
+      'cadastrar-calculo': FaWallet,
+      'visualizar-calculo': FaWallet,
     };
     
     const IconComponent = iconComponents[route] || FaHome;
@@ -118,5 +160,4 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   );
 };
 
-// Importe o CSS DEPOIS do componente para evitar conflitos
 import '../components/css/RouterProvider.css';

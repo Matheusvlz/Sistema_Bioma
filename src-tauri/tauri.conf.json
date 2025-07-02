@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "sistema_bioma",
   "version": "0.1.0",
-  "identifier": "com.sistema_bioma.app",
+  "identifier": "com.sistemabioma.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,6 +13,7 @@
     "windows": [
       {
         "fullscreen": false,
+        "maximized": true,
         "height": 600,
         "resizable": true,
         "title": "Sistema Bioma",
