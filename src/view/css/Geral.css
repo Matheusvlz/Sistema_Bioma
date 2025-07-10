@@ -150,7 +150,6 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Estilo especial para cards com texto escuro */
 .card-base.text-dark {
   background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%);
 }
@@ -201,22 +200,21 @@
 }
 
 .modal-content2::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
 }
 
 .modal-content2::-webkit-scrollbar-track {
-  background: #f8fafc;
-  border-radius: 10px;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 4px;
 }
 
 .modal-content2::-webkit-scrollbar-thumb {
-  background: linear-gradient(180deg, #cbd5e1, #94a3b8);
-  border-radius: 10px;
-  border: 2px solid #f8fafc;
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 4px;
 }
 
 .modal-content2::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(180deg, #94a3b8, #64748b);
+  background: rgba(16, 185, 129, 0.5);
 }
 
 .modal-close-button {
@@ -343,13 +341,13 @@
     opacity: 0;
     transform: translateY(-10px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
-/* Global styles for smooth fonts */
 * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -363,12 +361,12 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
   .modal-content2 {
     min-width: unset;
@@ -408,3 +406,171 @@
   }
 }
 
+.geral-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.reload-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.reload-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338CA 0%, #6D28D9 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.4);
+}
+
+.reload-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.reload-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.reload-icon {
+  font-size: 1.1rem;
+  transition: transform 0.3s ease;
+}
+
+.reload-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@media (max-width: 768px) {
+  .geral-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reload-button {
+    align-self: center;
+    width: fit-content;
+  }
+}
+
+.text-light {
+  color: #ffffff;
+}
+
+.text-dark {
+  color: #111827;
+}
+
+.subtitle-clickable:hover {
+  background: rgba(255, 255, 255, 0.1);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.text-dark .subtitle-clickable:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.modal-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-item-card {
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.modal-item-card:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+@media (max-width: 768px) {
+  .geral-container {
+    padding: 1rem;
+  }
+
+  .geral-title {
+    font-size: 2rem;
+  }
+
+  .top-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .bottom-cards-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .card-base {
+    padding: 1.5rem;
+    min-height: 120px;
+  }
+
+  .modal-content2 {
+    margin: 0.5rem;
+    padding: 1.5rem;
+  }
+
+  .modal-item-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .modal-button {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-icon {
+    font-size: 2rem;
+  }
+
+  .card-title {
+    font-size: 1rem;
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+  }
+}

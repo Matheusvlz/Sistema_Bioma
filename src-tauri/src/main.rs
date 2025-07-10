@@ -16,12 +16,20 @@ use model::usuario::verificar_autenticacao;
 use controller::geral::cadastrarcliente_controller::{
     cliente_categoria,
     consultor,
-    setor_portal
+    setor_portal,
+    salvar_cliente,
+    editar_cliente,
+    get_cliente_data
 };
 
+use controller::geral::visualizarcliente_controller::{
+    buscar_clientes_filtros,
+    buscar_clientes_dropdown
+};
 
 use controller::inicio_controller::get_data_inicio;
 use controller::inicio_controller::get_data_for_screen;
+
 fn main() 
 {
     dotenvy::dotenv().ok(); 
@@ -38,9 +46,15 @@ fn main()
             cliente_categoria,
             consultor,
             setor_portal,
+            salvar_cliente,
             get_data_inicio,
-            get_data_for_screen
+            get_data_for_screen,
+            editar_cliente, // Add this new command
+            get_cliente_data,
+            buscar_clientes_filtros,
+            buscar_clientes_dropdown
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
 }
+

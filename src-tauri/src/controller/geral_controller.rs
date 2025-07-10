@@ -10,6 +10,7 @@ pub struct ClienteSemCadastro {
     pub telefone: Option<String>,
     pub contato: Option<String>,
     pub email: Option<String>,
+    pub origem: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

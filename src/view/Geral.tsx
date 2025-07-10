@@ -2,8 +2,9 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { core } from "@tauri-apps/api";
 import { useRouter } from '../routes/Router';
-import { FaUsers, FaTruck, FaFileAlt, FaGlobe, FaBuilding, FaHandshake, FaWallet, FaSpinner } from 'react-icons/fa';
+import { FaUsers, FaTruck, FaFileAlt, FaGlobe, FaBuilding, FaHandshake, FaWallet, FaSpinner, FaSync } from 'react-icons/fa';
 import { MdOutlineUnpublished, MdOutlinePlaylistAddCheck } from 'react-icons/md';
+import { WindowManager } from '../hooks/WindowManager';
 import './css/Geral.css';
 
 interface CardProps {
@@ -26,6 +27,16 @@ interface ClienteSemCadastro extends BaseData {
   telefone: string | null;
   contato: string | null;
   email: string | null;
+  origem: string | null;
+}
+
+interface ClienteDetalhes {
+  id: number;
+  nome_cliente: string | null;
+  documento: string | null;
+  telefone: string | null;
+  email: string | null;
+  origem: string | null;
 }
 
 interface AmostraPreCadastrada extends BaseData {
@@ -82,8 +93,8 @@ interface GroupedAmostra {
   samples: AmostraPreCadastrada[];
 }
 
-const Card: React.FC<CardProps & { onSubtitleClick?: (index: number) => void }> = React.memo(({ 
-  title, icon, bgColor, textColor = '#fff', onClick, subtitles, loading, onSubtitleClick 
+const Card: React.FC<CardProps & { onSubtitleClick?: (index: number) => void }> = React.memo(({
+  title, icon, bgColor, textColor = '#fff', onClick, subtitles, loading, onSubtitleClick
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isClickable = onClick ? true : false;
@@ -120,8 +131,8 @@ const Card: React.FC<CardProps & { onSubtitleClick?: (index: number) => void }> 
         <div className="card-subtitles-container">
           {subtitles.map((sub, index) => (
             <React.Fragment key={index}>
-              <span 
-                className="card-subtitle-item subtitle-clickable" 
+              <span
+                className="card-subtitle-item subtitle-clickable"
                 onClick={(e) => handleSubtitleClick(e, index)}
                 style={{ cursor: 'pointer' }}
               >
@@ -146,9 +157,12 @@ interface ModalProps {
   title: string;
   content: (string | GroupedAmostra)[];
   isAmostraModal: boolean;
+  modalTitle: string;
+  clientesSemCadastro: ClienteSemCadastro[];
+  openClienteModal: (cliente: ClienteSemCadastro) => void;
 }
 
-const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, content, isAmostraModal }) => {
+const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, content, isAmostraModal, modalTitle, clientesSemCadastro, openClienteModal }) => {
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onClose();
@@ -158,13 +172,20 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
     e.stopPropagation();
   }, []);
 
-  const handleItemClick = useCallback((item: string | GroupedAmostra) => {
+  const handleItemClick = useCallback((item: string | GroupedAmostra, index?: number) => {
     if (typeof item === 'string') {
+      if (modalTitle.includes('Clientes não Cadastrados') && index !== undefined) {
+        const cliente = clientesSemCadastro[index];
+        if (cliente) {
+          openClienteModal(cliente);
+          return;
+        }
+      }
       alert(`Detalhes de: ${item}`);
     } else {
       alert(`Detalhes das amostras da data: ${item.date}`);
     }
-  }, []);
+  }, [modalTitle, clientesSemCadastro, openClienteModal]);
 
   if (!isOpen) return null;
 
@@ -188,7 +209,7 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
                   ))}
                 </div>
                 <button className="modal-button" onClick={() => handleItemClick(group)}>
-                  Ver Detalhes
+                  Abrir
                 </button>
               </li>
             ))
@@ -200,8 +221,8 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
                     <p key={`line-${lineIndex}`} className="modal-item-text">{line}</p>
                   ))}
                 </div>
-                <button className="modal-button" onClick={() => handleItemClick(item)}>
-                  Ver Detalhes
+                <button className="modal-button" onClick={() => handleItemClick(item, index)}>
+                  Abrir
                 </button>
               </li>
             ))
@@ -214,12 +235,78 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
 
 Modal.displayName = 'Modal';
 
+interface ClienteModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  cliente: ClienteDetalhes | null;
+  onNovoCadastro: (cliente: ClienteDetalhes) => void;
+  onCadastroExistente: () => void;
+}
+
+const ClienteModal: React.FC<ClienteModalProps> = React.memo(({ isOpen, onClose, cliente, onNovoCadastro, onCadastroExistente }) => {
+  const handleOverlayClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClose();
+  }, [onClose]);
+
+  const handleContentClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+  }, []);
+
+  if (!isOpen || !cliente) return null;
+
+  return (
+    <div className="modal-overlay modal-fade-in" onClick={handleOverlayClick}>
+      <div className="modal-content2" onClick={handleContentClick} style={{ maxWidth: '500px' }}>
+        <button onClick={onClose} className="modal-close-button" aria-label="Fechar Modal">&times;</button>
+        <h2 className="modal-title">Cliente Não Cadastrado</h2>
+
+        <div style={{ padding: '20px 0' }}>
+          <p><strong>Nome:</strong> {cliente.nome_cliente || 'Não informado'}</p>
+          <p><strong>Documento:</strong> {cliente.documento || 'Não informado'}</p>
+          <p><strong>Telefone:</strong> {cliente.telefone || 'Não informado'}</p>
+          <p><strong>Email:</strong> {cliente.email || 'Não informado'}</p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="modal-button"
+            onClick={() => onNovoCadastro(cliente)}
+            style={{ backgroundColor: '#10B981', color: 'white' }}
+          >
+            Novo Cadastro
+          </button>
+          <button
+            className="modal-button"
+            onClick={onCadastroExistente}
+            style={{ backgroundColor: '#3B82F6', color: 'white' }}
+          >
+            Cadastro Existente
+          </button>
+          <button
+            className="modal-button"
+            onClick={onClose}
+            style={{ backgroundColor: '#6B7280', color: 'white' }}
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ClienteModal.displayName = 'ClienteModal';
+
 export const Geral: React.FC = () => {
   const { navigate } = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
-  const [modalContent, setModalContent] = useState<(string | GroupedAmostra)[]>([]); // Updated type
+  const [modalContent, setModalContent] = useState<(string | GroupedAmostra)[]>([]);
   const [isAmostraModal, setIsAmostraModal] = useState(false);
+
+  const [isClienteModalOpen, setIsClienteModalOpen] = useState(false);
+  const [clienteSelecionado, setClienteSelecionado] = useState<ClienteDetalhes | null>(null);
 
   const [clientesSemCadastro, setClientesSemCadastro] = useState<ClienteSemCadastro[]>([]);
   const [amostrasPreCadastradas, setAmostrasPreCadastradas] = useState<AmostraPreCadastrada[]>([]);
@@ -235,10 +322,12 @@ export const Geral: React.FC = () => {
     portal: false,
   });
 
+  const [isReloading, setIsReloading] = useState(false);
+
   const subtitleRoutes = {
     clientes: [
-      'cadastrar-clientes', 'visualizar-cliente', 'cadastrar-categoria', 
-      'cadastro-usuario-portal', 'cadastrar-setor-usuario', 'cadastrar-consultor', 
+      'cadastrar-clientes', 'visualizar-cliente', 'cadastrar-categoria',
+      'cadastro-usuario-portal', 'cadastrar-setor-usuario', 'cadastrar-consultor',
       'cadastrar-laboratorio-terceirizado'
     ],
     estruturas: [
@@ -254,10 +343,33 @@ export const Geral: React.FC = () => {
     contas: ['cadastrar-calculo', 'visualizar-calculo']
   };
 
-  const handleSubtitleNavigation = (category: keyof typeof subtitleRoutes, index: number) => {
+  const handleSubtitleNavigation = async (category: keyof typeof subtitleRoutes, index: number) => {
     const route = subtitleRoutes[category][index];
     if (route) {
-      navigate(route as any);
+      // Se for uma rota de cliente, abre em nova janela
+      if (category === 'clientes') {
+        try {
+          switch (route) {
+            case 'cadastrar-clientes':
+              await WindowManager.openCadastroClientes();
+              break;
+            case 'visualizar-cliente':
+              await WindowManager.openVisualizarCliente();
+              break;
+            default:
+              // Para outras rotas de clientes, usa navegação normal por enquanto
+              navigate(route as any);
+              break;
+          }
+        } catch (error) {
+          console.error('Erro ao abrir janela:', error);
+          // Fallback para navegação normal
+          navigate(route as any);
+        }
+      } else {
+        // Para outras categorias, usa navegação normal
+        navigate(route as any);
+      }
     }
   };
 
@@ -275,6 +387,23 @@ export const Geral: React.FC = () => {
     carregarColetas();
     carregarSolicitacoes();
     carregarPortal();
+  };
+
+  const handleReload = async () => {
+    setIsReloading(true);
+    try {
+      await Promise.all([
+        carregarClientes(),
+        carregarAmostras(),
+        carregarColetas(),
+        carregarSolicitacoes(),
+        carregarPortal()
+      ]);
+    } catch (error) {
+      console.error('Erro ao recarregar dados:', error);
+    } finally {
+      setIsReloading(false);
+    }
   };
 
   const carregarClientes = async () => {
@@ -360,6 +489,62 @@ export const Geral: React.FC = () => {
     setModalContent([]);
     setIsAmostraModal(false);
   }, []);
+
+  const openClienteModal = useCallback((cliente: ClienteSemCadastro) => {
+    const clienteDetalhes: ClienteDetalhes = {
+      id: cliente.id,
+      nome_cliente: cliente.nome_cliente,
+      documento: cliente.documento,
+      telefone: cliente.telefone,
+      email: cliente.email,
+      origem: cliente.origem
+    };
+    setClienteSelecionado(clienteDetalhes);
+    setIsClienteModalOpen(true);
+  }, []);
+
+  const closeClienteModal = useCallback(() => {
+    setIsClienteModalOpen(false);
+    setClienteSelecionado(null);
+  }, []);
+
+  const handleNovoCadastro = useCallback(async (cliente: ClienteDetalhes) => {
+    try {
+      // Prepara os dados do cliente para passar para a nova janela
+      const clienteData = {
+        id: cliente.id,
+        nome_cliente: cliente.nome_cliente,
+        documento: cliente.documento,
+        telefone: cliente.telefone,
+        email: cliente.email,
+        origem: cliente.origem
+      };
+
+      // Abre o cadastro de clientes em uma nova janela
+      await WindowManager.openCadastroClientes(clienteData);
+      
+      closeClienteModal();
+    } catch (error) {
+      console.error('Erro ao abrir janela de cadastro:', error);
+      // Fallback para navegação normal se houver erro
+      navigate('cadastrar-clientes' as any);
+      localStorage.setItem('clientePreenchimento', JSON.stringify(cliente));
+      closeClienteModal();
+    }
+  }, [closeClienteModal, navigate]);
+
+  const handleCadastroExistente = useCallback(async () => {
+    try {
+      // Abre a visualização de cliente em uma nova janela
+      await WindowManager.openVisualizarCliente();
+      closeClienteModal();
+    } catch (error) {
+      console.error('Erro ao abrir janela de visualização:', error);
+      // Fallback para navegação normal se houver erro
+      navigate('visualizar-cliente' as any);
+      closeClienteModal();
+    }
+  }, [closeClienteModal, navigate]);
 
   const formatarClientes = (clientes: ClienteSemCadastro[]): string[] => {
     return clientes.map(cliente => {
@@ -451,7 +636,7 @@ export const Geral: React.FC = () => {
       isAmostra: false,
     },
     {
-      title: `Solicitações do Portal ${coletasPortal.length > 0 ? `(${coletasPortal.length})`: ''}`,
+      title: `Solicitações do Portal ${coletasPortal.length > 0 ? `(${coletasPortal.length})` : ''}`,
       icon: <FaGlobe />,
       bgColor: '#10B981',
       modalContent: formatarColetasPortal(coletasPortal),
@@ -492,9 +677,22 @@ export const Geral: React.FC = () => {
   return (
     <Layout>
       <div className="geral-container">
-        <h1 className="geral-title">
-          Geral {isAnyLoading && <span style={{ fontSize: '14px', color: '#666' }}>(Carregando...)</span>}
-        </h1>
+        <div className="geral-header">
+
+          <h1 className="geral-title">
+            Geral {isAnyLoading && <span style={{ fontSize: '14px', color: '#666' }}>(Carregando...)</span>}
+          </h1>
+          {/* Botão de Reload */}
+          <button
+            className="reload-button"
+            onClick={handleReload}
+            disabled={isReloading}
+            title="Recarregar dados"
+          >
+            <FaSync className={`reload-icon ${isReloading ? 'spinning' : ''}`} />
+            {isReloading ? 'Recarregando...' : 'Recarregar'}
+          </button>
+        </div>
 
         <div className="top-cards-grid">
           {topCardsData.map((card, index) => (
@@ -524,8 +722,24 @@ export const Geral: React.FC = () => {
         </div>
       </div>
 
-      <Modal isOpen={isModalOpen} onClose={closeModal} title={modalTitle} content={modalContent} isAmostraModal={isAmostraModal} />
+      <Modal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        title={modalTitle}
+        content={modalContent}
+        isAmostraModal={isAmostraModal}
+        modalTitle={modalTitle}
+        clientesSemCadastro={clientesSemCadastro}
+        openClienteModal={openClienteModal}
+      />
+
+      <ClienteModal
+        isOpen={isClienteModalOpen}
+        onClose={closeClienteModal}
+        cliente={clienteSelecionado}
+        onNovoCadastro={handleNovoCadastro}
+        onCadastroExistente={handleCadastroExistente}
+      />
     </Layout>
   );
 };
-

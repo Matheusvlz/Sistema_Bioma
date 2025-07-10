@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { core } from '@tauri-apps/api';
-import { 
-  FaHome, 
-  FaSignInAlt, 
-  FaChartBar, 
-  FaCog, 
-  FaFlask, 
-  FaTruck, 
+import {
+  FaHome,
+  FaSignInAlt,
+  FaChartBar,
+  FaCog,
+  FaFlask,
+  FaTruck,
   FaCalendarAlt,
   FaClipboardCheck,
   FaMoneyBillWave,
@@ -19,13 +19,9 @@ import {
 } from 'react-icons/fa';
 
 type Route = 'login' | 'inicio' | 'reports' | 'settings' | 'laboratorio' | 'frota' | 'agenda' | 'qualidade' | 'financeiro' | 'geral' | 'administracao' |
-  // Subrotas de Clientes
   'cadastrar-clientes' | 'visualizar-cliente' | 'cadastrar-categoria' | 'cadastro-usuario-portal' | 'cadastrar-setor-usuario' | 'cadastrar-consultor' | 'cadastrar-laboratorio-terceirizado' |
-  // Subrotas de Estruturas
   'estrutura-tipo' | 'estrutura-grupo' | 'estrutura-matriz' | 'estrutura-unidade' | 'estrutura-parametro' | 'estrutura-pg-coleta' | 'estrutura-pop' | 'estrutura-tecnica' | 'estrutura-identificacao' | 'estrutura-metodologia' | 'estrutura-legislacao' | 'estrutura-categoria' | 'estrutura-forma-contato' | 'estrutura-observacao' | 'estrutura-submatriz' |
-  // Subrotas de Relacionamentos
   'rel-parametro-pop' | 'rel-limite-quantificacao' | 'rel-legislacao-parametro' | 'rel-pacote-parametro' | 'rel-tecnica-etapa' |
-  // Subrotas de Contas
   'cadastrar-calculo' | 'visualizar-calculo';
 
 interface RouterContextType {
@@ -55,54 +51,51 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mapeamento de ícones para rotas com verificação
+  const iconComponentsMap: { [key in Route]: React.ElementType } = {
+    'login': FaSignInAlt,
+    'inicio': FaHome,
+    'reports': FaChartBar,
+    'settings': FaCog,
+    'laboratorio': FaFlask,
+    'frota': FaTruck,
+    'agenda': FaCalendarAlt,
+    'qualidade': FaClipboardCheck,
+    'financeiro': FaMoneyBillWave,
+    'geral': FaGlobeAmericas,
+    'administracao': FaUserCog,
+    'cadastrar-clientes': FaUsers,
+    'visualizar-cliente': FaUsers,
+    'cadastrar-categoria': FaUsers,
+    'cadastro-usuario-portal': FaUsers,
+    'cadastrar-setor-usuario': FaUsers,
+    'cadastrar-consultor': FaUsers,
+    'cadastrar-laboratorio-terceirizado': FaUsers,
+    'estrutura-tipo': FaBuilding,
+    'estrutura-grupo': FaBuilding,
+    'estrutura-matriz': FaBuilding,
+    'estrutura-unidade': FaBuilding,
+    'estrutura-parametro': FaBuilding,
+    'estrutura-pg-coleta': FaBuilding,
+    'estrutura-pop': FaBuilding,
+    'estrutura-tecnica': FaBuilding,
+    'estrutura-identificacao': FaBuilding,
+    'estrutura-metodologia': FaBuilding,
+    'estrutura-legislacao': FaBuilding,
+    'estrutura-categoria': FaBuilding,
+    'estrutura-forma-contato': FaBuilding,
+    'estrutura-observacao': FaBuilding,
+    'estrutura-submatriz': FaBuilding,
+    'rel-parametro-pop': FaHandshake,
+    'rel-limite-quantificacao': FaHandshake,
+    'rel-legislacao-parametro': FaHandshake,
+    'rel-pacote-parametro': FaHandshake,
+    'rel-tecnica-etapa': FaHandshake,
+    'cadastrar-calculo': FaWallet,
+    'visualizar-calculo': FaWallet,
+  };
+
   const getRouteIcon = (route: Route): React.ReactNode => {
-    const iconComponents = {
-      'login': FaSignInAlt,
-      'inicio': FaHome,
-      'reports': FaChartBar,
-      'settings': FaCog,
-      'laboratorio': FaFlask,
-      'frota': FaTruck,
-      'agenda': FaCalendarAlt,
-      'qualidade': FaClipboardCheck,
-      'financeiro': FaMoneyBillWave,
-      'geral': FaGlobeAmericas,
-      ///////////////////////////////////////////////
-      'administracao': FaUserCog,
-      'cadastrar-clientes': FaUsers,
-      'visualizar-cliente': FaUsers,
-      'cadastrar-categoria': FaUsers,
-      'cadastro-usuario-portal': FaUsers,
-      'cadastrar-setor-usuario': FaUsers,
-      'cadastrar-consultor': FaUsers,
-      'cadastrar-laboratorio-terceirizado': FaUsers,
-      'estrutura-tipo': FaBuilding,
-      'estrutura-grupo': FaBuilding,
-      'estrutura-matriz': FaBuilding,
-      'estrutura-unidade': FaBuilding,
-      'estrutura-parametro': FaBuilding,
-      'estrutura-pg-coleta': FaBuilding,
-      'estrutura-pop': FaBuilding,
-      'estrutura-tecnica': FaBuilding,
-      'estrutura-identificacao': FaBuilding,
-      'estrutura-metodologia': FaBuilding,
-      'estrutura-legislacao': FaBuilding,
-      'estrutura-categoria': FaBuilding,
-      'estrutura-forma-contato': FaBuilding,
-      'estrutura-observacao': FaBuilding,
-      'estrutura-submatriz': FaBuilding,
-      'rel-parametro-pop': FaHandshake,
-      'rel-limite-quantificacao': FaHandshake,
-      'rel-legislacao-parametro': FaHandshake,
-      'rel-pacote-parametro': FaHandshake,
-      'rel-tecnica-etapa': FaHandshake,
-      'cadastrar-calculo': FaWallet,
-      'visualizar-calculo': FaWallet,
-    };
-    
-    const IconComponent = iconComponents[route] || FaHome;
-    
+    const IconComponent = iconComponentsMap[route] || FaHome; // Fallback to FaHome if route not found
     return (
       <span className="icon-container">
         <IconComponent className="icon" />
@@ -111,24 +104,34 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const isAuth = await core.invoke<boolean>('verificar_autenticacao');
-        setIsAuthenticated(isAuth);
-        setCurrentRoute(isAuth ? 'inicio' : 'login');
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        setCurrentRoute('login');
-      } finally {
+    const initializeRoute = async () => {
+      setIsLoading(true);
+      const pathFromHash = window.location.hash.substring(2);
+      const isValidHashRoute = (Object.keys(iconComponentsMap) as Route[]).includes(pathFromHash as Route);
+
+      if (isValidHashRoute) {
+        setCurrentRoute(pathFromHash as Route);
+        setIsAuthenticated(true);
         setIsLoading(false);
+      } else {
+        try {
+          const isAuth = await core.invoke<boolean>('verificar_autenticacao');
+          setIsAuthenticated(isAuth);
+          setCurrentRoute(isAuth ? 'inicio' : 'login');
+        } catch (error) {
+          console.error('Erro ao verificar autenticação:', error);
+          setCurrentRoute('login');
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
-    checkAuth();
+    initializeRoute();
   }, []);
-
   const navigate = (route: Route) => {
     setCurrentRoute(route);
+    window.location.hash = `#/${route}`;
   };
 
   const setAuthenticated = (auth: boolean) => {
@@ -148,10 +151,10 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   }
 
   return (
-    <RouterContext.Provider value={{ 
-      currentRoute, 
-      navigate, 
-      isAuthenticated, 
+    <RouterContext.Provider value={{
+      currentRoute,
+      navigate,
+      isAuthenticated,
       setAuthenticated,
       getRouteIcon
     }}>

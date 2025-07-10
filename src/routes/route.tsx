@@ -10,6 +10,7 @@ import { Frota } from '../view/Frota';
 import { Qualidade } from '../view/Qualidade';
 import Login from '../view/Login';
 import { CadastrarClientes } from '../view/geral/CadastrarCliente';
+import VisualizarClientes from '../view/geral/VisualizarCliente';
 
 export const routes = {
   login: <Login />,
@@ -26,7 +27,7 @@ export const routes = {
 
   // SUBROTAS DE CLIENTES - SUBSTITUA <Inicio /> PELOS COMPONENTES ESPECÍFICOS
   'cadastrar-clientes': <CadastrarClientes />,
-  'visualizar-cliente': <Inicio />, // TODO: <VisualizarCliente />
+  'visualizar-cliente': <VisualizarClientes />, // TODO: <VisualizarCliente />
   'cadastrar-categoria': <Inicio />, // TODO: <CadastrarCategoria />
   'cadastro-usuario-portal': <Inicio />, // TODO: <CadastroUsuarioPortal />
   'cadastrar-setor-usuario': <Inicio />, // TODO: <CadastrarSetorUsuario />
