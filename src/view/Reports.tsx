@@ -1,9 +1,9 @@
 import React from 'react';
-import { Layout } from '../components/Layout';
+
 
 export const Reports: React.FC = () => {
   return (
-    <Layout>
+
       <div>
         <h1 style={{ margin: '0 0 2rem 0', fontSize: '2rem', fontWeight: 'bold', color: '#111827' }}>
           Relatórios
@@ -19,6 +19,6 @@ export const Reports: React.FC = () => {
           </p>
         </div>
       </div>
-    </Layout>
+ 
   );
 };

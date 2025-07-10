@@ -8,10 +8,10 @@ import { Agenda } from '../view/Agenda';
 import { Financeiro } from '../view/Financeiro';
 import { Frota } from '../view/Frota';
 import { Qualidade } from '../view/Qualidade';
-import Login from '../view/Login';
 
-export const routes = {
-  login: <Login />,
+// Agora exportamos apenas os componentes de conteúdo, sem o Layout
+// O Layout será gerenciado pelo App.tsx de forma persistente
+export const authenticatedRoutes = {
   inicio: <Inicio />,
   reports: <Reports />,
   settings: <Settings />,
@@ -23,3 +23,7 @@ export const routes = {
   qualidade: <Qualidade />,
   frota: <Frota />
 };
+
+// Tipo para as rotas autenticadas
+export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
+

@@ -1,13 +1,47 @@
+/* src/components/css/Layout.css */
+
 /* Reset e configurações base */
 * {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); /* Cor de fundo padrão do body */
+  min-height: 100vh;
+  overflow: hidden; /* Evita scrollbar indesejada no body */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave para o modo escuro */
+}
+
+/* Dark Mode para o Body */
+body.dark-mode {
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); /* Fundo escuro */
+  color: #e2e8f0; /* Cor do texto padrão para o modo escuro */
+}
+
+/* --- Global Variables --- */
+:root {
+    --primary-color: #22c55e;
+    --primary-dark-color: #16a34a;
+    --accent-color: #3b82f6; /* Example accent color */
+    --accent-dark-color: #2563eb;
+
+    /* Dark Mode Variables */
+    --dark-mode-bg-primary: #1a202c;
+    --dark-mode-bg-secondary: #2d3748;
+    --dark-mode-bg-tertiary: #4a5568;
+    --dark-mode-text-color: #e2e8f0;
+    --dark-mode-border-color: #4a5568;
+    --dark-mode-accent-color: #6366f1; /* Example dark mode accent */
+    --dark-mode-accent-dark-color: #4f46e5;
 }
 
 .layout {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 /* Header limpo e minimalista */
@@ -21,16 +55,25 @@
   right: 0;
   z-index: 100;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para o Header */
+body.dark-mode .layout-header {
+  background-color: var(--dark-mode-bg-secondary); /* Fundo mais escuro */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border-bottom-color: var(--dark-mode-border-color);
 }
 
 .header-content {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start; /* Alinha o conteúdo à esquerda */
   height: 100%;
   padding: 0 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  gap: 1.5rem; /* Espaçamento entre os principais grupos do header */
 }
 
 .logo-small {
@@ -40,23 +83,273 @@
   font-weight: 600;
   color: #111827;
   font-size: 1.25rem;
+  transition: color 0.3s ease; /* Transição suave */
 }
 
-.user-menu {
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+/* Dark Mode para o Logo Small */
+body.dark-mode .logo-small {
+  color: #dcfce7; /* Verde claro */
+}
+
+/* Novo: Container para os ícones à esquerda */
+.header-actions-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem; /* Espaçamento entre os ícones */
+}
+
+/* Novo: Container para as ações à direita (info do usuário e logout) */
+.header-actions-right {
+    display: flex;
+    align-items: center;
+    /* Remover gap aqui, pois o dropdown será o único item flex */
+    margin-left: auto; /* Empurra este grupo para a direita */
+}
+.task-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0; /* Prevent actions from shrinking */
+}
+/* --- Refined Icon Buttons --- */
+.header-icon-button {
+  background: none;
+  border: none;
   cursor: pointer;
-  color: #6b7280;
-  transition: all 0.2s ease;
-  font-weight: 500;
+  padding: 0.6rem; /* Make clickable area larger */
+  border-radius: 50%; /* Circle shape */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  color: #6b7280; /* Default icon color */
 }
 
-.user-menu:hover {
-  background: #f3f4f6;
-  color: #111827;
+.header-icon-button:hover {
+  background-color: #f0fdf4; /* Subtle hover background */
+  transform: translateY(-2px); /* Slight lift effect */
+  color: var(--primary-color); /* Highlight icon color */
 }
+
+.header-icon-button svg {
+  fill: none;
+  stroke: currentColor; /* Use current text color for stroke */
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Dark Mode for Icon Buttons */
+body.dark-mode .header-icon-button {
+  color: #a0aec0; /* Dark mode icon color */
+}
+
+body.dark-mode .header-icon-button:hover {
+  background-color: #3d495f; /* Darker subtle hover */
+  color: var(--primary-color); /* Highlight in dark mode */
+}
+
+/* --- User Dropdown Styles --- */
+.user-dropdown {
+    position: relative;
+    display: inline-block; /* Permite que o dropdown se posicione em relação a ele */
+}
+
+.user-info-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0; /* Remova padding para que .user-info controle isso */
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem; /* Adicionado padding para a área clicável */
+    border-radius: 9999px;
+    background-color: #f0fdf4;
+    border: 1px solid #dcfce7;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.user-info-toggle:hover {
+    background-color: #e0f2fe;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+body.dark-mode .user-info-toggle {
+    background-color: #1a202c;
+    border-color: #4a5568;
+}
+
+body.dark-mode .user-info-toggle:hover {
+    background-color: #2d3748;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.dropdown-arrow {
+    color: #6b7280;
+    transition: transform 0.3s ease;
+}
+
+.dropdown-arrow.open {
+    transform: rotate(180deg);
+}
+
+body.dark-mode .dropdown-arrow {
+    color: #a0aec0;
+}
+
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    /* Removido padding, border, background-color, border-radius daqui, movido para user-info-toggle */
+    transition: all 0.2s ease;
+    flex-shrink: 1; /* Permite que este item flexível encolha */
+    min-width: 0; /* Permite que o conteúdo interno encolha */
+}
+
+/* Removido user-info:hover, já está em user-info-toggle:hover */
+
+.profile-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #22c55e;
+  flex-shrink: 0;
+  transition: border-color 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para Profile Photo */
+body.dark-mode .profile-photo {
+  border-color: #34d399; /* Verde mais claro */
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  min-width: 0; /* Permite que o conteúdo de texto encolha */
+}
+
+.user-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  transition: color 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para User Name */
+body.dark-mode .user-name {
+  color: #f8fafc; /* Texto claro */
+}
+
+.user-cargo {
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+  transition: color 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para User Cargo */
+body.dark-mode .user-cargo {
+  color: #a0aec0; /* Texto mais suave */
+}
+
+/* --- Dropdown Content --- */
+.dropdown-content {
+    position: absolute;
+    background-color: #ffffff;
+    min-width: 180px; /* Largura mínima do dropdown */
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 101; /* Garante que fique acima de outros elementos */
+    right: 0; /* Alinha à direita do botão de toggle */
+    top: calc(100% + 10px); /* Posiciona abaixo do botão, com um pequeno gap */
+    border-radius: 8px;
+    padding: 8px 0; /* Padding interno */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, visibility 0.3s ease-out;
+    display: flex; /* Para alinhar itens internos */
+    flex-direction: column;
+}
+
+/* Adiciona classe para exibir o dropdown (controlada por JS) */
+.user-dropdown .dropdown-content.show-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+body.dark-mode .dropdown-content {
+    background-color: #2d3748;
+    box-shadow: 0px 8px 20px 0px rgba(0,0,0,0.4);
+}
+
+.dropdown-item {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px; /* Padding para cada item */
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #333; /* Cor do texto padrão */
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body.dark-mode .dropdown-item {
+    color: #e2e8f0;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0f0;
+    color: var(--primary-color); /* Mudar cor do texto no hover */
+}
+
+body.dark-mode .dropdown-item:hover {
+    background-color: #3b4252;
+    color: var(--primary-color);
+}
+
+.dropdown-item svg {
+    stroke: currentColor; /* Usa a cor do texto do item para o ícone */
+}
+
+/* Ajustes específicos para o botão de logout dentro do dropdown */
+.dropdown-item.logout-button {
+    /* Mantenha as cores de hover do logout como vermelho */
+    color: #444; /* Cor padrão para o logout */
+}
+
+body.dark-mode .dropdown-item.logout-button {
+    color: #e2e8f0;
+}
+
+.dropdown-item.logout-button:hover {
+    background-color: #fef2f2; /* Fundo vermelho claro */
+    color: #ef4444; /* Texto vermelho */
+}
+
+body.dark-mode .dropdown-item.logout-button:hover {
+    background-color: #4a3c3c; /* Fundo vermelho mais escuro */
+    color: #ff6666; /* Texto vermelho mais claro */
+}
+
 
 /* Layout body */
 .layout-body {
@@ -77,6 +370,14 @@
   overflow-y: auto;
   box-shadow: 4px 0 20px rgba(16, 185, 129, 0.05);
   z-index: 50;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para Sidebar */
+body.dark-mode .layout-sidebar {
+  background: linear-gradient(180deg, #2d3748 0%, #202b3a 100%);
+  border-right-color: rgba(52, 211, 153, 0.2);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-nav {
@@ -139,6 +440,28 @@
   width: 100%;
 }
 
+/* Dark Mode para Nav Item */
+body.dark-mode .nav-item {
+  color: #a0aec0; /* Texto mais claro */
+}
+
+body.dark-mode .nav-item:hover {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.08), rgba(34, 197, 94, 0.05));
+  color: #34d399; /* Verde mais claro */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .nav-item::before {
+  background: linear-gradient(135deg, #34d399, #22c55e); /* Gradiente mais claro */
+}
+
+body.dark-mode .nav-item.active {
+  background: linear-gradient(135deg, #34d399, #22c55e); /* Gradiente mais claro */
+  color: white;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+
 /* Área principal */
 .layout-main {
   margin-left: 280px;
@@ -147,6 +470,12 @@
   background: linear-gradient(135deg, #f0fdf4 0%, #f7fee7 50%, #f0fdf4 100%);
   overflow-y: auto;
   position: relative;
+  transition: background 0.3s ease; /* Transição suave */
+}
+
+/* Dark Mode para Main Content */
+body.dark-mode .layout-main {
+  background: linear-gradient(135deg, #1f2937 0%, #2a3547 50%, #1f2937 100%);
 }
 
 .layout-main::before {
@@ -156,24 +485,33 @@
   left: 280px;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 25% 25%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(5, 150, 105, 0.02) 0%, transparent 50%);
   pointer-events: none;
   z-index: -1;
+  transition: background 0.3s ease; /* Transição suave */
 }
+
+/* Dark Mode para o Background Decoration do Main Content */
+body.dark-mode .layout-main::before {
+  background:
+    radial-gradient(circle at 25% 25%, rgba(52, 211, 153, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 75% 75%, rgba(34, 197, 94, 0.03) 0%, transparent 50%);
+}
+
 
 /* Responsividade */
 @media (max-width: 1024px) {
   .layout-sidebar {
     width: 260px;
   }
-  
+
   .layout-main {
     margin-left: 260px;
     padding: 2rem;
   }
-  
+
   .header-content {
     padding: 0 1.5rem;
   }
@@ -185,24 +523,24 @@
     transform: translateX(-100%);
     transition: transform 0.3s ease;
   }
-  
+
   .layout-sidebar.open {
     transform: translateX(0);
   }
-  
+
   .layout-main {
     margin-left: 0;
     padding: 1.5rem;
   }
-  
+
   .layout-main::before {
     left: 0;
   }
-  
+
   .header-content {
     padding: 0 1rem;
   }
-  
+
   .nav-item {
     padding: 0.875rem 1rem;
     font-size: 0.9rem;
@@ -213,39 +551,39 @@
   .layout-header {
     height: 60px;
   }
-  
+
   .layout-body {
     margin-top: 60px;
     height: calc(100vh - 60px);
   }
-  
+
   .layout-sidebar {
     top: 60px;
     height: calc(100vh - 60px);
   }
-  
+
   .layout-main {
     padding: 1rem;
   }
-  
+
   .layout-main::before {
     top: 60px;
   }
-  
+
   .header-content {
     padding: 0 0.75rem;
   }
-  
+
   .logo-small {
     font-size: 1.1rem;
     gap: 0.5rem;
   }
-  
+
   .user-menu {
     padding: 0.5rem 0.75rem;
     font-size: 0.9rem;
   }
-  
+
   .sidebar-nav {
     padding: 1rem 0.75rem;
   }
@@ -312,4 +650,654 @@
 
 .layout-main::-webkit-scrollbar-thumb:hover {
   background: rgba(16, 185, 129, 0.5);
+}
+
+.notifications-container,
+.tasks-container {
+    position: relative;
+    display: inline-block;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px; /* Adjusted for better placement */
+    right: -4px; /* Adjusted for better placement */
+    background-color: #ff4d4f; /* Red badge */
+    color: white;
+    border-radius: 50%;
+    padding: 3px 7px; /* Slightly larger padding */
+    font-size: 0.7em;
+    font-weight: bold;
+    line-height: 1;
+    min-width: 20px; /* Ensure circular shape for single digits */
+    text-align: center;
+    box-shadow: 0 0 0 2px white; /* White border around badge */
+}
+
+body.dark-mode .notification-badge {
+    box-shadow: 0 0 0 2px var(--dark-mode-bg-secondary); /* Dark mode border around badge */
+}
+
+
+/* --- Modal Styles --- */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInModal 0.3s ease-out; /* Fade in animation for modal */
+}
+
+.modal-content {
+    background-color: white;
+    padding: 25px; /* Slightly more padding */
+    border: 1px solid #ddd;
+    border-radius: 12px; /* More rounded corners */
+    width: 90%; /* Adjust as needed */
+    max-width: 550px; /* Max width for readability */
+    box-shadow: 0 8px 30px rgba(0,0,0,0.25); /* More pronounced shadow */
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.95); /* Initial scale for pop-in effect */
+    animation: scaleInModal 0.3s ease-out forwards;
+}
+
+body.dark-mode .modal-content {
+    background-color: #2a3547; /* Darker background */
+    color: #e2e8f0;
+    border-color: #4a5568;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px; /* More space */
+    margin-bottom: 20px; /* More space */
+}
+
+body.dark-mode .modal-header {
+    border-bottom-color: #4a5568;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.6em; /* Slightly larger heading */
+    color: #333;
+}
+
+body.dark-mode .modal-header h3 {
+    color: #e2e8f0;
+}
+
+.close-button {
+    color: #999;
+    font-size: 32px; /* Larger close button */
+    font-weight: normal; /* Less bold */
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: #555;
+}
+
+body.dark-mode .close-button {
+    color: #bbb;
+}
+
+body.dark-mode .close-button:hover {
+    color: #fff;
+}
+
+.modal-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: 450px; /* Increased max height */
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for Modal Body */
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05); /* Light track */
+  border-radius: 4px;
+}
+
+body.dark-mode .modal-body::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05); /* Dark mode track */
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2); /* Darker thumb */
+  border-radius: 4px;
+}
+
+body.dark-mode .modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2); /* Dark mode thumb */
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.modal-body ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* MODAL NOTIFICATIONS */
+.notification-item-modal { /* Specific class for modal list items */
+    display: flex; /* Make it a flex container */
+    align-items: flex-start; /* Align icon and text at the top */
+    gap: 12px; /* Space between icon and text */
+    padding: 15px; /* More padding */
+    border-bottom: 1px solid #f0f0f0; /* Lighter border */
+    font-size: 0.95em;
+    color: #444;
+    line-height: 1.4;
+    transition: background-color 0.2s ease;
+}
+
+body.dark-mode .notification-item-modal {
+    border-bottom-color: #3b4252;
+    color: #c9d1d9;
+}
+
+.notification-item-modal:last-child {
+    border-bottom: none;
+}
+
+.notification-item-modal:hover {
+    background-color: #f8f8f8; /* Subtle hover effect */
+}
+
+body.dark-mode .notification-item-modal:hover {
+    background-color: #3b4252;
+}
+
+.notification-item-modal.new {
+    background-color: #e6ffed; /* Light green for new notifications */
+    border-left: 4px solid var(--primary-color); /* Highlight new ones */
+    animation: fadeInNotification 0.3s ease-out;
+}
+
+body.dark-mode .notification-item-modal.new {
+    background-color: #2b3b4d; /* Darker green for new notifications in dark mode */
+    border-left-color: var(--primary-color);
+}
+
+
+.notification-item-icon {
+    flex-shrink: 0; /* Prevent icon from shrinking */
+    color: var(--primary-color); /* Green icon */
+}
+
+body.dark-mode .notification-item-icon {
+    color: var(--dark-mode-accent-color); /* Dark mode accent for icon */
+}
+
+.notification-text-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1; /* Allows text content to take remaining space */
+}
+
+.notification-title {
+    font-weight: 600;
+    font-size: 1.05em;
+    color: #222;
+    margin-bottom: 4px;
+}
+
+body.dark-mode .notification-title {
+    color: #f8fafc;
+}
+
+.notification-description {
+    font-size: 0.9em;
+    color: #666;
+}
+
+body.dark-mode .notification-description {
+    color: #a0aec0;
+}
+
+.notification-separator {
+    text-align: center;
+    padding: 10px 0;
+    color: #999;
+    font-style: italic;
+    border-bottom: 1px dashed #eee;
+    margin: 10px 0;
+}
+
+body.dark-mode .notification-separator {
+    border-bottom-color: #4a5568;
+    color: #a0aec0;
+}
+
+.no-items-message {
+    text-align: center;
+    padding: 20px;
+    color: #888;
+    font-style: italic;
+}
+
+body.dark-mode .no-items-message {
+    color: #a0aec0;
+}
+
+.modal-footer {
+    padding-top: 20px; /* More space */
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+    text-align: right;
+    display: flex; /* Use flexbox for buttons */
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px; /* Space between buttons */
+}
+
+body.dark-mode .modal-footer {
+    border-top-color: #4a5568;
+}
+
+.modal-footer button {
+    padding: 10px 20px; /* Larger buttons */
+    border: none;
+    border-radius: 6px; /* Slightly more rounded */
+    background-color: var(--accent-color);
+    color: white;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    font-weight: 500;
+}
+
+.modal-footer button:hover {
+    background-color: var(--accent-dark-color);
+    transform: translateY(-1px);
+}
+
+body.dark-mode .modal-footer button {
+    background-color: var(--dark-mode-accent-color);
+}
+
+body.dark-mode .modal-footer button:hover {
+    background-color: var(--dark-mode-accent-dark-color);
+}
+
+/* Specific style for "Limpar todas" button */
+.modal-footer button.clear-all-notifications-button {
+    background-color: #ef4444; /* Red for clear all */
+}
+
+.modal-footer button.clear-all-notifications-button:hover {
+    background-color: #dc2626; /* Darker red on hover */
+}
+
+body.dark-mode .modal-footer button.clear-all-notifications-button {
+    background-color: #c63b3b;
+}
+
+body.dark-mode .modal-footer button.clear-all-notifications-button:hover {
+    background-color: #a62b2b;
+}
+
+
+/* --- Task specific styles (MODAL TASKS) --- */
+.task-item {
+    display: flex;
+    align-items: center; /* Vertically align items in the center */
+    justify-content: space-between;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background-color: var(--card-background-color); /* Use a variable for dark/light mode */
+    border-radius: 8px;
+    box-shadow: var(--shadow-small);
+    transition: all 0.2s ease-in-out;
+    border-left: 5px solid transparent; /* Default, will be overridden by urgency colors */
+}
+
+
+body.dark-mode .task-item {
+    border-color: #4a5568;
+    background-color: #333d4e;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+
+.task-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+}
+body.dark-mode .task-item:hover {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.task-details {
+    flex-grow: 1;
+    display: flex; /* Make this a flex container */
+    align-items: center; /* Align icon and text vertically */
+    margin-right: 15px;
+    /* Removed flex-direction: column here, as we want icon next to text */
+}
+
+.task-name {
+    font-weight: 600;
+    color: var(--text-color-primary);
+    font-size: 1rem;
+}
+body.dark-mode .task-name {
+    color: #f8fafc;
+}
+
+
+
+body.dark-mode .task-description {
+    color: #a0aec0;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #e9ecef; /* Lighter background for the container */
+    border-radius: 8px; /* More rounded */
+    overflow: hidden;
+    height: 12px; /* Slightly taller bar */
+    position: relative;
+    margin-top: 8px; /* Space from description */
+}
+
+body.dark-mode .progress-bar-container {
+    background-color: #5a6b80;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(to right, #34d399, #22c55e); /* Green gradient */
+    border-radius: 8px;
+    transition: width 0.4s ease-in-out;
+}
+
+.progress-text {
+    position: absolute;
+    right: 8px; /* Adjusted position */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.75em; /* Slightly larger font */
+    color: #ffffff; /* White text for contrast on green bar */
+    font-weight: 600;
+    text-shadow: 0 0 2px rgba(0,0,0,0.3); /* Subtle shadow for readability */
+    z-index: 1;
+}
+
+
+.finalize-task-button:hover {
+    background-color: var(--hover-color); /* Light grey or subtle hover effect */
+}
+
+
+
+
+.finalize-task-button svg {
+    stroke-width: 2.5; /* Thicker stroke for checkmark */
+}
+
+.task-completed-text {
+    color: #28a745; /* Green for completed text */
+    font-weight: 600;
+    font-size: 0.95em;
+    padding: 5px 10px;
+    background-color: #e6ffed; /* Light green background */
+    border-radius: 5px;
+}
+
+body.dark-mode .task-completed-text {
+    color: #34d399;
+    background-color: #1a362a;
+}
+
+
+/* Modal Animations */
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleInModal {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInNotification {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Seu CSS existente do Layout.css pode vir antes ou depois. */
+
+/* Estilos do Pop-up de Notificação */
+.notification-popup {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+
+  /* Transparência e Blur (moderno) */
+  background-color: rgba(34, 197, 94, 0.9); /* Verde com 90% de opacidade */
+  backdrop-filter: blur(8px); /* Efeito de blur no que está atrás do pop-up */
+  -webkit-backdrop-filter: blur(8px); /* Suporte para navegadores WebKit */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Borda sutil transparente */
+
+  color: white;
+  padding: 15px 20px; /* Um pouco mais de padding */
+  border-radius: 12px; /* Cantos mais arredondados */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35); /* Sombra mais intensa */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 15px; /* Espaço entre ícone/mensagem e botão de fechar */
+  max-width: 350px; /* Aumenta um pouco a largura máxima */
+  min-width: 250px; /* Aumenta um pouco a largura mínima */
+  box-sizing: border-box;
+
+  /* Fundo com gradiente sutil (opcional, para um toque extra) */
+  background-image: linear-gradient(45deg, rgba(34, 197, 94, 0.95), rgba(6, 95, 70, 0.85));
+
+  /* Animações de entrada e saída */
+  animation: slideInBottom 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards, /* Animação mais suave */
+             fadeOutBottom 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) 4.4s forwards; /* Começa um pouco antes para suavizar a saída */
+}
+
+/* Container para a mensagem e o ícone */
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Espaço entre o ícone e o texto */
+  flex-grow: 1; /* Permite que o conteúdo ocupe o espaço */
+}
+
+/* Estilo do ícone de notificação */
+.notification-icon {
+  color: white; /* Cor do ícone */
+  min-width: 24px; /* Garante que o ícone não encolha */
+  min-height: 24px;
+}
+
+/* Estilo do parágrafo da mensagem dentro do pop-up */
+.notification-popup p {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+  font-size: 0.95em; /* Ligeiramente menor para um visual mais limpo */
+}
+
+/* Estilos do botão de fechar */
+.close-popup-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.6em; /* Um pouco maior */
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  flex-shrink: 0;
+  opacity: 0.8; /* Ligeiramente transparente por padrão */
+}
+
+.close-popup-button:hover {
+  transform: scale(1.2);
+  opacity: 1; /* Totalmente opaco ao passar o mouse */
+}
+
+/* --- Keyframes para as Animações --- */
+
+/* Animação para o pop-up surgir de baixo para cima */
+@keyframes slideInBottom {
+  from {
+    transform: translateY(100px); /* Começa um pouco mais abaixo para um efeito mais "vindo do chão" */
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animação para o pop-up desaparecer */
+@keyframes fadeOutBottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px); /* Desliza ligeiramente para baixo ao desaparecer */
+  }
+}
+
+/* --- src/main/frontend/src/App.css or src/main/frontend/src/components/css/Layout.css --- */
+
+
+
+
+
+.task-description {
+    font-size: 0.85rem;
+    color: var(--text-color-secondary);
+    margin-top: 4px; /* Maintain spacing if description is on a new line */
+}
+
+
+
+.finalize-task-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background-color 0.2s ease;
+}
+
+
+/* --- NEW: Urgency Specific Styles --- */
+
+/* Urgency Indicator (the small icon next to the name) */
+.task-urgency-indicator {
+    /* Increased size slightly to ensure icon fits comfortably */
+    width: 24px; /* Increased from 20px */
+    height: 24px; /* Increased from 20px */
+    margin-right: 10px; /* Space between icon and text, slightly increased */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Make it round */
+    flex-shrink: 0; /* Prevent it from shrinking */
+    /* Optional: Add a subtle border or background if you want the indicator itself to stand out */
+    /* border: 1px solid currentColor; */
+}
+
+.task-urgency-indicator svg {
+    width: 100%;
+    height: 100%;
+    display: block; /* Remove any extra space around the SVG */
+}
+
+/* Urgency colors applied to the indicator or border */
+.task-item.urgency-1 { /* Option to color the left border of the whole item */
+    border-left-color: var(--urgency-low-color);
+}
+.task-item.urgency-2 {
+    border-left-color: var(--urgency-medium-color);
+}
+.task-item.urgency-3 {
+    border-left-color: var(--urgency-high-color);
+}
+.task-item.urgency-4 {
+    border-left-color: var(--urgency-very-high-color);
+}
+
+/* Also apply color to the icon stroke directly */
+.task-item.urgency-1 .task-urgency-indicator svg { stroke: var(--urgency-low-color); }
+.task-item.urgency-2 .task-urgency-indicator svg { stroke: var(--urgency-medium-color); }
+.task-item.urgency-3 .task-urgency-indicator svg { stroke: var(--urgency-high-color); }
+.task-item.urgency-4 .task-urgency-indicator svg { stroke: var(--urgency-very-high-color); }
+
+
+/* Define CSS variables for colors (add these to your :root or appropriate theme selector) */
+:root {
+  /* ... existing variables ... */
+  --urgency-low-color: #60a5fa;    /* blue-400 */
+  --urgency-medium-color: #4ade80; /* green-400 */
+  --urgency-high-color: #fb923c;   /* orange-400 */
+  --urgency-very-high-color: #ef4444; /* red-500 */
+
+  /* For dark mode, adjust if needed. Example: */
+  --card-background-color: #ffffff;
+  --text-color-primary: #1f2937;
+  --text-color-secondary: #4b5563;
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --hover-color: #f3f4f6;
+}
+
+.dark-mode {
+  --card-background-color: #374151;
+  --text-color-primary: #f3f4f6;
+  --text-color-secondary: #d1d5db;
+  --shadow-small: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-medium: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --hover-color: #4b5563;
+
+  /* Adjust urgency colors for dark mode if desired */
+  --urgency-low-color: #3b82f6;    /* blue-500 */
+  --urgency-medium-color: #22c55e; /* green-500 */
+  --urgency-high-color: #f97316;   /* orange-500 */
+  --urgency-very-high-color: #dc2626; /* red-600 */
 }

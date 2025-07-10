@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { core } from '@tauri-apps/api';
 import { 
   FaHome, 
-  FaSignInAlt, 
   FaChartBar, 
   FaCog, 
   FaFlask, 
@@ -13,15 +12,14 @@ import {
   FaGlobeAmericas,
   FaUserCog
 } from 'react-icons/fa';
-
-type Route = 'login' | 'inicio' | 'reports' | 'settings' | 'laboratorio' | 'frota' | 'agenda' | 'qualidade' | 'financeiro' | 'geral' | 'administracao';
+import { AuthenticatedRoute } from './route';
 
 interface RouterContextType {
-  currentRoute: Route;
-  navigate: (route: Route) => void;
+  currentRoute: AuthenticatedRoute;
+  navigate: (route: AuthenticatedRoute) => void;
   isAuthenticated: boolean;
   setAuthenticated: (auth: boolean) => void;
-  getRouteIcon: (route: Route) => React.ReactNode;
+  getRouteIcon: (route: AuthenticatedRoute) => React.ReactNode;
 }
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
@@ -39,14 +37,14 @@ interface RouterProviderProps {
 }
 
 export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
-  const [currentRoute, setCurrentRoute] = useState<Route>('login');
+  // Agora o currentRoute só gerencia rotas autenticadas, começando com 'inicio'
+  const [currentRoute, setCurrentRoute] = useState<AuthenticatedRoute>('inicio');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Mapeamento de ícones para rotas com verificação
-  const getRouteIcon = (route: Route): React.ReactNode => {
+  // Mapeamento de ícones para rotas autenticadas
+  const getRouteIcon = (route: AuthenticatedRoute): React.ReactNode => {
     const iconComponents = {
-      'login': FaSignInAlt,
       'inicio': FaHome,
       'reports': FaChartBar,
       'settings': FaCog,
@@ -73,10 +71,14 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
       try {
         const isAuth = await core.invoke<boolean>('verificar_autenticacao');
         setIsAuthenticated(isAuth);
-        setCurrentRoute(isAuth ? 'inicio' : 'login');
+        // Se autenticado, mantém a rota atual ou vai para 'inicio'
+        // Se não autenticado, o App.tsx vai mostrar o Login
+        if (isAuth) {
+          setCurrentRoute('inicio');
+        }
       } catch (error) {
         console.error('Erro ao verificar autenticação:', error);
-        setCurrentRoute('login');
+        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
@@ -85,13 +87,16 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     checkAuth();
   }, []);
 
-  const navigate = (route: Route) => {
+  const navigate = (route: AuthenticatedRoute) => {
     setCurrentRoute(route);
   };
 
   const setAuthenticated = (auth: boolean) => {
     setIsAuthenticated(auth);
-    navigate(auth ? 'inicio' : 'login');
+    if (auth) {
+      setCurrentRoute('inicio');
+    }
+    // Se não autenticado, o App.tsx vai lidar com isso
   };
 
   if (isLoading) {
@@ -120,3 +125,4 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
 
 // Importe o CSS DEPOIS do componente para evitar conflitos
 import '../components/css/RouterProvider.css';
+

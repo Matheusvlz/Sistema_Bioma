@@ -15,6 +15,9 @@ pub struct UsuarioResponse {
     pub nome_completo: String,
     pub cargo: String,
     pub numero_doc: String,
+    pub profile_photo: Option<String>,
+    pub dark_mode: bool,
+    pub cor: Option<String> // Alterado para Option<String>
 }
 
 #[derive(Serialize)]
@@ -54,17 +57,21 @@ pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
     let parsed = res.json::<UsuarioResponse>().await;
 
     match parsed {
-        Ok(usuario) => {
+        Ok(usuario_resp) => { // Renomeado para evitar conflito com a struct Usuario
             salvar_usuario(Usuario {
-                success: usuario.success,
-                id: usuario.id,
-                nome: usuario.nome,
-                privilegio: usuario.privilegio,
-                empresa: usuario.empresa,
-                ativo: usuario.ativo,
-                nome_completo: usuario.nome_completo,
-                cargo: usuario.cargo,
-                numero_doc: usuario.numero_doc,
+                success: usuario_resp.success,
+                id: usuario_resp.id,
+                nome: usuario_resp.nome,
+                privilegio: usuario_resp.privilegio,
+                empresa: usuario_resp.empresa,
+                ativo: usuario_resp.ativo,
+                nome_completo: usuario_resp.nome_completo,
+                cargo: usuario_resp.cargo,
+                numero_doc: usuario_resp.numero_doc,
+                profile_photo: usuario_resp.profile_photo,
+                dark_mode: usuario_resp.dark_mode,
+                cor: usuario_resp.cor,
+                conectado_com_websocket: Some(false),// Agora é Option<String>
             });
 
             LoginStatus { success: true }
