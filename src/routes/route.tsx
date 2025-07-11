@@ -10,7 +10,7 @@ import { Frota } from '../view/Frota';
 import { Qualidade } from '../view/Qualidade';
 import Login from '../view/Login';
 import { CadastrarClientes } from '../view/geral/CadastrarCliente';
-import VisualizarClientes from '../view/geral/VisualizarCliente';
+import { VisualizarClientes } from '../view/geral/VisualizarCliente';
 
 export const routes = {
   login: <Login />,
@@ -33,7 +33,7 @@ export const routes = {
   'cadastrar-setor-usuario': <Inicio />, // TODO: <CadastrarSetorUsuario />
   'cadastrar-consultor': <Inicio />, // TODO: <CadastrarConsultor />
   'cadastrar-laboratorio-terceirizado': <Inicio />, // TODO: <CadastrarLaboratorioTerceirizado />
-  
+
   // SUBROTAS DE ESTRUTURAS - SUBSTITUA <Inicio /> PELOS COMPONENTES ESPECÍFICOS
   'estrutura-tipo': <Inicio />, // TODO: <EstruturaTipo />
   'estrutura-grupo': <Inicio />, // TODO: <EstruturaGrupo />
@@ -50,14 +50,14 @@ export const routes = {
   'estrutura-forma-contato': <Inicio />, // TODO: <EstruturaFormaContato />
   'estrutura-observacao': <Inicio />, // TODO: <EstruturaObservacao />
   'estrutura-submatriz': <Inicio />, // TODO: <EstruturaSubmatriz />
-  
+
   // SUBROTAS DE RELACIONAMENTOS - SUBSTITUA <Inicio /> PELOS COMPONENTES ESPECÍFICOS
   'rel-parametro-pop': <Inicio />, // TODO: <RelacionamentoParametroPOP />
   'rel-limite-quantificacao': <Inicio />, // TODO: <RelacionamentoLimiteQuantificacao />
   'rel-legislacao-parametro': <Inicio />, // TODO: <RelacionamentoLegislacaoParametro />
   'rel-pacote-parametro': <Inicio />, // TODO: <RelacionamentoPacoteParametro />
   'rel-tecnica-etapa': <Inicio />, // TODO: <RelacionamentoTecnicaEtapa />
-  
+
   // SUBROTAS DE CONTAS - SUBSTITUA <Inicio /> PELOS COMPONENTES ESPECÍFICOS
   'cadastrar-calculo': <Inicio />, // TODO: <CadastrarCalculo />
   'visualizar-calculo': <Inicio />, // TODO: <VisualizarCalculo />

@@ -20,20 +20,23 @@ interface SearchField {
   options?: { value: string; label: string }[];
 }
 
+interface DropdownSearchConfig {
+  enabled: boolean;
+  placeholder?: string;
+  onSearch?: (query: string) => Promise<Cliente[]>;
+  onSelect?: (cliente: Cliente) => void;
+}
+
 interface SearchLayoutProps {
   fields?: SearchField[];
-  onSearch: (filters: Record<string, string>) => void;
-  onClienteSelect?: (cliente: Cliente) => void;
-  onMainSearch?: (query: string) => Promise<Cliente[]>;
-  placeholder?: string;
+  onSearch?: (filters: Record<string, string>) => void;
+  dropdownSearch?: DropdownSearchConfig;
 }
 
 export const SearchLayout: React.FC<SearchLayoutProps> = ({
   fields = [],
   onSearch,
-  onClienteSelect,
-  onMainSearch,
-  placeholder = "Buscar por fantasia, razão ou documento..."
+  dropdownSearch = { enabled: false }
 }) => {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [mainSearchQuery, setMainSearchQuery] = useState('');
@@ -41,11 +44,12 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [filters, setFilters] = useState<Record<string, string>>({});
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fechar dropdown quando clicar fora
+  const shouldShowToggle = dropdownSearch.enabled && fields.length > 0;
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -59,14 +63,13 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     };
   }, []);
 
-  // Busca principal com dropdown
   const handleMainSearchChange = async (value: string) => {
     setMainSearchQuery(value);
-    
-    if (value.trim().length >= 2 && onMainSearch) {
+
+    if (value.trim().length >= 2 && dropdownSearch.onSearch) {
       setIsSearching(true);
       try {
-        const results = await onMainSearch(value);
+        const results = await dropdownSearch.onSearch(value);
         setSearchResults(results);
         setShowDropdown(results.length > 0);
       } catch (error) {
@@ -82,16 +85,14 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     }
   };
 
-  // Selecionar cliente do dropdown
   const handleClienteSelect = (cliente: Cliente) => {
     setMainSearchQuery(cliente.fantasia || cliente.razao || '');
     setShowDropdown(false);
-    if (onClienteSelect) {
-      onClienteSelect(cliente);
+    if (dropdownSearch.onSelect) {
+      dropdownSearch.onSelect(cliente);
     }
   };
 
-  // Alternar modo avançado
   const toggleAdvancedMode = () => {
     setIsAdvancedMode(!isAdvancedMode);
     if (!isAdvancedMode) {
@@ -102,7 +103,6 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     }
   };
 
-  // Atualizar filtros
   const handleFilterChange = (fieldName: string, value: string) => {
     setFilters(prev => ({
       ...prev,
@@ -110,56 +110,55 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     }));
   };
 
-  // Executar busca avançada
   const handleAdvancedSearch = () => {
-    onSearch(filters);
-  };
-
-  // Limpar filtros
-  const handleClearFilters = () => {
-    if (isAdvancedMode) {
-      setFilters({});
-    } else {
-      setMainSearchQuery('');
-      setShowDropdown(false);
+    if (onSearch) {
+      onSearch(filters);
     }
   };
 
-  // Formatar documento para exibição
+  const handleClearFilters = () => {
+    setFilters({});
+    setMainSearchQuery('');
+    setShowDropdown(false);
+  };
+
   const formatDocument = (doc: string) => {
     if (!doc) return '';
-    
-    // Remove caracteres não numéricos
+
     const numbers = doc.replace(/\D/g, '');
-    
+
     if (numbers.length === 11) {
-      // CPF: 000.000.000-00
       return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     } else if (numbers.length === 14) {
-      // CNPJ: 00.000.000/0000-00
       return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     }
-    
+
     return doc;
   };
 
+  if (!dropdownSearch.enabled && fields.length === 0) {
+    return null;
+  }
+
   return (
     <div className="search-layout">
-      <div className="search-header">
-        <div className="search-toggle">
-          <button
-            className="toggle-button"
-            onClick={toggleAdvancedMode}
-            title={isAdvancedMode ? "Busca simples" : "Busca avançada"}
-          >
-            {isAdvancedMode ? <FaToggleOn /> : <FaToggleOff />}
-            <span>{isAdvancedMode ? "Busca Avançada" : "Busca Simples"}</span>
-          </button>
+      {shouldShowToggle && (
+        <div className="search-header">
+          <div className="search-toggle">
+            <button
+              className="toggle-button"
+              onClick={toggleAdvancedMode}
+              title={isAdvancedMode ? "Busca simples" : "Busca avançada"}
+            >
+              {isAdvancedMode ? <FaToggleOn /> : <FaToggleOff />}
+              <span>{isAdvancedMode ? "Busca Avançada" : "Busca Simples"}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {!isAdvancedMode ? (
-        // Busca principal com dropdown
+      {/* Busca por dropdown - mostrar se habilitada E não estiver em modo avançado */}
+      {dropdownSearch.enabled && (!shouldShowToggle || !isAdvancedMode) && (
         <div className="main-search-container" ref={searchRef}>
           <div className="search-input-wrapper">
             <FaSearch className="search-icon" />
@@ -167,7 +166,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
               ref={inputRef}
               type="text"
               className="main-search-input"
-              placeholder={placeholder}
+              placeholder={dropdownSearch.placeholder || "Buscar..."}
               value={mainSearchQuery}
               onChange={(e) => handleMainSearchChange(e.target.value)}
               onFocus={() => {
@@ -223,8 +222,10 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
             </div>
           )}
         </div>
-      ) : (
-        // Busca avançada com múltiplos campos
+      )}
+
+      {/* Busca avançada - mostrar se há campos E (não há toggle OU está em modo avançado) */}
+      {fields.length > 0 && (!shouldShowToggle || isAdvancedMode) && (
         <div className="advanced-search-container">
           <div className="search-fields-grid">
             {fields.map((field) => (
@@ -281,4 +282,3 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     </div>
   );
 };
-

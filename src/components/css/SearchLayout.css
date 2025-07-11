@@ -285,6 +285,24 @@
   animation: fadeIn 0.2s ease-out;
 }
 
+.search-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.search-dropdown::-webkit-scrollbar-track {
+  background: rgba(59, 131, 246, 0.171);  
+  border-radius: 4px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.5);
+  border-radius: 4px;
+}
+
+.search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
 /* Estados de loading */
 .loading-spinner {
   display: inline-block;

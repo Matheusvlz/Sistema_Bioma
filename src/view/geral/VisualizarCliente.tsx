@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Layout } from '../../components/Layout';
 import { SearchLayout } from '../../components/SearchLayout';
 import { core } from "@tauri-apps/api";
 import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaEdit, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import './css/VisualizarClientes.css';
+import './css/VisualizarCliente.css';
 
 interface Cliente {
   id: number;
@@ -44,7 +43,35 @@ interface PaginationInfo {
   itemsPerPage: number;
 }
 
+interface Categoria {
+  id: number;
+  nome: string;
+}
+
+interface Consultor {
+  id: number;
+  nome: string;
+  documento?: string;
+  telefone?: string;
+  email?: string;
+  ativo: boolean;
+}
+
+interface CategoriaResponse {
+  success: boolean;
+  data?: Categoria[];
+  message?: string;
+}
+
+interface ConsultorResponse {
+  success: boolean;
+  data?: Consultor[];
+  message?: string;
+}
+
 export const VisualizarClientes: React.FC = () => {
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [consultores, setConsultores] = useState<Consultor[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState<PaginationInfo>({
@@ -62,9 +89,9 @@ export const VisualizarClientes: React.FC = () => {
     { name: 'cnpj', label: 'CNPJ', type: 'text' as const },
     { name: 'cpf', label: 'CPF', type: 'text' as const },
     { name: 'cidade', label: 'Cidade', type: 'text' as const },
-    { 
-      name: 'uf', 
-      label: 'UF', 
+    {
+      name: 'uf',
+      label: 'UF',
       type: 'select' as const,
       options: [
         { value: 'AC', label: 'Acre' },
@@ -96,14 +123,56 @@ export const VisualizarClientes: React.FC = () => {
         { value: 'TO', label: 'Tocantins' }
       ]
     },
-    { name: 'categoria', label: 'Categoria', type: 'text' as const },
-    { name: 'consultor', label: 'Consultor', type: 'text' as const }
+    {
+      name: 'categoria',
+      label: 'Categoria',
+      type: 'select' as const,
+      options: categorias.map(cat => ({ value: cat.id.toString(), label: cat.nome }))
+    },
+    {
+      name: 'consultor',
+      label: 'Consultor',
+      type: 'select' as const,
+      options: consultores.map(cons => ({ value: cons.id.toString(), label: cons.nome }))
+    }
   ];
+
+  // Configuração do dropdown de busca
+  const dropdownSearchConfig = {
+    enabled: true,
+    placeholder: "Buscar por fantasia, razão social ou documento...",
+    onSearch: buscarClientesDropdown,
+    onSelect: handleClienteSelect
+  };
 
   // Carregar clientes iniciais
   useEffect(() => {
     buscarClientes({}, 1);
+    carregarCategorias();
+    carregarConsultores();
   }, []);
+
+  const carregarCategorias = async () => {
+    try {
+      const response: CategoriaResponse = await core.invoke('buscar_categorias');
+      if (response.success && response.data) {
+        setCategorias(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar categorias:', error);
+    }
+  };
+
+  const carregarConsultores = async () => {
+    try {
+      const response: ConsultorResponse = await core.invoke('buscar_consultores');
+      if (response.success && response.data) {
+        setConsultores(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar consultores:', error);
+    }
+  };
 
   // Buscar clientes com filtros e paginação
   const buscarClientes = async (filters: SearchFilters, page: number = 1) => {
@@ -137,7 +206,7 @@ export const VisualizarClientes: React.FC = () => {
   };
 
   // Busca principal para dropdown
-  const buscarClientesDropdown = async (query: string): Promise<Cliente[]> => {
+  async function buscarClientesDropdown(query: string): Promise<Cliente[]> {
     try {
       const response: ClienteResponse = await core.invoke('buscar_clientes_dropdown', {
         query: query.trim()
@@ -151,12 +220,12 @@ export const VisualizarClientes: React.FC = () => {
       console.error('Erro na busca dropdown:', error);
       return [];
     }
-  };
+  }
 
   // Manipular busca avançada
   const handleAdvancedSearch = useCallback((filters: Record<string, string>) => {
     const searchFilters: SearchFilters = {};
-    
+
     Object.keys(filters).forEach(key => {
       if (filters[key]?.trim()) {
         searchFilters[key as keyof SearchFilters] = filters[key].trim();
@@ -167,7 +236,7 @@ export const VisualizarClientes: React.FC = () => {
   }, []);
 
   // Selecionar cliente do dropdown
-  const handleClienteSelect = useCallback((cliente: Cliente) => {
+  function handleClienteSelect(cliente: Cliente) {
     setClientes([cliente]);
     setPagination(prev => ({
       ...prev,
@@ -176,7 +245,7 @@ export const VisualizarClientes: React.FC = () => {
       totalItems: 1
     }));
     setCurrentFilters({});
-  }, []);
+  }
 
   // Navegação de páginas
   const handlePageChange = (newPage: number) => {
@@ -188,30 +257,30 @@ export const VisualizarClientes: React.FC = () => {
   // Formatar documento
   const formatDocument = (doc: string) => {
     if (!doc) return '';
-    
+
     const numbers = doc.replace(/\D/g, '');
-    
+
     if (numbers.length === 11) {
       return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     } else if (numbers.length === 14) {
       return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
     }
-    
+
     return doc;
   };
 
   // Formatar telefone
   const formatPhone = (phone: string) => {
     if (!phone) return '';
-    
+
     const numbers = phone.replace(/\D/g, '');
-    
+
     if (numbers.length === 11) {
       return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
     } else if (numbers.length === 10) {
       return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
     }
-    
+
     return phone;
   };
 
@@ -227,163 +296,158 @@ export const VisualizarClientes: React.FC = () => {
   };
 
   return (
-    <Layout>
-      <div className="visualizar-clientes-container">
-        <div className="page-header">
-          <h1 className="page-title">Visualizar Clientes</h1>
-          <div className="page-stats">
-            {pagination.totalItems > 0 && (
-              <span className="stats-text">
-                {pagination.totalItems} cliente{pagination.totalItems !== 1 ? 's' : ''} encontrado{pagination.totalItems !== 1 ? 's' : ''}
-              </span>
-            )}
-          </div>
+    <div className="visualizar-clientes-container">
+      <div className="page-header">
+        <h1 className="page-title">Visualizar Clientes</h1>
+        <div className="page-stats">
+          {pagination.totalItems > 0 && (
+            <span className="stats-text">
+              {pagination.totalItems} cliente{pagination.totalItems !== 1 ? 's' : ''} encontrado{pagination.totalItems !== 1 ? 's' : ''}
+            </span>
+          )}
         </div>
+      </div>
 
-        <SearchLayout
-          fields={searchFields}
-          onSearch={handleAdvancedSearch}
-          onClienteSelect={handleClienteSelect}
-          onMainSearch={buscarClientesDropdown}
-          placeholder="Buscar por fantasia, razão social ou documento..."
-        />
+      <SearchLayout
+        fields={searchFields}
+        onSearch={handleAdvancedSearch}
+        dropdownSearch={dropdownSearchConfig}
+      />
 
-        {loading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <span>Carregando clientes...</span>
-          </div>
-        ) : (
-          <>
-            {clientes.length > 0 ? (
-              <>
-                <div className="clientes-grid">
-                  {clientes.map((cliente) => (
-                    <div key={cliente.id} className="cliente-card">
-                      <div className="card-header">
-                        <div className="cliente-avatar">
-                          <FaUser />
-                        </div>
-                        <div className="cliente-main-info">
-                          <h3 className="cliente-name">
-                            {cliente.fantasia || cliente.razao || 'Nome não informado'}
-                          </h3>
-                          {cliente.documento && (
-                            <span className="cliente-document">
-                              {formatDocument(cliente.documento)}
-                            </span>
-                          )}
-                        </div>
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <span>Carregando clientes...</span>
+        </div>
+      ) : (
+        <>
+          {clientes.length > 0 ? (
+            <>
+              <div className="clientes-grid">
+                {clientes.map((cliente) => (
+                  <div key={cliente.id} className="cliente-card">
+                    <div className="card-header">
+                      <div className="cliente-avatar">
+                        <FaUser />
                       </div>
-
-                      <div className="card-body">
-                        {cliente.telefone && (
-                          <div className="info-item">
-                            <FaPhone className="info-icon" />
-                            <span>{formatPhone(cliente.telefone)}</span>
-                          </div>
+                      <div className="cliente-main-info">
+                        <h3 className="cliente-name">
+                          {cliente.fantasia || cliente.razao || 'Nome não informado'}
+                        </h3>
+                        {cliente.documento && (
+                          <span className="cliente-document">
+                            {formatDocument(cliente.documento)}
+                          </span>
                         )}
-                        
-                        {cliente.email && (
-                          <div className="info-item">
-                            <FaEnvelope className="info-icon" />
-                            <span>{cliente.email}</span>
-                          </div>
-                        )}
-                        
-                        {(cliente.cidade || cliente.uf) && (
-                          <div className="info-item">
-                            <FaMapMarkerAlt className="info-icon" />
-                            <span>
-                              {cliente.cidade && cliente.uf 
-                                ? `${cliente.cidade} / ${cliente.uf}`
-                                : cliente.cidade || cliente.uf
-                              }
-                            </span>
-                          </div>
-                        )}
-
-                        {cliente.categoria && (
-                          <div className="info-item">
-                            <span className="info-label">Categoria:</span>
-                            <span>{cliente.categoria}</span>
-                          </div>
-                        )}
-
-                        {cliente.consultor && (
-                          <div className="info-item">
-                            <span className="info-label">Consultor:</span>
-                            <span>{cliente.consultor}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="card-actions">
-                        <button
-                          className="action-button view"
-                          onClick={() => handleView(cliente)}
-                          title="Visualizar detalhes"
-                        >
-                          <FaEye />
-                          Visualizar
-                        </button>
-                        <button
-                          className="action-button edit"
-                          onClick={() => handleEdit(cliente)}
-                          title="Editar cliente"
-                        >
-                          <FaEdit />
-                          Editar
-                        </button>
                       </div>
                     </div>
-                  ))}
-                </div>
 
-                {pagination.totalPages > 1 && (
-                  <div className="pagination-container">
-                    <div className="pagination">
+                    <div className="card-body">
+                      {cliente.telefone && (
+                        <div className="info-item">
+                          <FaPhone className="info-icon" />
+                          <span>{formatPhone(cliente.telefone)}</span>
+                        </div>
+                      )}
+
+                      {cliente.email && (
+                        <div className="info-item">
+                          <FaEnvelope className="info-icon" />
+                          <span>{cliente.email}</span>
+                        </div>
+                      )}
+
+                      {(cliente.cidade || cliente.uf) && (
+                        <div className="info-item">
+                          <FaMapMarkerAlt className="info-icon" />
+                          <span>
+                            {cliente.cidade && cliente.uf
+                              ? `${cliente.cidade} / ${cliente.uf}`
+                              : cliente.cidade || cliente.uf
+                            }
+                          </span>
+                        </div>
+                      )}
+
+                      {cliente.categoria && (
+                        <div className="info-item">
+                          <span className="info-label">Categoria:</span>
+                          <span>{cliente.categoria}</span>
+                        </div>
+                      )}
+
+                      {cliente.consultor && (
+                        <div className="info-item">
+                          <span className="info-label">Consultor:</span>
+                          <span>{cliente.consultor}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="card-actions">
                       <button
-                        className="pagination-button"
-                        onClick={() => handlePageChange(pagination.currentPage - 1)}
-                        disabled={pagination.currentPage === 1}
+                        className="action-button view"
+                        onClick={() => handleView(cliente)}
+                        title="Visualizar detalhes"
                       >
-                        <FaChevronLeft />
-                        Anterior
+                        <FaEye />
+                        Visualizar
                       </button>
-
-                      <div className="pagination-info">
-                        <span className="page-numbers">
-                          Página {pagination.currentPage} de {pagination.totalPages}
-                        </span>
-                        <span className="items-info">
-                          ({pagination.itemsPerPage} itens por página)
-                        </span>
-                      </div>
-
                       <button
-                        className="pagination-button"
-                        onClick={() => handlePageChange(pagination.currentPage + 1)}
-                        disabled={pagination.currentPage === pagination.totalPages}
+                        className="action-button edit"
+                        onClick={() => handleEdit(cliente)}
+                        title="Editar cliente"
                       >
-                        Próxima
-                        <FaChevronRight />
+                        <FaEdit />
+                        Editar
                       </button>
                     </div>
                   </div>
-                )}
-              </>
-            ) : (
-              <div className="empty-state">
-                <FaUser className="empty-icon" />
-                <h3>Nenhum cliente encontrado</h3>
-                <p>Tente ajustar os filtros de busca ou verifique se há clientes cadastrados.</p>
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </div>
-    </Layout>
+
+              {pagination.totalPages > 1 && (
+                <div className="pagination-container">
+                  <div className="pagination">
+                    <button
+                      className="pagination-button"
+                      onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      disabled={pagination.currentPage === 1}
+                    >
+                      <FaChevronLeft />
+                      Anterior
+                    </button>
+
+                    <div className="pagination-info">
+                      <span className="page-numbers">
+                        Página {pagination.currentPage} de {pagination.totalPages}
+                      </span>
+                      <span className="items-info">
+                        ({pagination.itemsPerPage} itens por página)
+                      </span>
+                    </div>
+
+                    <button
+                      className="pagination-button"
+                      onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      disabled={pagination.currentPage === pagination.totalPages}
+                    >
+                      Próxima
+                      <FaChevronRight />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="empty-state">
+              <FaUser className="empty-icon" />
+              <h3>Nenhum cliente encontrado</h3>
+              <p>Tente ajustar os filtros de busca ou verifique se há clientes cadastrados.</p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 };
-
