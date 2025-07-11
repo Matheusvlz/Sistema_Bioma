@@ -13,6 +13,7 @@
     "windows": [
       {
         "fullscreen": false,
+        "maximized": true,
         "height": 600,
         "resizable": true,
         "title": "Sistema Bioma",

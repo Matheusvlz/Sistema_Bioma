@@ -67,3 +67,11 @@
 .modal-error .modal-button:hover {
   background: #dc2626;
 }
+
+.modal-warning .modal-button {
+  background: #facc15;
+}
+
+.modal-warning .modal-button:hover {
+  background: #eab308;
+}

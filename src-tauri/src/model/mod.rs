@@ -8,3 +8,4 @@ pub mod financeiro;
 pub mod x9;
 pub mod kanban_card;
 pub mod notification_task;
+pub mod usuarios_todos;

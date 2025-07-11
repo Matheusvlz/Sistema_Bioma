@@ -3,7 +3,7 @@ import { useRouter } from '../routes/Router';
 import './css/Layout.css'; // Ensure your CSS is imported
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-
+import { WindowManager } from '../hooks/WindowManager';
 // --- (Existing Interfaces - No Changes Here) ---
 interface WebSocketMessagePayload {
   type: string;
@@ -498,7 +498,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
 
           <div className="header-actions-left">
-            <button className="header-icon-button" onClick={() => console.log('Abrir chat')}>
+            <button className="header-icon-button" onClick={() => WindowManager.openChat()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
@@ -708,23 +708,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </div>
 
       {/* --- Pop-up de Notificação --- */}
-    {showPopup && popupMessage && (
-  <div className="notification-popup">
-    <div className="notification-content">
-      {/* Adicione o wrapper ao redor do ícone aqui */}
-      <div className="notification-icon-wrapper">
-        {getNotificationIcon(popupMessage.icon || (popupMessage.type === "new_kanban_card" ? "ticket" : "default"))}
-      </div>
-      <div className="notification-text-content">
-        <span className="notification-title-popup">{popupMessage.title || (popupMessage.type === "new_kanban_card" && popupMessage.data ? `Nova Tarefa: ${popupMessage.data.title}` : "Nova Mensagem")}</span>
-        <span className="notification-description-popup">{popupMessage.description || (popupMessage.type === "new_kanban_card" && popupMessage.data ? popupMessage.data.description || 'Nenhuma descrição.' : "")}</span>
-      </div>
-    </div>
-    <button className="close-popup-button" onClick={closePopup}>
-      &times;
-    </button>
-  </div>
-)}
+      {showPopup && popupMessage && (
+        <div className="notification-popup">
+          <div className="notification-content">
+            {getNotificationIcon(popupMessage.icon || (popupMessage.type === "new_kanban_card" ? "ticket" : "default"))}
+            <div className="notification-text-content">
+              <span className="notification-title-popup">{popupMessage.title || (popupMessage.type === "new_kanban_card" && popupMessage.data ? `Nova Tarefa: ${popupMessage.data.title}` : "Nova Mensagem")}</span>
+              <span className="notification-description-popup">{popupMessage.description || (popupMessage.type === "new_kanban_card" && popupMessage.data ? popupMessage.data.description || 'Nenhuma descrição.' : "")}</span>
+            </div>
+          </div>
+          <button className="close-popup-button" onClick={closePopup}>
+            &times;
+          </button>
+        </div>
+      )}
       {/* --- Fim do Pop-up de Notificação --- */}
 
       {/* NEW: Confirmation Modal for Clear All Notifications */}

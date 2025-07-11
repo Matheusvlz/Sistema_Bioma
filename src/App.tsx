@@ -1,24 +1,26 @@
-﻿import { RouterProvider, useRouter } from "./routes/Router";
-import { authenticatedRoutes } from "./routes/route";
+﻿// App.tsx
+import { RouterProvider, useRouter } from "./routes/Router";
+import { authenticatedRoutes, AuthenticatedRoute } from "./routes/route"; // Import AuthenticatedRoute
 import { Layout } from "./components/Layout";
 import Login from "./view/Login";
 import "./App.css";
 
 const AppContent = () => {
   const { currentRoute, isAuthenticated } = useRouter();
-  
-  // Se não estiver autenticado, mostra o Login
+
   if (!isAuthenticated) {
     return <Login />;
   }
-  
-  // Se estiver autenticado, mostra o Layout com o conteúdo da rota atual
-  // O Layout agora é persistente e só o conteúdo interno muda
-  return (
-    <Layout>
-      {authenticatedRoutes[currentRoute]}
-    </Layout>
-  );
+
+  const routeConfig = authenticatedRoutes[currentRoute as AuthenticatedRoute]; // Cast currentRoute
+  const ComponentToRender = routeConfig ? routeConfig.component : null;
+  const shouldRenderLayout = routeConfig ? routeConfig.hasLayout : false;
+
+  if (shouldRenderLayout) {
+    return <Layout>{ComponentToRender}</Layout>;
+  } else {
+    return <>{ComponentToRender}</>; // Render component directly without Layout
+  }
 };
 
 function App() {
@@ -30,4 +32,3 @@ function App() {
 }
 
 export default App;
-
