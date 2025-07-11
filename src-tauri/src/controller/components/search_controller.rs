@@ -43,7 +43,7 @@ pub async fn buscar_clientes_filtros(
         limit,
     };
     let res = match client
-        .post("http://127.0.0.1:8082/clientes/buscar")
+        .post("http://192.168.15.26:8082/clientes/buscar")
         .json(&request_data)
         .send()
         .await
@@ -87,7 +87,7 @@ pub async fn buscar_clientes_dropdown(query: String) -> ClienteResponse {
     let client = Client::new();
     let request_data = ClienteDropdownRequest { query };
     let res = match client
-        .post("http://127.0.0.1:8082/clientes/dropdown")
+        .post("http://192.168.15.26:8082/clientes/dropdown")
         .json(&request_data)
         .send()
         .await

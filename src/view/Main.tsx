@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
 import { Calendar } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import { Layout } from '../components/Layout';
+
 import './styles/inicio_style.css';
 import { invoke } from "@tauri-apps/api/core";
 import { CustomSelect, OptionType } from '../components/CustomSelect';
@@ -9,15 +9,15 @@ import { CustomSelect, OptionType } from '../components/CustomSelect';
 // Import partial screens - their props will now be more specific
 import { ColetaScreen } from './partial_inicio/Case_Coleta';
 import { AtendimentoScreen } from './partial_inicio/Case_Atendimento';
-import { X9Screen } from './partial_inicio/Case_X9';
+
 import { MBScreen } from './partial_inicio/Case_MB';
 import { FQScreen } from './partial_inicio/Case_FQ';
-import { QualidadeScreen } from './partial_inicio/Case_Qualidade';
+import { X9Screen } from './partial_inicio/Case_X9';
 import { FinanceiroScreen } from './partial_inicio/Case_Financeiro';
 
 import {
   AlertTriangle,
-  CheckCircle,
+  CheckCircle, // Manter se for usado em ProjectItem ou outro lugar
   Clock,
   Calendar as CalendarIcon,
   Flag,
@@ -36,6 +36,18 @@ export interface Projeto {
   dataEntrega: string;
   progresso: number;
   atencoes: number;
+}
+
+export interface KanbanCardData { // <-- Mantenha esta interface, ela já está no seu código
+  id: number
+  urgencia: number;
+  card_type: string;
+  title: string;
+  description?: string;
+  user_id?: number;
+  user_photo_url?: string;
+  tags: string;
+  card_color?: string;
 }
 
 export interface MicrobiologiaPendenteItem {
@@ -61,6 +73,72 @@ export interface MBResponse {
   total_pendencias_prazo: number;
   pendencias_liberacao: MicrobiologiaLiberacaoPendenteItem[];
   total_pendencias_liberacao: number;
+}
+
+export interface FisicoQuimicoPendente {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  tempo?: string;
+  passou: boolean;
+  fantasia?: string;
+  razao?: string;
+}
+
+export interface FisicoQuimicoLiberacao {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  fantasia?: string;
+  razao?: string;
+}
+
+export interface UsuarioAtivoComTelas {
+  id: number;
+  nome: string;
+  privilegio?: string; // Optional if it can be null in the DB
+  empresa?: number; // Optional if it can be null in the DB
+  ativo: boolean;
+  nome_completo?: string;
+  cargo?: string;
+  numero_doc?: string;
+  profile_photo_path?: string;
+  dark_mode: boolean;
+  cor?: string;
+  telas_acesso: TelaPermitida[];
+}
+
+export interface X9Response {
+  usuarios_ativos_com_telas: UsuarioAtivoComTelas[];
+  total_usuarios_ativos: number;
+  kanban_cards: KanbanCardData[]; // <-- Adicione esta linha
+}
+export interface FQResponse {
+  pendencias_prazo: FisicoQuimicoPendente[];
+  total_pendencias_prazo: number;
+  pendencias_liberacao: FisicoQuimicoLiberacao[];
+  total_pendencias_liberacao: number;
+}
+export interface UnpaidBoletoNF {
+  id_boleto: number;
+  nome_cliente?: string;
+  descricao_boleto?: string;
+  valor_boleto?: string; // Use string for BigDecimal to handle arbitrary precision
+  data_vencimento_boleto?: string; // Use string for NaiveDate (YYYY-MM-DD)
+
+  id_boleto_nf?: number;
+  nf_numero?: string;
+  data_emissao_nf?: string; // Use string for NaiveDate
+  data_vencimento_nf?: string; // Use string for NaiveDate
+  nf_pago?: boolean;
+  boleto_nf_caminho?: string;
+}
+
+export interface FinanceiroResponse {
+  boletos_vencidos: UnpaidBoletoNF[];
+  boletos_vencem_hoje: UnpaidBoletoNF[];
+  boletos_vencem_este_mes: UnpaidBoletoNF[];
+  total_itens_nao_pagos: number;
 }
 
 export interface TelaPermitida {
@@ -93,7 +171,7 @@ export interface AtendimentoItem {
 }
 
 // Ensure AllResponseData can handle a message string
-export type AllResponseData = ColetaResponse | AtendimentoItem[] | MBResponse | string;
+export type AllResponseData = ColetaResponse | AtendimentoItem[] | MBResponse | FQResponse | X9Response | FinanceiroResponse | string;
 
 export interface RespostaTela<T> {
   telas: TelaPermitida[];
@@ -115,6 +193,8 @@ export interface StatCardProps {
 
 export interface ProjectItemProps {
   projeto: Projeto;
+  // Se você realmente precisa de estilos customizados para ProjectItem, adicione aqui:
+  // style?: React.CSSProperties;
 }
 
 interface CalendarTileContentProps {
@@ -401,15 +481,16 @@ ProximasEntregas.displayName = 'ProximasEntregas';
 
 
 export const Inicio: React.FC = () => {
-  const [dataSelecionada, setDataSelecionada] = useState<CalendarValue>(new Date());
+  // Removido setDataSelecionada pois não está sendo utilizado
+  const [dataSelecionada] = useState<CalendarValue>(new Date());
   // The main response data from the backend, which now holds the currently active screen's data
   const [currentScreenResponse, setCurrentScreenResponse] = useState<RespostaTela<AllResponseData> | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   // This state holds the name of the currently displayed screen (e.g., "COLETA", "ATENDIMENTO")
   const [activeScreenName, setActiveScreenName] = useState<string | null>(null);
-  // This state holds the selected option for the CustomSelect component
-  const [selectedTelaOption, setSelectedTelaOption] = useState<OptionType | null>(null);
+  // Removido selectedTelaOption pois não está sendo utilizado diretamente após a seleção
+  const [, setSelectedTelaOption] = useState<OptionType | null>(null);
 
   const projetosParaCalendarioEProximasEntregas: Projeto[] = useMemo(() => {
     // This array is for calendar/deliveries. It remains static here as per previous discussion,
@@ -456,7 +537,6 @@ export const Inicio: React.FC = () => {
           // Correctly map `first_screen_name` from backend (Rust) to `firstScreenName` (JS/TS)
           const adjustedResult = {
               ...result,
-              firstScreenName: result.first_screen_name // Use the `first_screen_name` property
           };
           setCurrentScreenResponse(adjustedResult); // Store the entire response
 
@@ -516,7 +596,7 @@ export const Inicio: React.FC = () => {
             ...prev,
             dados: result.dados, // Update the data payload
             // Use result.first_screen_name if it exists, otherwise fall back to selectedOption.label
-            firstScreenName: result.first_screen_name || selectedOption.label
+            firstScreenName:  selectedOption.label
           };
         }
         return result; // Fallback if prev is null (shouldn't happen if initial fetch worked)
@@ -559,36 +639,37 @@ export const Inicio: React.FC = () => {
         return <p style={{ color: 'red' }}>Erro ao carregar dados: {error}</p>;
     }
 
-    switch (activeScreenName) { // Use activeScreenName here
+   switch (activeScreenName) {
       case "COLETA":
-        // Type check to ensure currentScreenData matches ColetaResponse
         if (typeof currentScreenData !== 'string' && !Array.isArray(currentScreenData) && currentScreenData !== undefined) {
           return <ColetaScreen coleta={currentScreenData as ColetaResponse} />;
         }
         return <p>Dados de Coleta indisponíveis ou no formato incorreto.</p>;
       case "ATENDIMENTO":
-        // Type check to ensure currentScreenData matches AtendimentoItem[]
         if (Array.isArray(currentScreenData)) {
           return <AtendimentoScreen atendimentos={currentScreenData as AtendimentoItem[]} />;
         }
         return <p>Dados de Atendimento indisponíveis ou no formato incorreto.</p>;
-      case "X9":
-        // Placeholder for X9. Replace with actual component and data handling.
-        return <X9Screen /* data={currentScreenData as X9Type} */ />;
       case "MB":
         if (typeof currentScreenData === 'object' && currentScreenData && 'total_pendencias_prazo' in currentScreenData) {
           return <MBScreen mb={currentScreenData as MBResponse} />;
         }
         return <p>Dados de MB indisponíveis ou no formato incorreto.</p>;
       case "FQ":
-        // Placeholder for FQ. Replace with actual component and data handling.
-        return <FQScreen /* data={currentScreenData as FQType} */ />;
-      case "QUALIDADE":
-        // Placeholder for Qualidade. Replace with actual component and data handling.
-        return <QualidadeScreen /* data={currentScreenData as QualidadeType} */ />;
+        if (typeof currentScreenData === 'object' && currentScreenData && 'total_pendencias_prazo' in currentScreenData) {
+          return <FQScreen fq={currentScreenData as FQResponse} />;
+        }
+        return <p>Dados de Físico-Químico indisponíveis ou no formato incorreto.</p>; // Corrected message
       case "FINANCEIRO":
-        // Placeholder for Financeiro. Replace with actual component and data handling.
-        return <FinanceiroScreen /* data={currentScreenData as FinanceiroType} */ />;
+          if (typeof currentScreenData === 'object' && currentScreenData && 'boletos_vencidos' in currentScreenData && 'total_itens_nao_pagos' in currentScreenData) {
+        return <FinanceiroScreen financeiro={currentScreenData as FinanceiroResponse} />;
+      }
+      return <p>Dados Financeiros indisponíveis ou no formato incorreto.</p>;
+      case "X9": // <-- ADD THIS NEW CASE
+        if (typeof currentScreenData === 'object' && currentScreenData && 'usuarios_ativos_com_telas' in currentScreenData && 'total_usuarios_ativos' in currentScreenData) {
+          return <X9Screen x9={currentScreenData as X9Response} />;
+        }
+        return <p>Dados de X9 indisponíveis ou no formato incorreto.</p>;
       default:
         // Default content if no specific screen is selected or recognized
         if (currentScreenData && typeof currentScreenData === 'string') {
@@ -603,7 +684,7 @@ export const Inicio: React.FC = () => {
   };
 
   return (
-    <Layout>
+ 
       <div style={containerStyle}>
         <div>
           <div style={{ marginBottom: '2rem' }}>
@@ -632,7 +713,6 @@ export const Inicio: React.FC = () => {
                 options={telasOptions}
                 onSelect={handleSelectTela}
                 placeholder="Selecione uma tela"
-                initialSelectedOption={selectedTelaOption}
               />
             ) : (
               <div>Nenhuma tela disponível.</div>
@@ -655,13 +735,13 @@ export const Inicio: React.FC = () => {
               locale="pt-BR"
               calendarType="gregory"
               tileContent={tileContent}
-              formatMonthYear={(locale, date) =>
+              formatMonthYear={(_locale, date) => // Corrigido: _locale
                 date.toLocaleDateString('pt-BR', {
                   month: 'long',
                   year: 'numeric',
                 })
               }
-              formatShortWeekday={(locale, date) =>
+              formatShortWeekday={(_locale, date) => // Corrigido: _locale
                 date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')
               }
               showNeighboringMonth={false}
@@ -679,6 +759,6 @@ export const Inicio: React.FC = () => {
           </div>
         </div>
       </div>
-    </Layout>
+
   );
 };

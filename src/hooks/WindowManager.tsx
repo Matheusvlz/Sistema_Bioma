@@ -130,5 +130,19 @@ export class WindowManager {
       allowMultiple: true
     });
   }
+
+   static async openChat(): Promise<WebviewWindow>
+    {
+    return this.openWindow({
+      label: 'chat',
+      title: 'Chat',
+      url: '/#/chat',
+      width: 1200,
+      height: 900,
+      allowMultiple: true
+    });
+  }
 }
+
+
 

@@ -131,7 +131,7 @@ async fn consulta_geral(consulta_tipo: String) -> GeralResponse {
     let request_data = GeralRequest { consulta_tipo };
 
     let res = match client
-        .post("http://127.0.0.1:8082/geral")
+        .post("http://192.168.15.26:8082/geral")
         .json(&request_data)
         .send()
         .await

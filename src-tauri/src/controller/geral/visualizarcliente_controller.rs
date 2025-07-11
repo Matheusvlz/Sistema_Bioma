@@ -37,7 +37,8 @@ pub async fn buscar_categorias() -> CategoriaResponse {
     let client = Client::new();
 
     let res = match client
-        .get("http://127.0.0.1:8082/clientes/categorias")
+        .post("http://192.168.15.26:8082/clientes/buscar")
+        .json(&request_data)
         .send()
         .await
     {
@@ -70,7 +71,8 @@ pub async fn buscar_consultores() -> ConsultorResponse {
     let client = Client::new();
 
     let res = match client
-        .get("http://127.0.0.1:8082/clientes/consultores")
+        .post("http://192.168.15.26:8082/clientes/dropdown")
+        .json(&request_data)
         .send()
         .await
     {

@@ -1,1 +1,11 @@
 pub mod usuario;  
+pub mod fisico_quimico;
+pub mod common;
+pub mod coleta;
+pub mod atendimento;
+pub mod microbiologia;
+pub mod financeiro;
+pub mod x9;
+pub mod kanban_card;
+pub mod notification_task;
+pub mod usuarios_todos;

@@ -675,7 +675,7 @@ export const Geral: React.FC = () => {
   const isAnyLoading = Object.values(loadingStates).some(loading => loading);
 
   return (
-    <Layout>
+    <> {/* Added React Fragment here */}
       <div className="geral-container">
         <div className="geral-header">
 
@@ -740,6 +740,6 @@ export const Geral: React.FC = () => {
         onNovoCadastro={handleNovoCadastro}
         onCadastroExistente={handleCadastroExistente}
       />
-    </Layout>
+    </> // Added React Fragment here
   );
 };

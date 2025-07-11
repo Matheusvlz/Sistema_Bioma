@@ -1,3 +1,4 @@
+// Router.tsx
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { core } from '@tauri-apps/api';
 import {
@@ -17,19 +18,17 @@ import {
   FaHandshake,
   FaWallet
 } from 'react-icons/fa';
+import { authenticatedRoutes, AuthenticatedRoute } from './route'; // Import authenticatedRoutes and AuthenticatedRoute
 
-type Route = 'login' | 'inicio' | 'reports' | 'settings' | 'laboratorio' | 'frota' | 'agenda' | 'qualidade' | 'financeiro' | 'geral' | 'administracao' |
-  'cadastrar-clientes' | 'visualizar-cliente' | 'cadastrar-categoria' | 'cadastro-usuario-portal' | 'cadastrar-setor-usuario' | 'cadastrar-consultor' | 'cadastrar-laboratorio-terceirizado' |
-  'estrutura-tipo' | 'estrutura-grupo' | 'estrutura-matriz' | 'estrutura-unidade' | 'estrutura-parametro' | 'estrutura-pg-coleta' | 'estrutura-pop' | 'estrutura-tecnica' | 'estrutura-identificacao' | 'estrutura-metodologia' | 'estrutura-legislacao' | 'estrutura-categoria' | 'estrutura-forma-contato' | 'estrutura-observacao' | 'estrutura-submatriz' |
-  'rel-parametro-pop' | 'rel-limite-quantificacao' | 'rel-legislacao-parametro' | 'rel-pacote-parametro' | 'rel-tecnica-etapa' |
-  'cadastrar-calculo' | 'visualizar-calculo';
+// The Route type should now align with the keys of authenticatedRoutes
+type Route = AuthenticatedRoute;
 
 interface RouterContextType {
-  currentRoute: Route;
-  navigate: (route: Route) => void;
+  currentRoute: AuthenticatedRoute;
+  navigate: (route: AuthenticatedRoute) => void;
   isAuthenticated: boolean;
   setAuthenticated: (auth: boolean) => void;
-  getRouteIcon: (route: Route) => React.ReactNode;
+  getRouteIcon: (route: AuthenticatedRoute) => React.ReactNode;
 }
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
@@ -47,12 +46,14 @@ interface RouterProviderProps {
 }
 
 export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
-  const [currentRoute, setCurrentRoute] = useState<Route>('login');
+  const [currentRoute, setCurrentRoute] = useState<AuthenticatedRoute>('inicio');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const iconComponentsMap: { [key in Route]: React.ElementType } = {
-    'login': FaSignInAlt,
+  // You can keep a separate map for icons or extract it from authenticatedRoutes if icons were part of it.
+  // For now, let's keep it as is, assuming your icon mapping doesn't change.
+  const iconComponentsMap: { [key in AuthenticatedRoute]: React.ElementType } = {
+    'login': FaSignInAlt, // Assuming 'login' is still conceptually a route for icon purposes
     'inicio': FaHome,
     'reports': FaChartBar,
     'settings': FaCog,
@@ -94,8 +95,8 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     'visualizar-calculo': FaWallet,
   };
 
-  const getRouteIcon = (route: Route): React.ReactNode => {
-    const IconComponent = iconComponentsMap[route] || FaHome; // Fallback to FaHome if route not found
+  const getRouteIcon = (route: AuthenticatedRoute): React.ReactNode => {
+    const IconComponent = iconComponentsMap[route] || FaHome;
     return (
       <span className="icon-container">
         <IconComponent className="icon" />
@@ -107,16 +108,19 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     const initializeRoute = async () => {
       setIsLoading(true);
       const pathFromHash = window.location.hash.substring(2);
-      const isValidHashRoute = (Object.keys(iconComponentsMap) as Route[]).includes(pathFromHash as Route);
+      // Check if the route exists in authenticatedRoutes and has a component
+      const isValidHashRoute = authenticatedRoutes.hasOwnProperty(pathFromHash);
 
       if (isValidHashRoute) {
-        setCurrentRoute(pathFromHash as Route);
+        setCurrentRoute(pathFromHash as AuthenticatedRoute);
         setIsAuthenticated(true);
         setIsLoading(false);
       } else {
         try {
           const isAuth = await core.invoke<boolean>('verificar_autenticacao');
           setIsAuthenticated(isAuth);
+          // If not authenticated, always go to 'login'.
+          // If authenticated but hash is invalid, default to 'inicio'.
           setCurrentRoute(isAuth ? 'inicio' : 'login');
         } catch (error) {
           console.error('Erro ao verificar autenticação:', error);
@@ -129,14 +133,17 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
 
     initializeRoute();
   }, []);
-  const navigate = (route: Route) => {
+
+  const navigate = (route: AuthenticatedRoute) => {
     setCurrentRoute(route);
     window.location.hash = `#/${route}`;
   };
 
   const setAuthenticated = (auth: boolean) => {
     setIsAuthenticated(auth);
-    navigate(auth ? 'inicio' : 'login');
+    if (auth) {
+      setCurrentRoute('inicio');
+    }
   };
 
   if (isLoading) {

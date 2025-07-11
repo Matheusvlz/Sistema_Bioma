@@ -156,7 +156,7 @@ pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
     let client = Client::new();
     println!("Dados recebidos em salvar_cliente_api: {:#?}", dados);
     let res = client
-        .post("http://127.0.0.1:8082/salvar_cliente")
+        .post("http://192.168.15.26:8082/salvar_cliente")
         .json(&dados)
         .send()
         .await;
@@ -191,7 +191,7 @@ pub async fn editar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
     let client = Client::new();
     println!("Dados recebidos em editar_cliente_api: {:#?}", dados);
     let res = client
-        .post("http://127.0.0.1:8082/editar_cliente")
+        .post("http://192.168.15.26:8082/editar_cliente")
         .json(&dados)
         .send()
         .await;
@@ -230,7 +230,7 @@ pub async fn get_cliente_data(client_id: u32) -> GeralResponse {
     });
 
     let res = match client
-        .post("http://127.0.0.1:8082/cadastrar-cliente")
+        .post("http://192.168.15.26:8082/cadastrar-cliente")
         .json(&request_data)
         .send()
         .await
@@ -284,7 +284,7 @@ async fn consulta_geral(consulta_tipo: String) -> GeralResponse {
     let request_data = GeralRequest { consulta_tipo };
 
     let res = match client
-        .post("http://127.0.0.1:8082/cadastrar-cliente")
+        .post("http://192.168.15.26:8082/cadastrar-cliente")
         .json(&request_data)
         .send()
         .await

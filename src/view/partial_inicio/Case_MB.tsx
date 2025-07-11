@@ -1,8 +1,6 @@
 import {
-  CheckCircle,
   Clock,
   Users,
-  Target,
   Lock, // Added Lock icon for MB
   Unlock, // Added Unlock icon for MB
 } from 'lucide-react';
@@ -176,7 +174,7 @@ export const MBScreen = memo<MBScreenProps>(({ mb }) => {
               <ProjectItem
                 key={`pendente-${item.id || index}`}
                 projeto={mapMBItemToProjeto(item)}
-                style={{ backgroundColor: '#ffe0e0', marginBottom: '0.75rem', padding: '1rem', borderRadius: '8px' }}
+                
               />
             ))}
 
@@ -192,7 +190,7 @@ export const MBScreen = memo<MBScreenProps>(({ mb }) => {
               <ProjectItem
                 key={`liberacao-${item.id || index}`}
                 projeto={mapMBItemToProjeto(item)}
-                style={{ backgroundColor: '#e0f2fe', marginBottom: '0.75rem', padding: '1rem', borderRadius: '8px' }}
+               
               />
             ))}
 
@@ -235,7 +233,7 @@ export const MBScreen = memo<MBScreenProps>(({ mb }) => {
               <ProjectItem
                 key={`modal-pendente-${item.id || index}`}
                 projeto={mapMBItemToProjeto(item)}
-                style={{ backgroundColor: '#ffe0e0', marginBottom: '0.75rem', padding: '1rem', borderRadius: '8px' }}
+               
               />
             ))}
 
@@ -251,7 +249,7 @@ export const MBScreen = memo<MBScreenProps>(({ mb }) => {
               <ProjectItem
                 key={`modal-liberacao-${item.id || index}`}
                 projeto={mapMBItemToProjeto(item)}
-                style={{ backgroundColor: '#e0f2fe', marginBottom: '0.75rem', padding: '1rem', borderRadius: '8px' }}
+              
               />
             ))}
           </div>

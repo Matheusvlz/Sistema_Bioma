@@ -14,13 +14,13 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 # HTTP client com suporte a JSON
-reqwest = { version = "0.12.20", features = ["json"] }
+reqwest = { version = "0.12.22", features = ["json"] }
 
 # Runtime assíncrono com macros (para async/await)
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1.46.0", features = ["rt-multi-thread", "macros"] }
 
 # Framework Tauri versão 2
-tauri = { version = "2.6.1", features = [] }
+tauri = { version = "2.6.2", features = [] }
 
 # Plugin opcional para abrir arquivos/URLs
 tauri-plugin-opener = "2"
@@ -40,5 +40,18 @@ dotenvy = "0.15.7"
 
 chrono = { version = "0.4.41", features = ["serde"] }
 
+bigdecimal = { version = "0.4.8", features = ["serde"] } 
 
+uuid = { version = "1.17.0", features = ["v4", "serde"] } # Adicione esta linha
 
+base64 = "0.22.1"
+
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "mysql", "chrono"] } # Use appropriate runtime and database features
+
+tokio-tungstenite = "0.27.0"
+
+futures-util = "0.3.31"
+
+url = "2.5.4"
+
+lazy_static = "1.4" 

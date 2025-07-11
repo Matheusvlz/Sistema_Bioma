@@ -14,6 +14,11 @@ pub struct Usuario {
     pub nome_completo: String,
     pub cargo: String,
     pub numero_doc: String,
+    pub profile_photo: Option<String>,
+    pub dark_mode: bool,
+    pub cor: Option<String>,
+    pub conectado_com_websocket: Option<bool>
+    
 }
 
 static USUARIO_LOGADO: OnceCell<RwLock<Usuario>> = OnceCell::new();
