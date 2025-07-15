@@ -1,6 +1,3 @@
-/* ChatContainer.css */
-
-/* Reset and base styles */
 * {
   box-sizing: border-box;
 }
@@ -9,15 +6,16 @@
 .chat-container {
   height: 100vh;
   background-color: #f9fafb;
-  display: flex;
+  display: flex; /* Ensures sidebar and chat-main are laid out side-by-side */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 320px;
+  width: 320px; /* Fixed width for the sidebar */
+  flex-shrink: 0; /* Prevents the sidebar from shrinking when chat-main content is too wide */
   transition: all 0.3s ease;
-  overflow: hidden;
+  overflow: hidden; /* Hides content when sidebar is closed */
   background-color: white;
   border-right: 1px solid #e5e7eb;
   display: flex;
@@ -26,12 +24,18 @@
 
 .sidebar.closed {
   width: 0;
+  /*
+  The transformX(-100%) in @media (max-width: 480px) is good for mobile,
+  but for desktop, setting width to 0 and overflow: hidden is sufficient
+  for a clean collapse without affecting layout of chat-main.
+  */
 }
 
 /* Sidebar header */
 .sidebar-header {
   padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0; /* Prevents header from shrinking */
 }
 
 .sidebar-header-top {
@@ -92,14 +96,16 @@
 }
 
 .search-input:focus {
-  ring: 2px solid #4ade80;
-  border-color: transparent;
+  /* ring: 2px solid #4ade80;  This is likely a TailwindCSS utility, won't work in plain CSS unless defined */
+  border-color: #4ade80; /* Standard CSS equivalent for focus */
+  box-shadow: 0 0 0 2px #4ade80; /* Added for a ring-like effect */
 }
 
 /* Conversations list */
 .conversations-list {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1; /* Allows the list to take up remaining vertical space in sidebar */
+  overflow-y: auto; /* Enables vertical scrolling for conversation list */
+  -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS devices */
 }
 
 .conversation-item {
@@ -126,6 +132,7 @@
 
 .avatar-container {
   position: relative;
+  flex-shrink: 0; /* Prevents avatar from shrinking */
 }
 
 .avatar {
@@ -159,7 +166,7 @@
 
 .conversation-info {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Allows content inside to shrink without overflowing */
 }
 
 .conversation-header {
@@ -179,6 +186,7 @@
 .conversation-time {
   font-size: 0.75rem;
   color: #6b7280;
+  flex-shrink: 0; /* Prevents time from wrapping */
 }
 
 .conversation-footer {
@@ -194,11 +202,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   color: #6b7280;
-}
-
-.conversation-message.typing {
-  color: #16a34a;
-  font-style: italic;
+  flex: 1; /* Allows message to take available space */
+  min-width: 0; /* Ensures ellipsis works if message is very long */
 }
 
 .unread-badge {
@@ -209,11 +214,12 @@
   padding: 0.125rem 0.5rem;
   min-width: 1.25rem;
   text-align: center;
+  flex-shrink: 0; /* Prevents badge from shrinking */
 }
 
 /* Main chat area */
 .chat-main {
-  flex: 1;
+  flex: 1; /* Allows chat-main to fill remaining horizontal space */
   display: flex;
   flex-direction: column;
 }
@@ -227,6 +233,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0; /* Prevents chat header from shrinking */
 }
 
 .chat-header-left {
@@ -242,6 +249,7 @@
   border-radius: 50%;
   cursor: pointer;
   transition: background-color 0.2s ease;
+  display: none; /* Hidden by default, shown in media queries for responsiveness */
 }
 
 .menu-button:hover {
@@ -300,13 +308,16 @@
 
 /* Messages area */
 .messages-area {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1; /* Allows messages area to take up all available vertical space */
+  overflow-y: auto; /* Enables vertical scrolling for messages */
+  overflow-x: hidden; /* Prevents horizontal scrolling */
   padding: 1rem;
   background: linear-gradient(to bottom, #f9fafb, white);
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch; /* Improves scrolling on iOS devices */
 }
 
 .message-container {
@@ -322,16 +333,30 @@
 }
 
 .message {
-  max-width: 20rem;
+  max-width: 70%; /* Limits the maximum width of a message bubble */
   padding: 0.75rem 1rem;
   border-radius: 1rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transform: scale(1);
   transition: all 0.2s ease;
+  /* These are key to prevent overflow for long words/URLs: */
+  word-wrap: break-word; /* Older browsers */
+  overflow-wrap: break-word; /* Modern browsers */
+  word-break: break-word; /* Aggressive breaking for very long strings */
+  hyphens: auto; /* Allows hyphenation for better breaking */
+
+  /* If you add images to messages, add this: */
+  /*
+  & img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+  */
 }
 
 .message:hover {
-  transform: scale(1.05);
+  transform: scale(1.02); /* Reduced hover scale slightly to be less aggressive */
 }
 
 .message.user {
@@ -349,6 +374,9 @@
   font-size: 0.875rem;
   line-height: 1.6;
   margin: 0;
+  white-space: pre-wrap; /* Allows text to wrap naturally while preserving whitespace */
+  word-wrap: break-word; /* Fallback for older browsers */
+  overflow-wrap: break-word; /* Ensures long words break */
 }
 
 .message-footer {
@@ -357,6 +385,7 @@
   justify-content: flex-end;
   margin-top: 0.25rem;
   gap: 0.25rem;
+  flex-shrink: 0; /* Prevents footer content from being compressed */
 }
 
 .message-footer.user {
@@ -391,55 +420,12 @@
   color: #16a34a;
 }
 
-/* Typing indicator */
-.typing-indicator {
-  display: flex;
-  justify-content: flex-start;
-}
-
-.typing-bubble {
-  background-color: white;
-  border-radius: 1rem;
-  padding: 0.75rem 1rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-.typing-dots {
-  display: flex;
-  gap: 0.25rem;
-}
-
-.typing-dot {
-  width: 0.5rem;
-  height: 0.5rem;
-  background-color: #4ade80;
-  border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out;
-}
-
-.typing-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes bounce {
-  0%, 80%, 100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
 /* Input area */
 .input-area {
   background-color: white;
   border-top: 1px solid #e5e7eb;
   padding: 1rem;
+  flex-shrink: 0; /* Prevents input area from shrinking */
 }
 
 .input-container {
@@ -482,7 +468,8 @@
 }
 
 .message-input:focus {
-  border-color: transparent;
+  border-color: #4ade80; /* Standard CSS for focus */
+  box-shadow: 0 0 0 2px #4ade80; /* Added for a ring-like effect */
 }
 
 .emoji-button {
@@ -526,7 +513,6 @@
 
 .send-button:focus {
   outline: none;
-
 }
 
 .send-button:disabled {
@@ -540,45 +526,78 @@
   height: 1.25rem;
 }
 
+/* No conversation selected */
+.no-conversation-selected {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  font-size: 1rem;
+  background: linear-gradient(to bottom, #f9fafb, white);
+}
+
 /* Responsive design */
 @media (max-width: 1024px) {
   .menu-button {
-    display: block;
+    display: block; /* Shows the menu button for smaller screens */
   }
   
   .message {
-    max-width: 16rem;
+    max-width: 80%;
   }
 }
 
 @media (max-width: 768px) {
   .sidebar {
-    width: 280px;
+    width: 280px; /* Adjust sidebar width for tablets */
   }
   
   .message {
-    max-width: 14rem;
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 480px) {
+  .message {
+    max-width: 90%;
+  }
+  
+  .sidebar {
+    width: 100%; /* Sidebar takes full width on very small screens */
+    position: absolute; /* Positions sidebar absolutely to overlay content */
+    z-index: 1000;
+    height: 100vh;
+  }
+  
+  .sidebar.closed {
+    transform: translateX(-100%); /* Hides sidebar by moving it off-screen */
+    width: 100%; /* Ensures it slides completely off */
   }
 }
 
 /* Scrollbar styling */
+/* Grouping common scrollbar properties */
 .conversations-list::-webkit-scrollbar,
 .messages-area::-webkit-scrollbar {
-  width: 6px;
+  width: 8px; /* Consistent width for both scrollbars */
 }
 
 .conversations-list::-webkit-scrollbar-track,
 .messages-area::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(16, 185, 129, 0.05);
+  border-radius: 4px;
 }
 
 .conversations-list::-webkit-scrollbar-thumb,
 .messages-area::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
+  background: rgba(16, 185, 129, 0.3);
+  border-radius: 4px;
 }
 
 .conversations-list::-webkit-scrollbar-thumb:hover,
 .messages-area::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(16, 185, 129, 0.5);
 }
+
+/* Removed redundant scrollbar definitions */

@@ -33,7 +33,14 @@ use controller::settings_controller::update_user_settings;
 use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
 use socket_listener::send_ws_message; // Importar o novo comando
 use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed}; // This import is correct and already there.
-use controller::chat::chat_controller::get_users;
+use controller::chat::chat_controller::{
+    get_users, 
+    create_chat, 
+    get_user_chats, 
+    send_message, 
+    get_chat_messages, 
+    create_direct_chat
+};
 
 fn main() {
     dotenvy::dotenv().ok();
@@ -79,8 +86,15 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            get_users
+            // Funções do Chat
+            get_users,
+            create_chat,
+            get_user_chats,
+            send_message,
+            get_chat_messages,
+            create_direct_chat
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
 }
+

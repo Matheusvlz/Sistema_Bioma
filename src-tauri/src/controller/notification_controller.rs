@@ -147,7 +147,6 @@ pub async fn finalizar_notificacao() -> Result<(), String> {
     Ok(())
 }
 
-
 #[tauri::command]
 pub async fn mark_kanban_card_as_completed(card_id: i32) -> Result<String, String> {
     // Get the API URL from environment variables

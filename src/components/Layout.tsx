@@ -4,6 +4,9 @@ import './css/Layout.css'; // Ensure your CSS is imported
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { WindowManager } from '../hooks/WindowManager';
+import ChatNotification from './ChatNotification';
+import ChatNotificationModal from './ChatNotificationModal';
+
 // --- (Existing Interfaces - No Changes Here) ---
 interface WebSocketMessagePayload {
   type: string;
@@ -12,6 +15,16 @@ interface WebSocketMessagePayload {
   title?: string;
   isNew?: boolean;
   data?: SavedKanbanCard;
+}
+
+interface MessageNotificationPayload {
+    message_type: string;
+    sender_id: number;
+    chat_id: number;
+    sender_name: string;
+    sender_avatar: string | null;
+    content: string;
+    timestamp: string;
 }
 
 interface SavedNotification {
@@ -102,7 +115,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
-
+  
+  // New states for improved chat notifications
+  const [chatNotification, setChatNotification] = useState<MessageNotificationPayload | null>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [showChatPopup, setShowChatPopup] = useState(false);
+  
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState<WebSocketMessagePayload | null>(null);
   const popupTimeoutRef = useRef<number | null>(null);
@@ -124,6 +142,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       popupTimeoutRef.current = null;
     }
   }, []);
+
+  // New handlers for chat notifications
+  const closeChatNotificationModal = () => {
+    setShowChatModal(false);
+    setChatNotification(null);
+  };
+
+  const closeChatNotificationPopup = () => {
+    setShowChatPopup(false);
+    setChatNotification(null);
+  };
+
+  const handleOpenChat = (chatId: number) => {
+    console.log(`Opening chat with ID: ${chatId}`);
+    // Here you would implement the logic to open the chat window
+    // For example: WindowManager.openChatWithId(chatId);
+    WindowManager.openChat(); // Using existing method for now
+  };
 
   const fetchInicioData = useCallback(async () => {
     try {
@@ -182,52 +218,70 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       const unlistenPromise = listen<string>('nova_mensagem_ws', (event) => {
         console.log('[Tauri Event] Mensagem WS recebida do Tauri:', event.payload);
         try {
-          const parsedMessage: WebSocketMessagePayload = JSON.parse(event.payload);
+          const messagePayload = JSON.parse(event.payload);
+          const { message_type, ...data } = messagePayload;
 
-          if (parsedMessage.type === "new_kanban_card" && parsedMessage.data) {
-            const newKanbanCard: SavedKanbanCard = parsedMessage.data;
-            console.log("Recebido novo Kanban Card via WebSocket:", newKanbanCard);
-
-            setTasks(prevTasks => {
-              const newTask: Task = {
-                id: newKanbanCard.id,
-                name: newKanbanCard.title,
-                description: newKanbanCard.description,
-                urgency: newKanbanCard.urgencia,
-                cardType: newKanbanCard.cardType,
-                tags: newKanbanCard.tags,
-                cardColor: newKanbanCard.cardColor,
-                isCompleted: false,
-              };
-              return [newTask, ...prevTasks];
-            });
-
-            setPopupMessage({
-              type: "new_ticket",
-              title: `Nova Tarefa: ${newKanbanCard.title}`,
-              description: newKanbanCard.description || 'Nenhuma descrição.',
-              icon: 'ticket',
-              isNew: true
-            });
-            setShowPopup(true);
-
-          } else if (parsedMessage.type === "new_ticket") {
-            const newNotification: WebSocketMessagePayload = { ...parsedMessage, isNew: true };
-            setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-            setPopupMessage(newNotification);
-            setShowPopup(true);
+          // Enhanced chat message notification handling
+          if (message_type === 'chat_message_notification') {
+            const chatNotificationData = data as MessageNotificationPayload;
+            console.log('Recebida notificação de chat:', chatNotificationData);
+            
+            setChatNotification(chatNotificationData);
+            setShowChatPopup(true);
+            
+            // Auto-hide popup after 6 seconds
+            setTimeout(() => {
+              setShowChatPopup(false);
+            }, 6000);
           } else {
-            console.warn("Mensagem WebSocket com tipo desconhecido ou payload inválido:", parsedMessage);
-            setPopupMessage({ title: "Mensagem do Servidor", description: event.payload, icon: "info", type: "info", isNew: true });
-            setShowPopup(true);
+            // Handle other notification types (existing logic)
+            const parsedMessage: WebSocketMessagePayload = messagePayload;
+            
+            if (parsedMessage.type === "new_kanban_card" && parsedMessage.data) {
+              const newKanbanCard: SavedKanbanCard = parsedMessage.data;
+              console.log("Recebido novo Kanban Card via WebSocket:", newKanbanCard);
+
+              setTasks(prevTasks => {
+                const newTask: Task = {
+                  id: newKanbanCard.id,
+                  name: newKanbanCard.title,
+                  description: newKanbanCard.description,
+                  urgency: newKanbanCard.urgencia,
+                  cardType: newKanbanCard.cardType,
+                  tags: newKanbanCard.tags,
+                  cardColor: newKanbanCard.cardColor,
+                  isCompleted: false,
+                };
+                return [newTask, ...prevTasks];
+              });
+
+              setPopupMessage({
+                type: "new_ticket",
+                title: `Nova Tarefa: ${newKanbanCard.title}`,
+                description: newKanbanCard.description || 'Nenhuma descrição.',
+                icon: 'ticket',
+                isNew: true
+              });
+              setShowPopup(true);
+
+            } else if (parsedMessage.type === "new_ticket") {
+              const newNotification: WebSocketMessagePayload = { ...parsedMessage, isNew: true };
+              setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+              setPopupMessage(newNotification);
+              setShowPopup(true);
+            } else {
+              console.warn("Mensagem WebSocket com tipo desconhecido ou payload inválido:", parsedMessage);
+              setPopupMessage({ title: "Mensagem do Servidor", description: event.payload, icon: "info", type: "info", isNew: true });
+              setShowPopup(true);
+            }
+            
+            if (popupTimeoutRef.current) {
+              clearTimeout(popupTimeoutRef.current);
+            }
+            popupTimeoutRef.current = setTimeout(() => {
+              closePopup();
+            }, 5000) as unknown as number;
           }
-          
-          if (popupTimeoutRef.current) {
-            clearTimeout(popupTimeoutRef.current);
-          }
-          popupTimeoutRef.current = setTimeout(() => {
-            closePopup();
-          }, 5000) as unknown as number;
 
         } catch (e) {
           console.error("Erro ao parsear mensagem JSON do WebSocket:", e);
@@ -707,7 +761,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </main>
       </div>
 
-      {/* --- Pop-up de Notificação --- */}
+      {/* --- Enhanced Chat Notifications --- */}
+      {showChatPopup && chatNotification && (
+        <ChatNotification
+          notification={chatNotification}
+          onClose={closeChatNotificationPopup}
+          onOpenChat={handleOpenChat}
+        />
+      )}
+
+      {showChatModal && chatNotification && (
+        <ChatNotificationModal
+          notification={chatNotification}
+          onClose={closeChatNotificationModal}
+          onOpenChat={handleOpenChat}
+        />
+      )}
+
+      {/* --- Pop-up de Notificação (existing) --- */}
       {showPopup && popupMessage && (
         <div className="notification-popup">
           <div className="notification-content">
@@ -722,9 +793,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </button>
         </div>
       )}
-      {/* --- Fim do Pop-up de Notificação --- */}
 
-      {/* NEW: Confirmation Modal for Clear All Notifications */}
+      {/* --- Confirmation Modals (existing) --- */}
       {showClearNotificationsConfirmModal && (
         <div className="modal confirm-modal">
           <div className="modal-content">
@@ -743,9 +813,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
-      {/* --- Fim do Confirmation Modal (Clear All Notifications) --- */}
 
-      {/* --- NEW: Confirmation Modal for Finalize Task --- */}
       {showConfirmTaskModal && taskToFinalize && (
         <div className="modal confirm-modal">
           <div className="modal-content">
@@ -765,7 +833,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
-      {/* --- Fim do Confirmation Modal (Finalize Task) --- */}
     </div>
   );
 };
