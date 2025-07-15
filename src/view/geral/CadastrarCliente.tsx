@@ -7,6 +7,7 @@ import { useModal } from "../../hooks/useModal";
 import { Modal } from "../../components/Modal";
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
+import { UFSelect, ConsultorSelect } from './CustomSelect';
 
 interface Categoria {
   id: number;
@@ -784,15 +785,11 @@ export const CadastrarClientes: React.FC = () => {
 
         <div className="form-group">
           <label>UF</label>
-          <select
-            value={dadosGerais.uf}
-            onChange={(e) => setDadosGerais({ ...dadosGerais, uf: e.target.value })}
-          >
-            <option value="">Selecione...</option>
-            {ESTADOS_BRASIL.map(estado => (
-              <option key={estado} value={estado}>{estado}</option>
-            ))}
-          </select>
+          <UFSelect
+  id="uf-gerais"
+  value={dadosGerais.uf}
+  onChange={(value) => setDadosGerais({ ...dadosGerais, uf: value })}
+/>
         </div>
 
         <div className="form-group">
@@ -849,17 +846,12 @@ export const CadastrarClientes: React.FC = () => {
 
         <div className="form-group">
           <label>Consultor</label>
-          <select
-            value={dadosGerais.consultorId || ''}
-            onChange={(e) => setDadosGerais({ ...dadosGerais, consultorId: e.target.value ? Number(e.target.value) : null })}
-          >
-            <option value="">Selecione um consultor...</option>
-            {consultores.filter(c => c.ativo).map(consultor => (
-              <option key={consultor.id} value={consultor.id}>
-                {consultor.nome} - {consultor.documento}
-              </option>
-            ))}
-          </select>
+          <ConsultorSelect
+  id="consultor-gerais"
+  value={dadosGerais.consultorId}
+  onChange={(value) => setDadosGerais({ ...dadosGerais, consultorId: value })}
+  consultores={consultores}
+/>
         </div>
 
         <div className="form-group full-width">
@@ -1048,15 +1040,11 @@ export const CadastrarClientes: React.FC = () => {
 
         <div className="form-group">
           <label>UF</label>
-          <select
-            value={dadosCobranca.uf}
-            onChange={(e) => setDadosCobranca({ ...dadosCobranca, uf: e.target.value })}
-          >
-            <option value="">Selecione...</option>
-            {ESTADOS_BRASIL.map(estado => (
-              <option key={estado} value={estado}>{estado}</option>
-            ))}
-          </select>
+          <UFSelect
+  id="uf-cobranca"
+  value={dadosCobranca.uf}
+  onChange={(value) => setDadosCobranca({ ...dadosCobranca, uf: value })}
+/>
         </div>
 
         <div className="form-group">

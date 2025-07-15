@@ -4,29 +4,23 @@ mod controller;
 mod model;
 mod socket_listener;
 
-use controller::login_controller::fazer_login;
-use controller::geral_controller::{
-    buscar_clientes_sem_cadastro,
-    buscar_amostras_pre_cadastradas,
-    buscar_coletas,
-    buscar_solicitacoes_usuarios,
-    buscar_coletas_portal
+use controller::geral::cadastrarcliente_controller::{
+    cliente_categoria, consultor, editar_cliente, get_cliente_data, salvar_cliente, setor_portal,
 };
+use controller::geral_controller::{
+    buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas,
+    buscar_coletas_portal, buscar_solicitacoes_usuarios,
+};
+use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
-use controller::geral::cadastrarcliente_controller::{
-    cliente_categoria,
-    consultor,
-    setor_portal,
-    salvar_cliente,
-    editar_cliente,
-    get_cliente_data
+
+//use controller::geral::visualizarcliente_controller::{buscar_categorias, buscar_consultores};
+
+use controller::components::search_controller::{
+    buscar_clientes_dropdown, buscar_clientes_filtros,
 };
 
-use controller::geral::visualizarcliente_controller::{
-    buscar_clientes_filtros,
-    buscar_clientes_dropdown
-};
 
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::settings_controller::update_user_settings;
@@ -56,8 +50,9 @@ fn main() {
                     // O ID do usuário será enviado pelo frontend *após* o login.
                     socket_listener::iniciar_socket(
                         "ws://192.168.15.26:8082/ws/notificacoes",
-                        app_handle_clone // Passe o clone do AppHandle
-                    ).await;
+                        app_handle_clone, // Passe o clone do AppHandle
+                    )
+                    .await;
                 }
             });
 
@@ -78,6 +73,10 @@ fn main() {
             salvar_cliente,
             get_data_inicio,
             get_data_for_screen,
+            editar_cliente,
+            get_cliente_data,
+            buscar_clientes_filtros,  //SearchLayout
+            buscar_clientes_dropdown, //SearchLayout
             update_user_settings,
             salvar_ticket,
             send_ws_message,
@@ -97,4 +96,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
 }
-
