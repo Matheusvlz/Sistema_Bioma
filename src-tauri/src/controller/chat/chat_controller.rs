@@ -1,6 +1,8 @@
 use serde::{Serialize, Deserialize};
 use reqwest::Client;
 use crate::model::usuarios_todos::Usuario;
+use crate::model::usuario::obter_usuario;
+use bigdecimal::BigDecimal;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChatResponse {
@@ -27,12 +29,21 @@ pub struct ChatInfo {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MessageInfo {
-    pub id: i32,
-    pub user_id: i32,
+    pub id: u64,
+    pub user_id: u32,
     pub content: String,
-    pub timestamp: String, 
-     pub user_name: String, // Usando String para facilitar serialização
+    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub user_name: String,
+    pub visualizado_cont: i32,
+    pub visualizado_hora: Option<chrono::DateTime<chrono::Utc>>,
+    pub visualizado: bool,
+    pub arquivo: bool,
+    pub arquivo_nome: Option<String>,
+    pub arquivo_tipo: Option<String>,
+    pub arquivo_tamanho: Option<u64>, // Corrected type
+    pub arquivo_url: Option<String>,
 }
+
 
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,6 +51,11 @@ pub struct SendMessageRequest {
     pub chat_id: i32,
     pub user_id: i32,
     pub content: String,
+    pub arquivo: Option<bool>,
+    pub arquivo_nome: Option<String>,
+    pub arquivo_tipo: Option<String>,
+    pub arquivo_tamanho: Option<u64>,
+    pub file_content: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -172,7 +188,7 @@ pub async fn get_user_chats(user_id: i32) -> Result<GetChatsResponse, String> {
 
 // Enviar mensagem
 #[tauri::command]
-pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result<MessageInfo, String> {
+pub async fn send_message(chat_id: i32, user_id: i32, content: String, arquivo: Option<bool>, arquivo_nome: Option<String>, arquivo_tipo: Option<String>, arquivo_tamanho: Option<u64>, file_content: Option<String>) -> Result<MessageInfo, String> {
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
     let full_url = format!("{}/chat/message/send", url);
     println!("[LOG] Enviando mensagem para: {}", full_url);
@@ -181,6 +197,11 @@ pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result
         chat_id,
         user_id,
         content,
+        arquivo,
+        arquivo_nome,
+        arquivo_tipo,
+        arquivo_tamanho,
+        file_content,
     };
 
     let client = Client::new();
@@ -219,7 +240,19 @@ pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result
 pub async fn get_chat_messages(chat_id: i32) -> Result<GetMessagesResponse, String> {
     // [LOG] Início da função e validação da URL da API
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!("{}/chat/{}/messages", url, chat_id);
+
+    // Obter o ID do usuário logado
+    let user_id = match obter_usuario() {
+        Some(usuario) => usuario.id,
+        None => {
+            let error_msg = "Usuário não logado. Não é possível buscar mensagens do chat sem um ID de usuário.";
+            eprintln!("[ERRO] {}", error_msg);
+            return Err(error_msg.to_string());
+        }
+    };
+
+    // Alterado para enviar user_id como parte da rota, conforme a nova API
+    let full_url = format!("{}/chat/{}/messages/user/{}", url, chat_id, user_id);
     println!("[LOG] Buscando mensagens do chat para ID: {}. URL: {}", chat_id, full_url);
 
     let client = Client::new();
@@ -279,6 +312,8 @@ pub async fn get_chat_messages(chat_id: i32) -> Result<GetMessagesResponse, Stri
 
     Ok(parsed)
 }
+
+
 
 // Função auxiliar para criar chat entre dois usuários (mais comum)
 #[tauri::command]

@@ -360,8 +360,8 @@
 }
 
 .message.user {
-  background: linear-gradient(to right, #22c55e, #16a34a);
-  color: white;
+  background: linear-gradient(to right, #e5e7eb, #d1d5db);
+  color: #1f2937;
 }
 
 .message.other {
@@ -389,7 +389,7 @@
 }
 
 .message-footer.user {
-  color: rgba(255, 255, 255, 0.7);
+  color: #6b7280;
 }
 
 .message-footer.other {
@@ -600,4 +600,381 @@
   background: rgba(16, 185, 129, 0.5);
 }
 
+/* ... other styles ... */
+
+/* Message status indicators */
+.message-status.status-read {
+    color: #16a34a;
+}
+
+.message-status.status-delivered {
+    color: #22c55e;
+}
+
+/* New CSS for message checkmarks and read time */
+.message-footer.user .status-checkmarks {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem; /* Reduced gap for a tighter look */
+}
+
+.message-footer.user .read-time {
+    font-size: 0.65rem; /* Smaller font for the read time */
+    margin-left: 0.25rem;
+    color: #6b7280;
+}
+
+/* Hide the read time if there is no value */
+.message-footer.user .read-time:empty {
+    display: none;
+}
 /* Removed redundant scrollbar definitions */
+
+.messages-area {
+    position: relative;
+}
+
+.messages-area.dragging {
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 2px dashed #3b82f6;
+}
+
+.drag-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(59, 130, 246, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.drag-message {
+    text-align: center;
+    color: #3b82f6;
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.drag-message p {
+    margin-top: 10px;
+}
+
+/* File Preview Container */
+.file-preview-container {
+    border-top: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+    padding: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.file-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.close-preview-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 2px;
+    border-radius: 4px;
+}
+
+.close-preview-button:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+.file-preview-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.file-preview-item {
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.file-preview-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.file-preview-document {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #f3f4f6;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.file-preview-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.file-preview-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-preview-size {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+
+.remove-file-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+.remove-file-button:hover {
+    color: #ef4444;
+    background-color: #fef2f2;
+}
+
+/* Message File Styles */
+.message-image {
+    max-width: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.message-image-content {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.message-image-info {
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+    font-size: 12px;
+    color: #6b7280;
+    display: flex;
+    justify-content: space-between;
+}
+
+.message-file {
+    display: flex;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    max-width: 300px;
+    margin-bottom: 5px;
+}
+
+.message-file-icon {
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.message-file-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+
+.file-size {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.file-download-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+    border-radius: 4px;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.file-download-button:hover {
+    color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Attachment Button Styles */
+.attachment-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.attachment-button:hover {
+    color: #3b82f6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .file-preview-container {
+        background-color: #1f2937;
+        border-color: #374151;
+    }
+    
+    .file-preview-header {
+        color: #d1d5db;
+    }
+    
+    .file-preview-item {
+        background-color: #374151;
+        border-color: #4b5563;
+    }
+    
+    .file-preview-name {
+        color: #d1d5db;
+    }
+    
+    .file-preview-size {
+        color: #9ca3af;
+    }
+    
+    .file-preview-document {
+        background-color: #4b5563;
+    }
+    
+    .message-file {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .message-image-info {
+        background-color: rgba(255, 255, 255, 0.05);
+        color: #9ca3af;
+    }
+    
+    .file-name {
+        color: #d1d5db;
+    }
+    
+    .file-size {
+        color: #9ca3af;
+    }
+    
+    .drag-overlay {
+        background-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .messages-area.dragging {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .file-preview-item {
+        min-width: 100%;
+        max-width: 100%;
+    }
+    
+    .message-image {
+        max-width: 250px;
+    }
+    
+    .message-file {
+        max-width: 250px;
+    }
+    
+    .file-preview-container {
+        max-height: 150px;
+    }
+}
+
+/* Animation for file upload */
+.file-preview-item {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading animation for file upload */
+.file-uploading {
+    opacity: 0.6;
+    position: relative;
+}
+
+.file-uploading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid #3b82f6;
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}

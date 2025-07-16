@@ -1,15 +1,23 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Plus, Menu } from 'lucide-react';
+import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Plus, Menu, Check, CheckCheck, X, File, Image, Download } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import './style/ChatContainer.css';
 
-// --- Interfaces (sem alterações) ---
+// --- Interfaces ---
 interface Message {
     id: number;
     user_id: number;
     content: string;
     timestamp: string;
     user_name: string;
+    visualizado_hora: string | null;
+    visualizado: boolean;
+    visualizado_cont: number;
+    arquivo: boolean | null;
+    arquivo_nome?: string;
+    arquivo_tipo?: string;
+    arquivo_tamanho?: number;
+    arquivo_url?: string;
 }
 
 interface BackendUser {
@@ -69,6 +77,12 @@ interface GetMessagesResponse {
     messages: Message[];
 }
 
+interface FileUpload {
+    file: File;
+    preview?: string;
+    type: 'image' | 'document';
+}
+
 export const ChatContainer: React.FC = () => {
     // --- State Hooks ---
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -80,8 +94,12 @@ export const ChatContainer: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<number>(1);
     const [currentUserName, setCurrentUserName] = useState<string>('Você');
+    const [selectedFiles, setSelectedFiles] = useState<FileUpload[]>([]);
+    const [showFilePreview, setShowFilePreview] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -89,15 +107,15 @@ export const ChatContainer: React.FC = () => {
 
     // Função para buscar o usuário logado
     const fetchCurrentUser = async () => {
-      try {
-        const user: Usuario | null = await invoke('usuario_logado');
-        if (user) {
-          setCurrentUserId(user.id);
-          setCurrentUserName(user.nome);
+        try {
+            const user: Usuario | null = await invoke('usuario_logado');
+            if (user) {
+                setCurrentUserId(user.id);
+                setCurrentUserName(user.nome);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar usuário logado:', error);
         }
-      } catch (error) {
-        console.error('Erro ao buscar usuário logado:', error);
-      }
     };
 
     const fetchUsers = async () => {
@@ -135,9 +153,9 @@ export const ChatContainer: React.FC = () => {
                         ? `http://192.168.15.26:8082${chatAvatar}`
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(chatName)}&background=random`,
                     lastMessage: chat.last_message?.content || 'Nenhuma mensagem',
-                    lastMessageTime: chat.last_message ? new Date(chat.last_message.timestamp) : new Date(0), // Corrigido aqui
+                    lastMessageTime: chat.last_message ? new Date(chat.last_message.timestamp) : new Date(0),
                     unreadCount: 0,
-                    status: 'online', 
+                    status: 'online',
                     members: chat.members
                 };
             });
@@ -147,7 +165,7 @@ export const ChatContainer: React.FC = () => {
             console.error('Erro ao buscar chats:', error);
         }
     };
-    
+
     const fetchChatMessages = async (chatId: number) => {
         try {
             const response = await invoke<GetMessagesResponse>('get_chat_messages', { chatId });
@@ -157,7 +175,7 @@ export const ChatContainer: React.FC = () => {
             console.error('Erro ao buscar mensagens:', error);
         }
     };
-    
+
     const handleSelectUserAndStartChat = async (targetUser: BackendUser) => {
         const existingConversation = conversations.find(conv => 
             conv.members.length === 2 && conv.members.some(member => member.id === targetUser.id)
@@ -196,81 +214,218 @@ export const ChatContainer: React.FC = () => {
         }
         setSearchQuery('');
     };
-    
-const handleSendMessage = async () => {
-        if (newMessage.trim() && selectedConversation) {
-            const messageContent = newMessage.trim();
-            const now = new Date();
-            
-            // 1. Criar a mensagem temporária para exibir imediatamente
-            const tempMessage: Message = {
-                id: Date.now(),
-                user_id: currentUserId,
-                content: messageContent,
-                timestamp: now.toISOString(),
-                user_name: currentUserName // Usa o nome do usuário atual
+
+    // Funções para manipulação de arquivos
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            handleFiles(Array.from(files));
+        }
+    };
+
+    const handleFiles = (files: File[]) => {
+        const newFiles: FileUpload[] = [];
+
+        files.forEach(file => {
+            const isImage = file.type.startsWith('image/');
+            const fileUpload: FileUpload = {
+                file,
+                type: isImage ? 'image' : 'document'
             };
 
-            // 2. Adicionar a mensagem à lista de mensagens e limpar o input
-            setMessages(prev => [...prev, tempMessage]);
-            setNewMessage('');
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    fileUpload.preview = e.target?.result as string;
+                    setSelectedFiles(prev => [...prev, fileUpload]);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                newFiles.push(fileUpload);
+            }
+        });
+
+        if (newFiles.length > 0) {
+            setSelectedFiles(prev => [...prev, ...newFiles]);
+        }
+
+        setShowFilePreview(true);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    };
+
+    const removeFile = (index: number) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+        if (selectedFiles.length <= 1) {
+            setShowFilePreview(false);
+        }
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const getFileIcon = (fileName: string) => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'pdf':
+                return <File className="text-red-500" size={24} />;
+            case 'doc':
+            case 'docx':
+                return <File className="text-blue-500" size={24} />;
+            case 'xls':
+            case 'xlsx':
+                return <File className="text-green-500" size={24} />;
+            case 'txt':
+                return <File className="text-gray-500" size={24} />;
+            default:
+                return <File className="text-gray-500" size={24} />;
+        }
+    };
+
+    const handleSendMessage = async () => {
+        if ((newMessage.trim() || selectedFiles.length > 0) && selectedConversation) {
+            const now = new Date();
             
-            // 3. ATUALIZAR A LISTA DE CONVERSAS IMEDIATAMENTE (NOVO)
+            // Enviar mensagem de texto se houver
+            if (newMessage.trim()) {
+                const messageContent = newMessage.trim();
+                
+                const tempMessage: Message = {
+                    id: Date.now(),
+                    user_id: currentUserId,
+                    content: messageContent,
+                    timestamp: now.toISOString(),
+                    user_name: currentUserName,
+                    visualizado: false,
+                    visualizado_cont: 0,
+                    visualizado_hora: null,
+                    arquivo: false
+                };
+
+                setMessages(prev => [...prev, tempMessage]);
+                setNewMessage('');
+                
+                try {                    const response = await invoke<Message>(\'send_message\', {
+                        chatId: selectedConversation.chatId,
+                        userId: currentUserId,
+                        content: messageContent,
+                        arquivo: false,
+                        arquivoNome: null,
+                        arquivoTipo: null,
+                        arquivoTamanho: null,
+                        arquivoUrl: null,
+                        fileContent: null,
+                    });
+                    setMessages(prev => 
+                        prev.map(msg => 
+                            msg.id === tempMessage.id ? response : msg
+                        )
+                    );
+                } catch (error) {
+                    console.error('Erro ao enviar mensagem:', error);
+                }
+            }
+
+            // Enviar arquivos se houver
+            if (selectedFiles.length > 0) {
+                for (const fileUpload of selectedFiles) {
+                    const tempFileMessage: Message = {
+                        id: Date.now() + Math.random(),
+                        user_id: currentUserId,
+                        content: fileUpload.type === 'image' ? '📷 Imagem' : `📄 ${fileUpload.file.name}`,
+                        timestamp: now.toISOString(),
+                        user_name: currentUserName,
+                        visualizado: false,
+                        visualizado_cont: 0,
+                        visualizado_hora: null,
+                        arquivo: true,
+                        arquivo_nome: fileUpload.file.name,
+                        arquivo_tipo: fileUpload.file.type,
+                        arquivo_tamanho: fileUpload.file.size,
+                        arquivo_url: fileUpload.preview
+                    };
+
+                    setMessages(prev => [...prev, tempFileMessage]);
+
+                    try {
+                        const reader = new FileReader();
+                        reader.onload = async (e) => {
+                            const base64Content = e.target?.result as string;
+                            const response = await invoke<Message>('send_file_message', {
+                                chatId: selectedConversation.chatId,
+                                userId: currentUserId,
+                                fileName: fileUpload.file.name,
+                                fileType: fileUpload.file.type,
+                                fileSize: fileUpload.file.size,
+                                fileContent: base64Content.split(',')[1] // Remove o prefixo 'data:image/png;base64,'
+                            });
+                            setMessages(prev => 
+                                prev.map(msg => 
+                                    msg.id === tempFileMessage.id ? response : msg
+                                )
+                            );
+                        };
+                        reader.readAsDataURL(fileUpload.file);
+                    } catch (error) {
+                        console.error('Erro ao enviar arquivo:', error);
+                    }
+                }
+                
+                setSelectedFiles([]);
+                setShowFilePreview(false);
+            }
+
+            // Atualizar lista de conversas
             setConversations(prevConversations => {
                 const updatedConversations = prevConversations.map(conv => {
-                    // Encontra a conversa que acabou de receber a nova mensagem
                     if (conv.chatId === selectedConversation.chatId) {
                         return {
                             ...conv,
-                            lastMessage: messageContent,
+                            lastMessage: selectedFiles.length > 0 ? '📎 Arquivo' : newMessage.trim(),
                             lastMessageTime: now,
                         };
                     }
                     return conv;
                 });
                 
-                // Encontra a conversa atualizada
                 const updatedSelectedConversation = updatedConversations.find(
                     conv => conv.chatId === selectedConversation.chatId
                 );
 
-                // Filtra as outras conversas (para não duplicar)
                 const otherConversations = updatedConversations.filter(
                     conv => conv.chatId !== selectedConversation.chatId
                 );
 
-                // Retorna uma nova lista com a conversa atualizada no topo
                 if (updatedSelectedConversation) {
                     return [updatedSelectedConversation, ...otherConversations];
                 }
                 
                 return updatedConversations;
             });
-            
-            // 4. Enviar a mensagem para o backend
-            try {
-                const response = await invoke<Message>('send_message', {
-                    chatId: selectedConversation.chatId,
-                    userId: currentUserId,
-                    content: messageContent
-                });
-
-                console.log('Mensagem enviada para API:', response);
-                
-                // Opcional: Atualizar a mensagem temporária com o ID real da API
-                setMessages(prev => 
-                    prev.map(msg => 
-                        msg.id === tempMessage.id ? response : msg
-                    )
-                );
-                
-            } catch (error) {
-                console.error('Erro ao enviar mensagem:', error);
-            }
         }
     };
-    
-    // --- Effects ---
+
     useEffect(() => {
         fetchCurrentUser();
     }, []);
@@ -299,13 +454,13 @@ const handleSendMessage = async () => {
             const convA = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === a.id));
             const convB = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === b.id));
             
-            const timeA = convA?.lastMessageTime || new Date(0); 
-            const timeB = convB?.lastMessageTime || new Date(0); 
+            const timeA = convA?.lastMessageTime || new Date(0);
+            const timeB = convB?.lastMessageTime || new Date(0);
             
             return timeB.getTime() - timeA.getTime();
         });
 
-    // Funções de formatação de data/hora (sem alterações)
+    // Funções de formatação de data/hora
     const formatTime = (date: Date) => {
         const now = new Date();
         if(!date || isNaN(date.getTime())) return '';
@@ -318,6 +473,12 @@ const handleSendMessage = async () => {
     };
 
     const formatMessageTime = (timestamp: string) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const formatReadTime = (timestamp: string | null) => {
+        if (!timestamp) return null;
         const date = new Date(timestamp);
         return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
@@ -344,7 +505,7 @@ const handleSendMessage = async () => {
                     </div>
                 </div>
 
-                {/* Lista de Contatos (renderiza todos os usuários) */}
+                {/* Lista de Contatos */}
                 <div className="conversations-list">
                     {filteredAndSortedUsers.map((user) => {
                         const conversation = conversations.find(conv => 
@@ -436,7 +597,21 @@ const handleSendMessage = async () => {
                         </div>
 
                         {/* Messages Area */}
-                        <div className="messages-area">
+                        <div 
+                            className={`messages-area ${isDragging ? 'dragging' : ''}`}
+                            onDragOver={handleDragOver}
+                            onDragLeave={handleDragLeave}
+                            onDrop={handleDrop}
+                        >
+                            {isDragging && (
+                                <div className="drag-overlay">
+                                    <div className="drag-message">
+                                        <Paperclip size={48} />
+                                        <p>Solte os arquivos aqui para enviar</p>
+                                    </div>
+                                </div>
+                            )}
+                            
                             {messages.map((message) => (
                                 <div
                                     key={message.id}
@@ -444,13 +619,53 @@ const handleSendMessage = async () => {
                                 >
                                     <div className={`message ${message.user_id === currentUserId ? 'user' : 'other'}`}>
                                         {message.user_id !== currentUserId && (
-                                          <div className="message-sender">{message.user_name}</div>
+                                            <div className="message-sender">{message.user_name}</div>
                                         )}
-                                        <p className="message-text">{message.content}</p>
+                                                                              {message.arquivo && message.arquivo_tipo?.startsWith(\'image/\') && message.arquivo_url ? (
+                                            <div className=\'message-image\'>
+                                                <img 
+                                                    src={`http://192.168.15.26:8082${message.arquivo_url}`} 
+                                                    alt={message.arquivo_nome}
+                                                    className=\'message-image-content\'
+                                                />                                              <div className="message-image-info">
+                                                    <span>{message.arquivo_nome}</span>
+                                                    <span>{message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}</span>
+                                                </div>
+                                            </div>
+                                        ) : message.arquivo && message.arquivo_url ? (
+                                            <div className=\'message-file\'>
+                                                <div className=\'message-file-icon\'>
+                                                    {getFileIcon(message.arquivo_nome || \'\')}
+                                                </div>
+                                                <div className=\'message-file-info\'>
+                                                    <span className=\'file-name\'>{message.arquivo_nome}</span>
+                                                    <span className=\'file-size\'>
+                                                        {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : \'\'} 
+                                                    </span>
+                                                </div>
+                                                <a href={`http://192.168.15.26:8082${message.arquivo_url}`} target=\'_blank\' rel=\'noopener noreferrer\' className=\'file-download-button\'>
+                                                    <Download size={16} />
+                                                </a>
+                                            </div>
+                                        ) : (
+                                            <p className="message-text">{message.content}</p>
+                                        )}
+                                        
                                         <div className={`message-footer ${message.user_id === currentUserId ? 'user' : 'other'}`}>
                                             <span className="message-time">{formatMessageTime(message.timestamp)}</span>
                                             {message.user_id === currentUserId && (
-                                                <div className="message-status status-sent">✓</div>
+                                                <div className="status-checkmarks">
+                                                    {message.visualizado ? (
+                                                        <CheckCheck size={16} color="#3b82f6" />
+                                                    ) : (
+                                                        <Check size={16} color="#6b7280" />
+                                                    )}
+                                                </div>
+                                            )}
+                                            {message.user_id === currentUserId && message.visualizado_hora && (
+                                                <span className="read-time">
+                                                    Lido às {formatReadTime(message.visualizado_hora)}
+                                                </span>
                                             )}
                                         </div>
                                     </div>
@@ -459,10 +674,68 @@ const handleSendMessage = async () => {
                             <div ref={messagesEndRef} />
                         </div>
 
+                        {/* File Preview */}
+                        {showFilePreview && selectedFiles.length > 0 && (
+                            <div className="file-preview-container">
+                                <div className="file-preview-header">
+                                    <span>Arquivos selecionados ({selectedFiles.length})</span>
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedFiles([]);
+                                            setShowFilePreview(false);
+                                        }}
+                                        className="close-preview-button"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <div className="file-preview-list">
+                                    {selectedFiles.map((fileUpload, index) => (
+                                        <div key={index} className="file-preview-item">
+                                            {fileUpload.type === 'image' && fileUpload.preview ? (
+                                                <img 
+                                                    src={fileUpload.preview} 
+                                                    alt={fileUpload.file.name}
+                                                    className="file-preview-image"
+                                                />
+                                            ) : (
+                                                <div className="file-preview-document">
+                                                    {getFileIcon(fileUpload.file.name)}
+                                                </div>
+                                            )}
+                                            <div className="file-preview-info">
+                                                <span className="file-preview-name">{fileUpload.file.name}</span>
+                                                <span className="file-preview-size">{formatFileSize(fileUpload.file.size)}</span>
+                                            </div>
+                                            <button 
+                                                onClick={() => removeFile(index)}
+                                                className="remove-file-button"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Input Area */}
                         <div className="input-area">
                             <div className="input-container">
-                                <button className="attachment-button"><Paperclip /></button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt"
+                                    onChange={handleFileSelect}
+                                    style={{ display: 'none' }}
+                                />
+                                <button 
+                                    className="attachment-button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                >
+                                    <Paperclip />
+                                </button>
                                 <div className="input-wrapper">
                                     <input
                                         type="text"
@@ -481,7 +754,7 @@ const handleSendMessage = async () => {
                                 </div>
                                 <button
                                     onClick={handleSendMessage}
-                                    disabled={!newMessage.trim()}
+                                    disabled={!newMessage.trim() && selectedFiles.length === 0}
                                     className="send-button"
                                 >
                                     <Send />
@@ -490,7 +763,6 @@ const handleSendMessage = async () => {
                         </div>
                     </>
                 ) : (
-                    // Mensagem inicial
                     <div className="no-conversation-selected">
                         <p>Selecione um contato na lista para iniciar uma conversa.</p>
                     </div>
