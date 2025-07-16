@@ -326,7 +326,8 @@ export const ChatContainer: React.FC = () => {
                 setMessages(prev => [...prev, tempMessage]);
                 setNewMessage('');
                 
-                try {                    const response = await invoke<Message>(\'send_message\', {
+                try {
+                    const response = await invoke<Message>('send_message', {
                         chatId: selectedConversation.chatId,
                         userId: currentUserId,
                         content: messageContent,
@@ -337,6 +338,7 @@ export const ChatContainer: React.FC = () => {
                         arquivoUrl: null,
                         fileContent: null,
                     });
+
                     setMessages(prev => 
                         prev.map(msg => 
                             msg.id === tempMessage.id ? response : msg
@@ -368,7 +370,7 @@ export const ChatContainer: React.FC = () => {
 
                     setMessages(prev => [...prev, tempFileMessage]);
 
-                    try {
+                                       try {
                         const reader = new FileReader();
                         reader.onload = async (e) => {
                             const base64Content = e.target?.result as string;
@@ -426,6 +428,7 @@ export const ChatContainer: React.FC = () => {
         }
     };
 
+    // --- Effects ---
     useEffect(() => {
         fetchCurrentUser();
     }, []);
@@ -621,31 +624,33 @@ export const ChatContainer: React.FC = () => {
                                         {message.user_id !== currentUserId && (
                                             <div className="message-sender">{message.user_name}</div>
                                         )}
-                                                                              {message.arquivo && message.arquivo_tipo?.startsWith(\'image/\') && message.arquivo_url ? (
-                                            <div className=\'message-image\'>
+                                        
+                                        {message.arquivo && message.arquivo_tipo?.startsWith('image/') && message.arquivo_url ? (
+                                            <div className="message-image">
                                                 <img 
                                                     src={`http://192.168.15.26:8082${message.arquivo_url}`} 
                                                     alt={message.arquivo_nome}
-                                                    className=\'message-image-content\'
-                                                />                                              <div className="message-image-info">
+                                                    className="message-image-content"
+                                                />
+                                                <div className="message-image-info">
                                                     <span>{message.arquivo_nome}</span>
                                                     <span>{message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}</span>
                                                 </div>
                                             </div>
-                                        ) : message.arquivo && message.arquivo_url ? (
-                                            <div className=\'message-file\'>
-                                                <div className=\'message-file-icon\'>
-                                                    {getFileIcon(message.arquivo_nome || \'\')}
+                                        ) : message.arquivo ? (
+                                            <div className="message-file">
+                                                <div className="message-file-icon">
+                                                    {getFileIcon(message.arquivo_nome || '')}
                                                 </div>
-                                                <div className=\'message-file-info\'>
-                                                    <span className=\'file-name\'>{message.arquivo_nome}</span>
-                                                    <span className=\'file-size\'>
-                                                        {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : \'\'} 
+                                                <div className="message-file-info">
+                                                    <span className="file-name">{message.arquivo_nome}</span>
+                                                    <span className="file-size">
+                                                        {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}
                                                     </span>
                                                 </div>
-                                                <a href={`http://192.168.15.26:8082${message.arquivo_url}`} target=\'_blank\' rel=\'noopener noreferrer\' className=\'file-download-button\'>
+                                                    <a href={`http://192.168.15.26:8082${message.arquivo_url}`} target="_blank" rel="noopener noreferrer" className="file-download-button"/>
                                                     <Download size={16} />
-                                                </a>
+                                             
                                             </div>
                                         ) : (
                                             <p className="message-text">{message.content}</p>
