@@ -40,11 +40,9 @@ pub struct MessageInfo {
     pub arquivo: bool,
     pub arquivo_nome: Option<String>,
     pub arquivo_tipo: Option<String>,
-    pub arquivo_tamanho: Option<u64>, // Corrected type
+    pub arquivo_tamanho: Option<u64>,
     pub arquivo_url: Option<String>,
 }
-
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SendMessageRequest {
@@ -56,6 +54,16 @@ pub struct SendMessageRequest {
     pub arquivo_tipo: Option<String>,
     pub arquivo_tamanho: Option<u64>,
     pub file_content: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SendFileMessageRequest {
+    pub chat_id: i32,
+    pub user_id: i32,
+    pub file_name: String,
+    pub file_type: String,
+    pub file_size: u64,
+    pub file_content: String, // Base64 encoded content
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -186,9 +194,9 @@ pub async fn get_user_chats(user_id: i32) -> Result<GetChatsResponse, String> {
     Ok(parsed)
 }
 
-// Enviar mensagem
+// Enviar mensagem de texto
 #[tauri::command]
-pub async fn send_message(chat_id: i32, user_id: i32, content: String, arquivo: Option<bool>, arquivo_nome: Option<String>, arquivo_tipo: Option<String>, arquivo_tamanho: Option<u64>, file_content: Option<String>) -> Result<MessageInfo, String> {
+pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result<MessageInfo, String> {
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
     let full_url = format!("{}/chat/message/send", url);
     println!("[LOG] Enviando mensagem para: {}", full_url);
@@ -197,11 +205,11 @@ pub async fn send_message(chat_id: i32, user_id: i32, content: String, arquivo: 
         chat_id,
         user_id,
         content,
-        arquivo,
-        arquivo_nome,
-        arquivo_tipo,
-        arquivo_tamanho,
-        file_content,
+        arquivo: Some(false),
+        arquivo_nome: None,
+        arquivo_tipo: None,
+        arquivo_tamanho: None,
+        file_content: None,
     };
 
     let client = Client::new();
@@ -231,6 +239,89 @@ pub async fn send_message(chat_id: i32, user_id: i32, content: String, arquivo: 
         .map_err(|e| format!("Erro ao decodificar JSON: {}", e))?;
 
     println!("[LOG] Mensagem enviada com sucesso: {:?}", parsed);
+
+    Ok(parsed)
+}
+
+// Nova função específica para envio de arquivos
+#[tauri::command]
+pub async fn send_file_message(
+    chat_id: i32, 
+    user_id: i32, 
+    file_name: String, 
+    file_type: String, 
+    file_size: u64, 
+    file_content: String
+) -> Result<MessageInfo, String> {
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/chat/message/send", url);
+    println!("[LOG] Enviando arquivo para: {}", full_url);
+
+    // Validar tipo de arquivo
+    let allowed_types = vec![
+        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
+        "application/pdf", "application/msword", 
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain", "text/csv"
+    ];
+
+    if !allowed_types.contains(&file_type.as_str()) {
+        return Err(format!("Tipo de arquivo não permitido: {}", file_type));
+    }
+
+    // Validar tamanho do arquivo (máximo 50MB)
+    const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+    if file_size > MAX_FILE_SIZE {
+        return Err(format!("Arquivo muito grande. Tamanho máximo: 50MB. Tamanho atual: {} bytes", file_size));
+    }
+
+    // Gerar conteúdo da mensagem baseado no tipo de arquivo
+    let content = if file_type.starts_with("image/") {
+        format!("📷 {}", file_name)
+    } else {
+        format!("📄 {}", file_name)
+    };
+
+    let request_body = SendMessageRequest {
+        chat_id,
+        user_id,
+        content,
+        arquivo: Some(true),
+        arquivo_nome: Some(file_name.clone()),
+        arquivo_tipo: Some(file_type.clone()),
+        arquivo_tamanho: Some(file_size),
+        file_content: Some(file_content),
+    };
+
+    let client = Client::new();
+    let response = client
+        .post(&full_url)
+        .json(&request_body)
+        .send()
+        .await
+        .map_err(|e| format!("Erro ao enviar requisição de arquivo: {}", e))?;
+
+    println!("[LOG] Status da resposta do arquivo: {}", response.status());
+
+    if !response.status().is_success() {
+        let status_code = response.status();
+        let body_text = response.text().await.unwrap_or_else(|_| "N/A".to_string());
+        return Err(format!("Erro da API ao enviar arquivo: Status {}. Resposta: {}", status_code, body_text));
+    }
+
+    let body = response
+        .text()
+        .await
+        .map_err(|e| format!("Erro ao ler corpo da resposta do arquivo: {}", e))?;
+
+    println!("[LOG] Corpo da resposta do arquivo:\n{}", body);
+
+    let parsed: MessageInfo = serde_json::from_str(&body)
+        .map_err(|e| format!("Erro ao decodificar JSON do arquivo: {}", e))?;
+
+    println!("[LOG] Arquivo enviado com sucesso: {:?}", parsed);
 
     Ok(parsed)
 }
@@ -312,8 +403,6 @@ pub async fn get_chat_messages(chat_id: i32) -> Result<GetMessagesResponse, Stri
 
     Ok(parsed)
 }
-
-
 
 // Função auxiliar para criar chat entre dois usuários (mais comum)
 #[tauri::command]

@@ -55,3 +55,10 @@ futures-util = "0.3.31"
 url = "2.5.4"
 
 lazy_static = "1.4" 
+
+dirs = "6.0.0"
+notify-rust = "4.11.7" # Para notificações (opcional)
+
+# Se você estiver usando tauri-plugin-dialog e tauri-plugin-fs
+tauri-plugin-dialog = "2.3.0"
+tauri-plugin-fs = "2.4.0"

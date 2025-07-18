@@ -33,8 +33,10 @@ use controller::chat::chat_controller::{
     get_user_chats, 
     send_message, 
     get_chat_messages, 
-    create_direct_chat
+    create_direct_chat,
+    send_file_message
 };
+use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 
 fn main() {
     dotenvy::dotenv().ok();
@@ -91,7 +93,10 @@ fn main() {
             get_user_chats,
             send_message,
             get_chat_messages,
-            create_direct_chat
+            create_direct_chat,
+            send_file_message,
+            download_file_to_downloads
+    
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
