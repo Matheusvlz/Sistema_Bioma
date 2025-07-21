@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Paperclip, Check, CheckCheck, ZoomIn, Download, Search, File } from 'lucide-react';
+import { Paperclip, Check, CheckCheck, ZoomIn, Download, Search } from 'lucide-react';
 
 interface Message {
     id: number;
@@ -172,4 +172,3 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
         </div>
     );
 };
-

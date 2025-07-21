@@ -85,7 +85,7 @@ export const useChatWebSocket = ({
     }, []);
 
     const showChatNotification = useCallback((notification: ChatMessageNotification) => {
-        if (notification.sender_id != currentUserId) return;
+        if (notification.sender_id === currentUserId) return;
         
         const notificationElement = document.createElement('div');
         notificationElement.innerHTML = `
@@ -148,7 +148,7 @@ export const useChatWebSocket = ({
         }, 3000);
     }, []);
 
-    const updateConversationWithNewMessage = useCallback((notification: ChatMessageNotification) => {
+  const updateConversationWithNewMessage = (notification: ChatMessageNotification) => {
         setConversations(prevConversations => {
             return prevConversations.map(conv => {
                 if (conv.chatId === notification.chat_id) {
@@ -156,13 +156,13 @@ export const useChatWebSocket = ({
                         ...conv,
                         lastMessage: notification.content,
                         lastMessageTime: new Date(notification.timestamp),
-                        unreadCount: notification.sender_id !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount
+                        unreadCount: conv.unreadCount + 1
                     };
                 }
                 return conv;
             });
         });
-    }, [currentUserId, setConversations]);
+    };
 
     const updateConversationWithDirectMessage = useCallback((chatMessage: ChatMessageWebSocket) => {
         setConversations(prevConversations => {
@@ -179,56 +179,46 @@ export const useChatWebSocket = ({
             });
         });
     }, [currentUserId, setConversations]);
+ const handleWebSocketMessage = (message: any) => {
+        console.log('Processando mensagem WebSocket estruturada:', message);
 
-    const handleWebSocketMessage = useCallback((message: any) => {
-        if (processingWebSocketMessage.current) {
-            return;
+        // Verificar se é uma notificação de mensagem de chat
+        if (message.type === 'chat_message_notification') {
+            const notification = message as ChatMessageNotification;
+            
+            // Verificar se a notificação é para o chat atualmente selecionado
+            if (selectedConversation && notification.chat_id === selectedConversation.chatId) {
+                // Recarregar mensagens do chat atual
+                // fetchChatMessages(selectedConversation.chatId);
+            }
+            
+            // Atualizar a lista de conversas com a nova mensagem
+            updateConversationWithNewMessage(notification);
+            
+            // Mostrar notificação visual (opcional)
+            showChatNotification(notification);
         }
         
-        processingWebSocketMessage.current = true;
-        
-        try {
-            console.log('Processando mensagem WebSocket estruturada:', message);
-
-            if (message.type === 'chat_message_notification') {
-                const notification = message as ChatMessageNotification;
-                
-                if (selectedConversation && 
-                    notification.chat_id === selectedConversation.chatId && 
-                    notification.sender_id !== currentUserId) {
-                    fetchChatMessages(selectedConversation.chatId);
-                }
-                
-                updateConversationWithNewMessage(notification);
-                
-                if (notification.sender_id !== currentUserId) {
-                    showChatNotification(notification);
-                }
+        // Verificar se é uma mensagem de chat direta
+        else if (message.type === 'chat_message') {
+            const chatMessage = message as ChatMessageWebSocket;
+            
+            // Se for para o chat atualmente selecionado, adicionar a mensagem
+            if (selectedConversation && chatMessage.chat_id === selectedConversation.chatId) {
+                setMessages(prevMessages => {
+                    // Verificar se a mensagem já existe para evitar duplicatas
+                    const messageExists = prevMessages.some(msg => msg.id === chatMessage.message.id);
+                    if (!messageExists) {
+                        return [...prevMessages, chatMessage.message];
+                    }
+                    return prevMessages;
+                });
             }
-            else if (message.type === 'chat_message') {
-                const chatMessage = message as ChatMessageWebSocket;
-                
-                if (selectedConversation && 
-                    chatMessage.chat_id === selectedConversation.chatId &&
-                    chatMessage.message.user_id !== currentUserId) {
-                    
-                    setMessages(prevMessages => {
-                        const messageExists = prevMessages.some(msg => msg.id === chatMessage.message.id);
-                        if (!messageExists) {
-                            return [...prevMessages, chatMessage.message];
-                        }
-                        return prevMessages;
-                    });
-                }
-                
-                updateConversationWithDirectMessage(chatMessage);
-            }
-        } finally {
-            setTimeout(() => {
-                processingWebSocketMessage.current = false;
-            }, 100);
+            
+            // Atualizar lista de conversas
+            updateConversationWithDirectMessage(chatMessage);
         }
-    }, [selectedConversation, currentUserId, fetchChatMessages, updateConversationWithNewMessage, updateConversationWithDirectMessage, showChatNotification, setMessages]);
+    };
 
     const handleWebSocketTextMessage = useCallback((message: string) => {
         console.log('Processando mensagem WebSocket de texto:', message);
@@ -269,4 +259,3 @@ export const useChatWebSocket = ({
         initializeWebSocketConnection
     };
 };
-
