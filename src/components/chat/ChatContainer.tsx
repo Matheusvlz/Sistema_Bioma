@@ -191,10 +191,9 @@ export const ChatContainer: React.FC = () => {
         setConversations,
         setIsConnectedToWebSocket,
         fetchChatMessages,
-        onUserOnlineStatusUpdate: updateUserOnlineStatus,
-        onChatOnlineUsersUpdate: updateChatOnlineUsers,
-        onUserStatusInChatUpdate: updateUserStatusInChat,
-        onUserTypingUpdate: updateUserTypingStatus
+        updateUserTypingStatus,
+        updateUserOnlineStatus,
+        updateUserStatusInChat
     });
 
     // Função para buscar o usuário logado
@@ -638,4 +637,3 @@ export const ChatContainer: React.FC = () => {
         </div>
     );
 };
-

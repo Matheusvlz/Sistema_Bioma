@@ -195,4 +195,3 @@ export const useTypingStatus = ({ currentUserId, selectedConversation }: UseTypi
         stopTyping
     };
 };
-

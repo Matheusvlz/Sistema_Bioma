@@ -123,7 +123,7 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({
                 </div>
             </div>
 
-            <style jsx>{`
+            <style>{`
                 .online-users-overlay {
                     position: fixed;
                     top: 0;
@@ -294,4 +294,3 @@ export const OnlineUsersList: React.FC<OnlineUsersListProps> = ({
         </div>
     );
 };
-

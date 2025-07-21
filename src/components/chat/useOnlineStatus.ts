@@ -164,4 +164,3 @@ export const useOnlineStatus = ({ currentUserId, selectedConversation }: UseOnli
         getCurrentChatOnlineCount
     };
 };
-
