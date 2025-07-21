@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from '../routes/Router';
-import './css/Layout.css'; // Ensure your CSS is imported
+import './css/Layout.css';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { WindowManager } from '../hooks/WindowManager';
-// --- (Existing Interfaces - No Changes Here) ---
+
+// Import notification components
+import ChatNotification from './ChatNotification';
+import ChatNotificationModal from './ChatNotificationModal';
+import NormalNotification from './NormalNotification';
+import KanbanNotification from './KanbanNotification';
+
+// --- Interfaces ---
 interface WebSocketMessagePayload {
   type: string;
   description?: string;
@@ -12,6 +19,16 @@ interface WebSocketMessagePayload {
   title?: string;
   isNew?: boolean;
   data?: SavedKanbanCard;
+}
+
+interface MessageNotificationPayload {
+    type: string;
+    sender_id: number;
+    chat_id: number;
+    sender_name: string;
+    sender_avatar: string | null;
+    content: string;
+    timestamp: string;
 }
 
 interface SavedNotification {
@@ -79,7 +96,7 @@ interface Task {
   id: number;
   name: string;
   description?: string;
-  urgency: number; // urgency: 1=baixa, 2=media, 3=alta, 4=muito alta
+  urgency: number;
   cardType: string;
   tags: string;
   cardColor?: string;
@@ -92,38 +109,78 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { navigate, currentRoute, setAuthenticated, getRouteIcon } = useRouter();
+  
+  // User and UI state
   const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [profileImageUrl, setProfileImageUrl] = useState<string>('https://placehold.co/40x40/065f46/ffffff?text=U');
-  const [newNotifications, setNewNotifications] = useState<WebSocketMessagePayload[]>([]);
-  const [savedNotifications, setSavedNotifications] = useState<SavedNotification[]>([]);
-  const [kanbanCards, setKanbanCards] = useState<SavedKanbanCard[]>([]);
   const [showNotificationsModal, setShowNotificationsModal] = useState(false);
   const [showTasksModal, setShowTasksModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Data state
+  const [newNotifications, setNewNotifications] = useState<WebSocketMessagePayload[]>([]);
+  const [savedNotifications, setSavedNotifications] = useState<SavedNotification[]>([]);
+  const [kanbanCards, setKanbanCards] = useState<SavedKanbanCard[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  const [showPopup, setShowPopup] = useState(false);
-  const [popupMessage, setPopupMessage] = useState<WebSocketMessagePayload | null>(null);
-  const popupTimeoutRef = useRef<number | null>(null);
-  const [showClearNotificationsConfirmModal, setShowClearNotificationsConfirmModal] = useState(false);
+  // Enhanced notification states
+  const [chatNotification, setChatNotification] = useState<MessageNotificationPayload | null>(null);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [showChatPopup, setShowChatPopup] = useState(false);
+  
+  const [normalNotification, setNormalNotification] = useState<WebSocketMessagePayload | null>(null);
+  const [showNormalPopup, setShowNormalPopup] = useState(false);
+  
+  const [kanbanNotification, setKanbanNotification] = useState<WebSocketMessagePayload | null>(null);
+  const [showKanbanPopup, setShowKanbanPopup] = useState(false);
 
+  // Modal states
+  const [showClearNotificationsConfirmModal, setShowClearNotificationsConfirmModal] = useState(false);
   const [showConfirmTaskModal, setShowConfirmTaskModal] = useState(false);
   const [taskToFinalize, setTaskToFinalize] = useState<Task | null>(null);
 
+  // Refs and flags
   const tauriListenerRegistered = useRef(false);
   const userIdSentToWsRef = useRef(false);
   const initialDataLoaded = useRef(false);
 
-  
-  const closePopup = useCallback(() => {
-    setShowPopup(false);
-    setPopupMessage(null);
-    if (popupTimeoutRef.current) {
-      clearTimeout(popupTimeoutRef.current);
-      popupTimeoutRef.current = null;
-    }
-  }, []);
+  // Enhanced notification handlers
+  const closeChatNotificationModal = () => {
+    setShowChatModal(false);
+    setChatNotification(null);
+  };
+
+  const closeChatNotificationPopup = () => {
+    setShowChatPopup(false);
+    setChatNotification(null);
+  };
+
+  const closeNormalNotificationPopup = () => {
+    setShowNormalPopup(false);
+    setNormalNotification(null);
+  };
+
+  const closeKanbanNotificationPopup = () => {
+    setShowKanbanPopup(false);
+    setKanbanNotification(null);
+  };
+
+  const handleOpenChat = (chatId?: number) => {
+    console.log(`Opening chat${chatId ? ` with ID: ${chatId}` : ''}`);
+    WindowManager.openChat();
+  };
+
+  const handleViewTask = (taskId: number) => {
+    console.log(`Viewing task with ID: ${taskId}`);
+    // Implement task viewing logic here
+    setShowTasksModal(true);
+  };
+
+  const handleAcceptTask = (taskId: number) => {
+    console.log(`Accepting task with ID: ${taskId}`);
+    // Implement task acceptance logic here
+  };
 
   const fetchInicioData = useCallback(async () => {
     try {
@@ -140,7 +197,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         createdAt: notif.created_at,
       }));
       setSavedNotifications(formattedNotifications);
-      console.log("Notificações salvas carregadas:", formattedNotifications);
 
       const formattedKanbanCards: SavedKanbanCard[] = fetchedData.kanban_cards.map(card => ({
         id: card.id,
@@ -154,7 +210,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         cardColor: card.card_color,
       }));
       setKanbanCards(formattedKanbanCards);
-      console.log("Kanban cards carregados:", formattedKanbanCards);
 
       const initialTasks: Task[] = formattedKanbanCards.map(card => ({
         id: card.id,
@@ -167,90 +222,116 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         isCompleted: false,
       }));
       setTasks(initialTasks);
-      console.log("Tasks populadas a partir de Kanban cards:", initialTasks);
 
     } catch (error) {
-      console.error("Erro ao buscar dados iniciais (notificações e Kanban cards):", error);
+      console.error("Erro ao buscar dados iniciais:", error);
     }
   }, []);
 
-  useEffect(() => {
-    if (!tauriListenerRegistered.current) {
-      tauriListenerRegistered.current = true;
-      console.log('[Frontend] Registrando listener Tauri para "nova_mensagem_ws".');
+useEffect(() => {
+  if (!tauriListenerRegistered.current) {
+    tauriListenerRegistered.current = true;
+    console.log('[Frontend] Registrando listener Tauri para "nova_mensagem_ws".');
 
-      const unlistenPromise = listen<string>('nova_mensagem_ws', (event) => {
-        console.log('[Tauri Event] Mensagem WS recebida do Tauri:', event.payload);
-        try {
-          const parsedMessage: WebSocketMessagePayload = JSON.parse(event.payload);
+    const unlistenPromise = listen<string>('nova_mensagem_ws', (event) => {
+      console.log('[Tauri Event] Mensagem WS recebida:', event.payload);
+      try {
+        const messagePayload = JSON.parse(event.payload);
+        const { type, ...data } = messagePayload;
 
-          if (parsedMessage.type === "new_kanban_card" && parsedMessage.data) {
-            const newKanbanCard: SavedKanbanCard = parsedMessage.data;
-            console.log("Recebido novo Kanban Card via WebSocket:", newKanbanCard);
-
-            setTasks(prevTasks => {
-              const newTask: Task = {
-                id: newKanbanCard.id,
-                name: newKanbanCard.title,
-                description: newKanbanCard.description,
-                urgency: newKanbanCard.urgencia,
-                cardType: newKanbanCard.cardType,
-                tags: newKanbanCard.tags,
-                cardColor: newKanbanCard.cardColor,
-                isCompleted: false,
-              };
-              return [newTask, ...prevTasks];
-            });
-
-            setPopupMessage({
-              type: "new_ticket",
-              title: `Nova Tarefa: ${newKanbanCard.title}`,
-              description: newKanbanCard.description || 'Nenhuma descrição.',
-              icon: 'ticket',
-              isNew: true
-            });
-            setShowPopup(true);
-
-          } else if (parsedMessage.type === "new_ticket") {
-            const newNotification: WebSocketMessagePayload = { ...parsedMessage, isNew: true };
-            setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-            setPopupMessage(newNotification);
-            setShowPopup(true);
-          } else {
-            console.warn("Mensagem WebSocket com tipo desconhecido ou payload inválido:", parsedMessage);
-            setPopupMessage({ title: "Mensagem do Servidor", description: event.payload, icon: "info", type: "info", isNew: true });
-            setShowPopup(true);
-          }
+        // Enhanced notification routing
+        if (type === 'chat_message_notification') {
+          const chatNotificationData = data as MessageNotificationPayload;
+          console.log('Recebida notificação de chat:', chatNotificationData);
           
-          if (popupTimeoutRef.current) {
-            clearTimeout(popupTimeoutRef.current);
-          }
-          popupTimeoutRef.current = setTimeout(() => {
-            closePopup();
-          }, 5000) as unknown as number;
+          setChatNotification(chatNotificationData);
+          setShowChatPopup(true);
+          
+          // Auto-hide popup after 6 seconds
+          setTimeout(() => {
+            setShowChatPopup(false);
+          }, 6000);
 
-        } catch (e) {
-          console.error("Erro ao parsear mensagem JSON do WebSocket:", e);
-          setPopupMessage({ title: "", description: event.payload, icon: "alert", type: "error", isNew: true });
-          setShowPopup(true);
-          if (popupTimeoutRef.current) {
-            clearTimeout(popupTimeoutRef.current);
-          }
-          popupTimeoutRef.current = setTimeout(() => {
-            closePopup();
-          }, 5000) as unknown as number;
+        } else if (type === "new_kanban_card" && messagePayload.data) {
+          const newKanbanCard: SavedKanbanCard = messagePayload.data;
+          console.log("Recebido novo Kanban Card:", newKanbanCard);
+
+          // Update tasks state
+          setTasks(prevTasks => {
+            const newTask: Task = {
+              id: newKanbanCard.id,
+              name: newKanbanCard.title,
+              description: newKanbanCard.description,
+              urgency: newKanbanCard.urgencia,
+              cardType: newKanbanCard.cardType,
+              tags: newKanbanCard.tags,
+              cardColor: newKanbanCard.cardColor,
+              isCompleted: false,
+            };
+            return [newTask, ...prevTasks];
+          });
+
+          // Show Kanban notification
+          const kanbanNotificationData: WebSocketMessagePayload = {
+            type: "new_kanban_card",
+            title: `Nova Tarefa: ${newKanbanCard.title}`,
+            description: newKanbanCard.description || 'Nenhuma descrição.',
+            icon: 'ticket',
+            isNew: true,
+            data: newKanbanCard
+          };
+          
+          setKanbanNotification(kanbanNotificationData);
+          setShowKanbanPopup(true);
+
+        } else if (type === "new_ticket") {
+          // Handle normal notifications
+          const newNotification: WebSocketMessagePayload = { ...messagePayload, isNew: true };
+          setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+          
+          setNormalNotification(newNotification);
+          setShowNormalPopup(true);
+
+        } else {
+          // Handle unknown notification types as normal notifications
+          console.warn("Mensagem WebSocket com tipo desconhecido:", messagePayload);
+          
+          const unknownNotification: WebSocketMessagePayload = { 
+            title: messagePayload.title || "Nova Notificação", 
+            description: messagePayload.description || "Notificação recebida", 
+            icon: messagePayload.icon || "info", 
+            type: messagePayload.type || "info", 
+            isNew: true 
+          };
+          
+          setNormalNotification(unknownNotification);
+          setShowNormalPopup(true);
         }
-      });
 
-      return () => {
-        console.log('[Frontend] Desregistrando listener Tauri para "nova_mensagem_ws".');
-        (async () => {
-          (await unlistenPromise)();
-        })();
-        tauriListenerRegistered.current = false;
-      };
-    }
-  }, [closePopup]);
+      } catch (e) {
+        console.error("Erro ao parsear mensagem JSON do WebSocket:", e);
+        const errorNotification: WebSocketMessagePayload = { 
+          title: "Erro de Comunicação", 
+          description: "Erro ao processar mensagem do servidor", 
+          icon: "alert", 
+          type: "error", 
+          isNew: true 
+        };
+        
+        setNormalNotification(errorNotification);
+        setShowNormalPopup(true);
+      }
+    });
+
+    return () => {
+      console.log('[Frontend] Desregistrando listener Tauri.');
+      (async () => {
+        (await unlistenPromise)();
+      })();
+      tauriListenerRegistered.current = false;
+    };
+  }
+}, []);
 
   useEffect(() => {
     if (!initialDataLoaded.current) {
@@ -282,7 +363,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             userIdSentToWsRef.current = false;
           }
         } catch (error) {
-          console.error("Erro ao buscar informações do usuário ou dados iniciais no Layout:", error);
+          console.error("Erro ao buscar informações do usuário:", error);
           userIdSentToWsRef.current = false;
         }
       };
@@ -362,14 +443,13 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (taskToFinalize) {
       try {
         await invoke('mark_kanban_card_as_completed', { cardId: taskToFinalize.id });
-        console.log(`Task ${taskToFinalize.id} finalizada (removida) com sucesso no backend.`);
+        console.log(`Task ${taskToFinalize.id} finalizada com sucesso.`);
 
         setTasks(prevTasks =>
           prevTasks.filter(task => task.id !== taskToFinalize.id)
         );
-        console.log(`Task ${taskToFinalize.id} removida do frontend.`);
       } catch (e) {
-        console.error(`Erro ao finalizar (remover) task ${taskToFinalize.id} no backend:`, e);
+        console.error(`Erro ao finalizar task ${taskToFinalize.id}:`, e);
       } finally {
         setTaskToFinalize(null);
         setShowConfirmTaskModal(false);
@@ -425,32 +505,32 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       fill: "none",
       stroke: "currentColor",
       strokeWidth: "2",
-      strokeLinecap: "round", // This will now be inferred as type "round"
-      strokeLinejoin: "round", // This will now be inferred as type "round"
+      strokeLinecap: "round" as const,
+      strokeLinejoin: "round" as const,
       className: "urgency-icon"
-    } as const; 
+    };
 
- switch (urgency) {
-      case 1: // Baixa (Low) - Circle
+    switch (urgency) {
+      case 1:
         return (
           <svg {...iconBaseProps}>
             <circle cx="12" cy="12" r="8"></circle>
           </svg>
         );
-      case 2: // Média (Medium) - Square/Rectangle
+      case 2:
         return (
           <svg {...iconBaseProps}>
             <rect x="6" y="6" width="12" height="12" rx="2" ry="2"></rect>
           </svg>
         );
-      case 3: // Alta (High) - Triangle/Up Arrow
+      case 3:
         return (
           <svg {...iconBaseProps}>
             <path d="M12 2L3 18h18z"></path>
             <line x1="12" y1="6" x2="12" y2="10"></line>
           </svg>
         );
-      case 4: // Muito Alta (Very High) - Exclamation/Double Up Arrow
+      case 4:
         return (
           <svg {...iconBaseProps}>
             <line x1="12" y1="1" x2="12" y2="6"></line>
@@ -459,7 +539,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <polyline points="7 17 12 22 17 17"></polyline>
           </svg>
         );
-      default: // Default/No Urgency
+      default:
         return (
           <svg {...iconBaseProps}>
             <circle cx="12" cy="12" r="10"></circle>
@@ -469,7 +549,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         );
     }
   };
-
 
   const allNotifications = [
     ...newNotifications.filter(notif => notif.type === "new_ticket"),
@@ -570,10 +649,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                                 <div className="task-urgency-indicator">
                                   {getUrgencyIcon(task.urgency)}
                                 </div>
-                                {/* MODIFIED: Set display to flex column for stacking name and description */}
                                 <div style={{flexGrow: 1, display: 'flex', flexDirection: 'column'}}>
                                     <span className="task-name">{task.name}</span>
-                                    {/* REMOVED: The <br/> tag is no longer needed with flex-direction: column */}
                                     {task.description && <span className="task-description">{task.description}</span>}
                                 </div>
                               </div>
@@ -634,6 +711,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </header>
+      
       <div className="layout-body">
         <aside className="layout-sidebar">
           <nav className="sidebar-nav">
@@ -707,24 +785,40 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </main>
       </div>
 
-      {/* --- Pop-up de Notificação --- */}
-      {showPopup && popupMessage && (
-        <div className="notification-popup">
-          <div className="notification-content">
-            {getNotificationIcon(popupMessage.icon || (popupMessage.type === "new_kanban_card" ? "ticket" : "default"))}
-            <div className="notification-text-content">
-              <span className="notification-title-popup">{popupMessage.title || (popupMessage.type === "new_kanban_card" && popupMessage.data ? `Nova Tarefa: ${popupMessage.data.title}` : "Nova Mensagem")}</span>
-              <span className="notification-description-popup">{popupMessage.description || (popupMessage.type === "new_kanban_card" && popupMessage.data ? popupMessage.data.description || 'Nenhuma descrição.' : "")}</span>
-            </div>
-          </div>
-          <button className="close-popup-button" onClick={closePopup}>
-            &times;
-          </button>
-        </div>
+      {/* Enhanced Notification Components */}
+      {showChatPopup && chatNotification && (
+        <ChatNotification
+          notification={chatNotification}
+          onClose={closeChatNotificationPopup}
+          onOpenChat={handleOpenChat}
+        />
       )}
-      {/* --- Fim do Pop-up de Notificação --- */}
 
-      {/* NEW: Confirmation Modal for Clear All Notifications */}
+      {showChatModal && chatNotification && (
+        <ChatNotificationModal
+          notification={chatNotification}
+          onClose={closeChatNotificationModal}
+          onOpenChat={handleOpenChat}
+        />
+      )}
+
+      {showNormalPopup && normalNotification && (
+        <NormalNotification
+          notification={normalNotification}
+          onClose={closeNormalNotificationPopup}
+        />
+      )}
+
+      {showKanbanPopup && kanbanNotification && (
+        <KanbanNotification
+          notification={kanbanNotification}
+          onClose={closeKanbanNotificationPopup}
+          onViewTask={handleViewTask}
+          onAcceptTask={handleAcceptTask}
+        />
+      )}
+
+      {/* Confirmation Modals */}
       {showClearNotificationsConfirmModal && (
         <div className="modal confirm-modal">
           <div className="modal-content">
@@ -743,9 +837,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
-      {/* --- Fim do Confirmation Modal (Clear All Notifications) --- */}
 
-      {/* --- NEW: Confirmation Modal for Finalize Task --- */}
       {showConfirmTaskModal && taskToFinalize && (
         <div className="modal confirm-modal">
           <div className="modal-content">
@@ -765,7 +857,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       )}
-      {/* --- Fim do Confirmation Modal (Finalize Task) --- */}
     </div>
   );
 };
+

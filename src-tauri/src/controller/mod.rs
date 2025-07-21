@@ -8,3 +8,4 @@ pub mod login_controller;
 pub mod components;
 pub mod geral;
 pub mod chat;
+pub mod download_controller;

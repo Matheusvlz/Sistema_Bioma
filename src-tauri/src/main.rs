@@ -15,24 +15,31 @@ use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
 
-use controller::geral::visualizarcliente_controller::{buscar_categorias, buscar_consultores};
+//use controller::geral::visualizarcliente_controller::{buscar_categorias, buscar_consultores};
 
 use controller::components::search_controller::{
     buscar_clientes_dropdown, buscar_clientes_filtros,
 };
 
-use controller::chat::chat_controller::get_users;
-use controller::inicio_case::case_x9_controller::{
-    salvar_ticket, update_kanban, update_kanban_card_urgency_and_index,
-};
-use controller::inicio_controller::{get_data_for_screen, get_data_inicio};
-use controller::notification_controller::{
-    finalizar_notificacao, get_inicio_data_from_api, mark_kanban_card_as_completed,
-}; // This import is correct and already there.
+
+use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::settings_controller::update_user_settings;
+use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
 use socket_listener::send_ws_message; // Importar o novo comando
+use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed}; // This import is correct and already there.
+use controller::chat::chat_controller::{
+    get_users, 
+    create_chat, 
+    get_user_chats, 
+    send_message, 
+    get_chat_messages, 
+    create_direct_chat,
+    send_file_message
+};
+use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 
 use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
+
 fn main() {
     dotenvy::dotenv().ok();
 
@@ -74,8 +81,6 @@ fn main() {
             get_cliente_data,
             buscar_clientes_filtros,  //SearchLayout
             buscar_clientes_dropdown, //SearchLayout
-            buscar_categorias,
-            buscar_consultores,
             update_user_settings,
             salvar_ticket,
             send_ws_message,
@@ -84,11 +89,19 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            get_users,
             buscar_categorias_cadastro,
             criar_categoria,
             editar_categoria,
-            excluir_categoria
+            excluir_categoria,
+            get_users,
+            create_chat,
+            get_user_chats,
+            send_message,
+            get_chat_messages,
+            create_direct_chat,
+            send_file_message,
+            download_file_to_downloads
+    
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

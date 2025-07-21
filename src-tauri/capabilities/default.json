@@ -8,6 +8,18 @@
     "opener:default",
     "core:webview:allow-create-webview-window",
     "core:window:allow-set-focus",
-    "core:window:allow-close"
+    "core:window:allow-close",
+    "dialog:default",
+    "dialog:allow-save",
+    "fs:default",
+    "fs:allow-write-file",
+    "fs:allow-read-file",
+    "fs:allow-create",
+    "fs:allow-remove",
+    "fs:allow-rename",
+    "fs:allow-copy-file",
+    "fs:allow-mkdir",
+    "fs:allow-read-dir",
+    "fs:allow-exists"
   ]
 }

@@ -5,6 +5,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+
 }
 
 body {
@@ -1300,4 +1301,121 @@ body.dark-mode .task-completed-text {
   --urgency-medium-color: #22c55e; /* green-500 */
   --urgency-high-color: #f97316;   /* orange-500 */
   --urgency-very-high-color: #dc2626; /* red-600 */
+}
+/* Layout.css */
+
+/* Estilos básicos do modal de notificação */
+.chat-notification-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.chat-notification-sender {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #4b5563;
+}
+
+.chat-notification-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #3b82f6; /* Cor da borda para destacar */
+}
+
+.chat-notification-message {
+    text-align: center;
+    font-size: 1em;
+    color: #6b7280;
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+/* --- New Chat Notification Pop-up Styles --- */
+.chat-notification-popup {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 900; /* Abaixo do modal, mas acima da maioria dos elementos */
+    background-color: white;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    max-width: 320px;
+    transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+    animation: slideInFromRight 0.5s forwards;
+    cursor: pointer;
+}
+
+body.dark-mode .chat-notification-popup {
+    background-color: var(--dark-mode-bg-secondary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.chat-notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.chat-notification-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid var(--primary-color);
+}
+
+.chat-notification-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.chat-notification-name {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+}
+
+body.dark-mode .chat-notification-name {
+    color: var(--dark-mode-text-color);
+}
+
+.chat-notification-message {
+    font-size: 0.9rem;
+    color: #4b5563;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limita a mensagem a 2 linhas */
+    -webkit-box-orient: vertical;
+}
+
+body.dark-mode .chat-notification-message {
+    color: var(--dark-mode-text-color);
+}
+
+/* Animação para o pop-up */
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
