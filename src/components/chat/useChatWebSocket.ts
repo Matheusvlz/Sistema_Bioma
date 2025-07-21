@@ -39,6 +39,20 @@ interface Conversation {
     members: BackendUser[];
 }
 
+interface OnlineUser {
+    user_id: number;
+    user_name: string;
+    status: 'online' | 'offline' | 'away' | 'typing';
+    last_activity: string;
+}
+
+interface UserOnlineStatus {
+    user_id: number;
+    user_name: string;
+    is_online: boolean;
+    last_seen?: string;
+}
+
 interface ChatMessageNotification {
     type: string;
     sender_id: number;
@@ -55,13 +69,41 @@ interface ChatMessageWebSocket {
     message: Message;
 }
 
-interface UseChatWebSocketProps {
+interface UserStatusUpdate {
+    type: string;
+    chat_id: number;
+    user_id: number;
+    status: 'online' | 'offline' | 'away' | 'typing';
+    user_name: string;
+}
+
+interface UserTyping {
+    type: string;
+    chat_id: number;
+    user_id: number;
+    user_name: string;
+    is_typing: boolean;
+}
+
+interface ChatOnlineUsers {
+    type: string;
+    chat_id: number;
+    online_users: OnlineUser[];
+}
+
+interface UseChatWebSocketEnhancedProps {
     currentUserId: number;
     selectedConversation: Conversation | null;
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
     setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>;
     setIsConnectedToWebSocket: React.Dispatch<React.SetStateAction<boolean>>;
     fetchChatMessages: (chatId: number) => Promise<void>;
+    // Callbacks para status online
+    onUserOnlineStatusUpdate?: (status: UserOnlineStatus) => void;
+    onChatOnlineUsersUpdate?: (users: OnlineUser[]) => void;
+    onUserStatusInChatUpdate?: (chatId: number, userId: number, status: 'online' | 'offline' | 'away' | 'typing', userName: string) => void;
+    // Callbacks para digitação
+    onUserTypingUpdate?: (userId: number, userName: string, chatId: number, isTyping: boolean) => void;
 }
 
 export const useChatWebSocket = ({
@@ -70,8 +112,12 @@ export const useChatWebSocket = ({
     setMessages,
     setConversations,
     setIsConnectedToWebSocket,
-    fetchChatMessages
-}: UseChatWebSocketProps) => {
+    fetchChatMessages,
+    onUserOnlineStatusUpdate,
+    onChatOnlineUsersUpdate,
+    onUserStatusInChatUpdate,
+    onUserTypingUpdate
+}: UseChatWebSocketEnhancedProps) => {
     const processingWebSocketMessage = useRef(false);
 
     const initializeWebSocketConnection = useCallback(async (userId: number) => {
@@ -81,6 +127,69 @@ export const useChatWebSocket = ({
             console.log('Mensagem de identificação enviada via WebSocket:', identificationMessage);
         } catch (error) {
             console.error('Erro ao enviar mensagem de identificação WebSocket:', error);
+        }
+    }, []);
+
+    const joinChat = useCallback(async (chatId: number) => {
+        try {
+            const message = {
+                type: 'JoinChat',
+                chat_id: chatId
+            };
+            await invoke('send_ws_message', { message: JSON.stringify(message) });
+            console.log('Entrando no chat:', chatId);
+        } catch (error) {
+            console.error('Erro ao entrar no chat:', error);
+        }
+    }, []);
+
+    const leaveChat = useCallback(async (chatId: number) => {
+        try {
+            const message = {
+                type: 'LeaveChat',
+                chat_id: chatId
+            };
+            await invoke('send_ws_message', { message: JSON.stringify(message) });
+            console.log('Saindo do chat:', chatId);
+        } catch (error) {
+            console.error('Erro ao sair do chat:', error);
+        }
+    }, []);
+
+    const requestOnlineUsers = useCallback(async (chatId: number) => {
+        try {
+            const message = {
+                type: 'RequestOnlineUsers',
+                chat_id: chatId
+            };
+            await invoke('send_ws_message', { message: JSON.stringify(message) });
+            console.log('Solicitando usuários online do chat:', chatId);
+        } catch (error) {
+            console.error('Erro ao solicitar usuários online:', error);
+        }
+    }, []);
+
+    const updateUserStatus = useCallback(async (status: 'online' | 'offline' | 'away') => {
+        try {
+            const message = {
+                type: 'UpdateStatus',
+                status: status
+            };
+            await invoke('send_ws_message', { message: JSON.stringify(message) });
+            console.log('Status atualizado para:', status);
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+        }
+    }, []);
+
+    const sendHeartbeat = useCallback(async () => {
+        try {
+            const message = {
+                type: 'Heartbeat'
+            };
+            await invoke('send_ws_message', { message: JSON.stringify(message) });
+        } catch (error) {
+            console.error('Erro ao enviar heartbeat:', error);
         }
     }, []);
 
@@ -148,7 +257,7 @@ export const useChatWebSocket = ({
         }, 3000);
     }, []);
 
-  const updateConversationWithNewMessage = (notification: ChatMessageNotification) => {
+    const updateConversationWithNewMessage = useCallback((notification: ChatMessageNotification) => {
         setConversations(prevConversations => {
             return prevConversations.map(conv => {
                 if (conv.chatId === notification.chat_id) {
@@ -156,13 +265,13 @@ export const useChatWebSocket = ({
                         ...conv,
                         lastMessage: notification.content,
                         lastMessageTime: new Date(notification.timestamp),
-                        unreadCount: conv.unreadCount + 1
+                        unreadCount: notification.sender_id !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount
                     };
                 }
                 return conv;
             });
         });
-    };
+    }, [currentUserId, setConversations]);
 
     const updateConversationWithDirectMessage = useCallback((chatMessage: ChatMessageWebSocket) => {
         setConversations(prevConversations => {
@@ -179,46 +288,123 @@ export const useChatWebSocket = ({
             });
         });
     }, [currentUserId, setConversations]);
- const handleWebSocketMessage = (message: any) => {
-        console.log('Processando mensagem WebSocket estruturada:', message);
 
-        // Verificar se é uma notificação de mensagem de chat
-        if (message.type === 'chat_message_notification') {
-            const notification = message as ChatMessageNotification;
-            
-            // Verificar se a notificação é para o chat atualmente selecionado
-            if (selectedConversation && notification.chat_id === selectedConversation.chatId) {
-                // Recarregar mensagens do chat atual
-                // fetchChatMessages(selectedConversation.chatId);
-            }
-            
-            // Atualizar a lista de conversas com a nova mensagem
-            updateConversationWithNewMessage(notification);
-            
-            // Mostrar notificação visual (opcional)
-            showChatNotification(notification);
+    const handleWebSocketMessage = useCallback((message: any) => {
+        if (processingWebSocketMessage.current) {
+            return;
         }
         
-        // Verificar se é uma mensagem de chat direta
-        else if (message.type === 'chat_message') {
-            const chatMessage = message as ChatMessageWebSocket;
-            
-            // Se for para o chat atualmente selecionado, adicionar a mensagem
-            if (selectedConversation && chatMessage.chat_id === selectedConversation.chatId) {
-                setMessages(prevMessages => {
-                    // Verificar se a mensagem já existe para evitar duplicatas
-                    const messageExists = prevMessages.some(msg => msg.id === chatMessage.message.id);
-                    if (!messageExists) {
-                        return [...prevMessages, chatMessage.message];
+        processingWebSocketMessage.current = true;
+        
+        try {
+            console.log('Processando mensagem WebSocket estruturada:', message);
+
+            switch (message.type) {
+                case 'chat_message_notification':
+                    const notification = message as ChatMessageNotification;
+                    
+                    if (selectedConversation && 
+                        notification.chat_id === selectedConversation.chatId && 
+                        notification.sender_id !== currentUserId) {
+                        fetchChatMessages(selectedConversation.chatId);
                     }
-                    return prevMessages;
-                });
+                    
+                    updateConversationWithNewMessage(notification);
+                    
+                    if (notification.sender_id !== currentUserId) {
+                        showChatNotification(notification);
+                    }
+                    break;
+
+                case 'chat_message':
+                    const chatMessage = message as ChatMessageWebSocket;
+                    
+                    if (selectedConversation && 
+                        chatMessage.chat_id === selectedConversation.chatId &&
+                        chatMessage.message.user_id !== currentUserId) {
+                        
+                        setMessages(prevMessages => {
+                            const messageExists = prevMessages.some(msg => msg.id === chatMessage.message.id);
+                            if (!messageExists) {
+                                return [...prevMessages, chatMessage.message];
+                            }
+                            return prevMessages;
+                        });
+                    }
+                    
+                    updateConversationWithDirectMessage(chatMessage);
+                    break;
+
+                case 'UserOnlineStatus':
+                    const onlineStatus = message as UserOnlineStatus;
+                    console.log('Status online atualizado:', onlineStatus);
+                    if (onUserOnlineStatusUpdate) {
+                        onUserOnlineStatusUpdate(onlineStatus);
+                    }
+                    break;
+
+                case 'ChatOnlineUsers':
+                    const chatOnlineUsers = message as ChatOnlineUsers;
+                    console.log('Usuários online do chat:', chatOnlineUsers);
+                    if (onChatOnlineUsersUpdate) {
+                        onChatOnlineUsersUpdate(chatOnlineUsers.online_users);
+                    }
+                    break;
+
+                case 'UserStatusUpdate':
+                    const statusUpdate = message as UserStatusUpdate;
+                    console.log('Status do usuário no chat atualizado:', statusUpdate);
+                    if (onUserStatusInChatUpdate) {
+                        onUserStatusInChatUpdate(
+                            statusUpdate.chat_id,
+                            statusUpdate.user_id,
+                            statusUpdate.status,
+                            statusUpdate.user_name
+                        );
+                    }
+                    break;
+
+                case 'UserTyping':
+                    const typingUpdate = message as UserTyping;
+                    console.log('Status de digitação atualizado:', typingUpdate);
+                    if (onUserTypingUpdate) {
+                        onUserTypingUpdate(
+                            typingUpdate.user_id,
+                            typingUpdate.user_name,
+                            typingUpdate.chat_id,
+                            typingUpdate.is_typing
+                        );
+                    }
+                    break;
+
+                case 'Heartbeat':
+                    // Responder ao heartbeat do servidor
+                    sendHeartbeat();
+                    break;
+
+                default:
+                    console.log('Tipo de mensagem WebSocket não reconhecido:', message.type);
+                    break;
             }
-            
-            // Atualizar lista de conversas
-            updateConversationWithDirectMessage(chatMessage);
+        } finally {
+            setTimeout(() => {
+                processingWebSocketMessage.current = false;
+            }, 100);
         }
-    };
+    }, [
+        selectedConversation,
+        currentUserId,
+        fetchChatMessages,
+        updateConversationWithNewMessage,
+        updateConversationWithDirectMessage,
+        showChatNotification,
+        setMessages,
+        onUserOnlineStatusUpdate,
+        onChatOnlineUsersUpdate,
+        onUserStatusInChatUpdate,
+        onUserTypingUpdate,
+        sendHeartbeat
+    ]);
 
     const handleWebSocketTextMessage = useCallback((message: string) => {
         console.log('Processando mensagem WebSocket de texto:', message);
@@ -229,6 +415,25 @@ export const useChatWebSocket = ({
             showConnectionNotification('Conectado ao sistema de chat em tempo real!');
         }
     }, [setIsConnectedToWebSocket, showConnectionNotification]);
+
+    // Entrar automaticamente no chat quando selecionado
+    useEffect(() => {
+        if (selectedConversation) {
+            joinChat(selectedConversation.chatId);
+            requestOnlineUsers(selectedConversation.chatId);
+        }
+    }, [selectedConversation?.chatId, joinChat, requestOnlineUsers]);
+
+    // Configurar heartbeat
+    useEffect(() => {
+        const heartbeatInterval = setInterval(() => {
+            sendHeartbeat();
+        }, 30000); // 30 segundos
+
+        return () => {
+            clearInterval(heartbeatInterval);
+        };
+    }, [sendHeartbeat]);
 
     useEffect(() => {
         const setupWebSocketListener = async () => {
@@ -256,6 +461,12 @@ export const useChatWebSocket = ({
     }, [handleWebSocketMessage, handleWebSocketTextMessage]);
 
     return {
-        initializeWebSocketConnection
+        initializeWebSocketConnection,
+        joinChat,
+        leaveChat,
+        requestOnlineUsers,
+        updateUserStatus,
+        sendHeartbeat
     };
 };
+

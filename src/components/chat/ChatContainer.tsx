@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { invoke } from "@tauri-apps/api/core";
+import { Users } from 'lucide-react';
 import './style/ChatContainer.css';
 
 // Componentes modularizados
@@ -10,11 +11,16 @@ import { InputArea } from './InputArea';
 import { FilePreview } from './FilePreview';
 import { ImageViewer } from './ImageViewer';
 import { PdfViewer } from './PdfViewer';
+import { OnlineStatusIndicator } from './OnlineStatusIndicator';
+import { TypingIndicator } from './TypingIndicator';
+import { OnlineUsersList } from './OnlineUsersList';
 
 // Hooks customizados
-import { useChatWebSocket } from './useChatWebSocket';
+import { useChatWebSocket} from './useChatWebSocket';
 import { useFileManagement } from './useFileManagement';
 import { useMediaViewers } from './useMediaViewers';
+import { useOnlineStatus } from './useOnlineStatus';
+import { useTypingStatus } from './useTypingStatus';
 
 // Utilitários
 import { formatTime, formatMessageTime, formatReadTime, formatFileSize } from './formatters';
@@ -107,8 +113,32 @@ export const ChatContainer: React.FC = () => {
     const [currentUserName, setCurrentUserName] = useState<string>('Você');
     const [isUploading, setIsUploading] = useState(false);
     const [isConnectedToWebSocket, setIsConnectedToWebSocket] = useState(false);
+    const [showOnlineUsersList, setShowOnlineUsersList] = useState(false);
 
-    // Hooks customizados
+    // Hooks customizados para status online e digitação
+    const {
+        onlineUsers,
+        chatOnlineUsers,
+        updateUserOnlineStatus,
+        updateChatOnlineUsers,
+        updateUserStatusInChat,
+        isUserOnline,
+        getUserStatus,
+        getCurrentChatOnlineUsers,
+        getCurrentChatOnlineCount
+    } = useOnlineStatus({ currentUserId, selectedConversation });
+
+    const {
+        typingUsers,
+        isCurrentUserTyping,
+        updateUserTypingStatus,
+        handleTyping,
+        stopTypingImmediately,
+        getTypingText,
+        isSomeoneTypingInCurrentChat
+    } = useTypingStatus({ currentUserId, selectedConversation });
+
+    // Hooks customizados existentes
     const {
         selectedFiles,
         showFilePreview,
@@ -153,14 +183,18 @@ export const ChatContainer: React.FC = () => {
         }
     }, []);
 
-    // Hook WebSocket
+    // Hook WebSocket aprimorado
     const { initializeWebSocketConnection } = useChatWebSocket({
         currentUserId,
         selectedConversation,
         setMessages,
         setConversations,
         setIsConnectedToWebSocket,
-        fetchChatMessages
+        fetchChatMessages,
+        onUserOnlineStatusUpdate: updateUserOnlineStatus,
+        onChatOnlineUsersUpdate: updateChatOnlineUsers,
+        onUserStatusInChatUpdate: updateUserStatusInChat,
+        onUserTypingUpdate: updateUserTypingStatus
     });
 
     // Função para buscar o usuário logado
@@ -274,6 +308,9 @@ export const ChatContainer: React.FC = () => {
 
         if (!hasTextMessage && !hasFiles) return;
 
+        // Parar de digitar imediatamente ao enviar mensagem
+        stopTypingImmediately();
+
         setIsUploading(true);
         const now = new Date();
 
@@ -370,7 +407,17 @@ export const ChatContainer: React.FC = () => {
         } finally {
             setIsUploading(false);
         }
-    }, [selectedConversation, newMessage, selectedFiles, currentUserId, currentUserName, uploadFile, clearFiles]);
+    }, [selectedConversation, newMessage, selectedFiles, currentUserId, currentUserName, uploadFile, clearFiles, stopTypingImmediately]);
+
+    // Função para lidar com mudanças no input de mensagem
+    const handleMessageInputChange = useCallback((value: string) => {
+        setNewMessage(value);
+        
+        // Gerenciar status de digitação
+        if (value.trim().length > 0) {
+            handleTyping();
+        }
+    }, [handleTyping]);
 
     // --- Effects ---
     useEffect(() => {
@@ -413,6 +460,73 @@ export const ChatContainer: React.FC = () => {
         setSidebarOpen(prev => !prev);
     }, []);
 
+    // Componente do cabeçalho do chat aprimorado
+    const EnhancedChatHeader = useCallback(() => {
+        if (!selectedConversation) return null;
+
+        const otherUser = selectedConversation.members.find(member => member.id !== currentUserId);
+        const isOnline = otherUser ? isUserOnline(otherUser.id) : false;
+        const userStatus = otherUser ? getUserStatus(otherUser.id) : 'offline';
+        const onlineCount = getCurrentChatOnlineCount();
+
+        return (
+            <div className="chat-header">
+                <button 
+                    className="sidebar-toggle"
+                    onClick={handleToggleSidebar}
+                >
+                    ☰
+                </button>
+                
+                <div className="chat-header-info">
+                    <div className="chat-avatar-container">
+                        <img 
+                            src={selectedConversation.avatar} 
+                            alt={selectedConversation.name}
+                            className="chat-avatar"
+                        />
+                        {otherUser && (
+                            <div className="avatar-status-indicator">
+                                <OnlineStatusIndicator 
+                                    isOnline={isOnline}
+                                    status={userStatus}
+                                    size="small"
+                                />
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="chat-info">
+                        <h3 className="chat-name">{selectedConversation.name}</h3>
+                        <div className="chat-status">
+                            {otherUser && (
+                                <OnlineStatusIndicator 
+                                    isOnline={isOnline}
+                                    status={userStatus}
+                                    size="small"
+                                    showText={true}
+                                />
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="chat-header-actions">
+                    {onlineCount > 0 && (
+                        <button 
+                            className="online-users-button"
+                            onClick={() => setShowOnlineUsersList(true)}
+                            title={`${onlineCount} usuário(s) online`}
+                        >
+                            <Users size={20} />
+                            <span className="online-count">{onlineCount}</span>
+                        </button>
+                    )}
+                </div>
+            </div>
+        );
+    }, [selectedConversation, currentUserId, isUserOnline, getUserStatus, getCurrentChatOnlineCount, handleToggleSidebar]);
+
     return (
         <div className="chat-container">
             {/* Sidebar */}
@@ -425,17 +539,16 @@ export const ChatContainer: React.FC = () => {
                 selectedConversation={selectedConversation}
                 onSelectUser={handleSelectUserAndStartChat}
                 formatTime={formatTime}
+                isUserOnline={isUserOnline}
+                getUserStatus={getUserStatus}
             />
 
             {/* Main Chat Area */}
             <div className="chat-main">
                 {selectedConversation ? (
                     <>
-                        {/* Chat Header */}
-                        <ChatHeader
-                            selectedConversation={selectedConversation}
-                            onToggleSidebar={handleToggleSidebar}
-                        />
+                        {/* Chat Header Aprimorado */}
+                        <EnhancedChatHeader />
 
                         {/* Messages Area */}
                         <MessagesArea
@@ -454,6 +567,12 @@ export const ChatContainer: React.FC = () => {
                             getFileIcon={getFileIcon}
                         />
 
+                        {/* Indicador de Digitação */}
+                        <TypingIndicator 
+                            typingText={getTypingText()}
+                            isVisible={isSomeoneTypingInCurrentChat()}
+                        />
+
                         {/* File Preview */}
                         <FilePreview
                             showFilePreview={showFilePreview}
@@ -468,11 +587,12 @@ export const ChatContainer: React.FC = () => {
                         {/* Input Area */}
                         <InputArea
                             newMessage={newMessage}
-                            setNewMessage={setNewMessage}
+                            setNewMessage={handleMessageInputChange}
                             onSendMessage={handleSendMessage}
                             onFileSelect={handleFileSelect}
                             isUploading={isUploading}
                             selectedFilesCount={selectedFiles.length}
+                            isTyping={isCurrentUserTyping}
                         />
                     </>
                 ) : (
@@ -481,6 +601,14 @@ export const ChatContainer: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Lista de Usuários Online */}
+            <OnlineUsersList
+                users={getCurrentChatOnlineUsers()}
+                currentUserId={currentUserId}
+                isVisible={showOnlineUsersList}
+                onClose={() => setShowOnlineUsersList(false)}
+            />
 
             {/* Visualizador de Imagens */}
             <ImageViewer
@@ -505,6 +633,9 @@ export const ChatContainer: React.FC = () => {
                 onClose={closePdfViewer}
                 onDownload={downloadFile}
             />
+
+      
         </div>
     );
 };
+
