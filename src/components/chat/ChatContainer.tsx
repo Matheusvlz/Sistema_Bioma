@@ -30,7 +30,7 @@ interface Conversation {
 }
 
 export const ChatContainer: React.FC = () => { 
-  const [conversations] = useState<Conversation[]>([
+  /*const [conversations] = useState<Conversation[]>([
     {
       id: '1',
       name: 'Ana Silva',
@@ -77,7 +77,7 @@ export const ChatContainer: React.FC = () => {
       status: 'online',
       isTyping: true
     }
-  ]);
+  ]);*/
 
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -109,13 +109,13 @@ export const ChatContainer: React.FC = () => {
       status: 'delivered'
     }
   ]);
-
+const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation>(conversations[0]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-    const [conversations, setConversations] = useState<Conversation[]>([]);
+    
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -139,7 +139,7 @@ export const ChatContainer: React.FC = () => {
           // Usa a foto do perfil ou uma imagem padrão
           avatar: user.profile_photo_path || `https://i.pravatar.cc/150?u=${user.id}`,
           // Mapeia o status 'ativo' para 'online' ou 'offline'
-          status: user.ativo ? 'online' : 'offline',
+          status: (user.ativo ? 'online' : 'offline') as "online" | "offline" | "away",
           // Preenche os campos restantes com valores padrão, pois não vêm da API de usuários
           lastMessage: "Clique para iniciar a conversa",
           lastMessageTime: new Date(),

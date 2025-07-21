@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SearchLayout } from '../../components/SearchLayout';
 import { core } from "@tauri-apps/api";
-import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaEdit, FaEye, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
-import './css/VisualizarCliente.css';
+import { FaUser, FaPhone, FaEnvelope, FaMapMarkerAlt, FaEdit, FaChevronLeft, FaChevronRight, FaFileAlt } from 'react-icons/fa';
+import styles from './css/VisualizarCliente.module.css';
+import { WindowManager } from '../../hooks/WindowManager';
 
 interface Cliente {
   id: number;
@@ -284,11 +285,19 @@ export const VisualizarClientes: React.FC = () => {
     return phone;
   };
 
-  // Ações dos botões (placeholder)
-  const handleEdit = (cliente: Cliente) => {
-    console.log('Editar cliente:', cliente);
-    // TODO: Implementar edição
-  };
+  const handleEdit = useCallback(async (cliente: Cliente) => {
+    try {
+      const clienteData = {
+        id: cliente.id,
+        origem: 'cliente_precadastro'
+      };
+
+      await WindowManager.openCadastroClientes(clienteData);
+    } catch (error) {
+      console.error('Erro ao abrir janela de cadastro:', error);
+      localStorage.setItem('clientePreenchimento', JSON.stringify(cliente));
+    }
+  }, []);
 
   const handleView = (cliente: Cliente) => {
     console.log('Visualizar cliente:', cliente);
@@ -296,12 +305,12 @@ export const VisualizarClientes: React.FC = () => {
   };
 
   return (
-    <div className="visualizar-clientes-container">
-      <div className="page-header">
-        <h1 className="page-title">Visualizar Clientes</h1>
-        <div className="page-stats">
+    <div className={styles["visualizar-clientes-container"]}>
+      <div className={styles["page-header"]}>
+        <h1 className={styles["page-title"]}>Visualizar Clientes</h1>
+        <div className={styles["page-stats"]}>
           {pagination.totalItems > 0 && (
-            <span className="stats-text">
+            <span className={styles["stats-text"]}>
               {pagination.totalItems} cliente{pagination.totalItems !== 1 ? 's' : ''} encontrado{pagination.totalItems !== 1 ? 's' : ''}
             </span>
           )}
@@ -311,55 +320,56 @@ export const VisualizarClientes: React.FC = () => {
       <SearchLayout
         fields={searchFields}
         onSearch={handleAdvancedSearch}
+         onClear={() => { buscarClientes({}, 1) }}
         dropdownSearch={dropdownSearchConfig}
       />
 
       {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
+        <div className={styles["loading-container"]}>
+          <div className={styles["loading-spinner"]}></div>
           <span>Carregando clientes...</span>
         </div>
       ) : (
         <>
           {clientes.length > 0 ? (
             <>
-              <div className="clientes-grid">
+              <div className={styles["clientes-grid"]}>
                 {clientes.map((cliente) => (
-                  <div key={cliente.id} className="cliente-card">
-                    <div className="card-header">
-                      <div className="cliente-avatar">
+                  <div key={cliente.id} className={styles["cliente-card"]}>
+                    <div className={styles["card-header"]}>
+                      <div className={styles["cliente-avatar"]}>
                         <FaUser />
                       </div>
-                      <div className="cliente-main-info">
-                        <h3 className="cliente-name">
+                      <div className={styles["cliente-main-info"]}>
+                        <h3 className={styles["cliente-name"]}>
                           {cliente.fantasia || cliente.razao || 'Nome não informado'}
                         </h3>
                         {cliente.documento && (
-                          <span className="cliente-document">
+                          <span className={styles["cliente-document"]}>
                             {formatDocument(cliente.documento)}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="card-body">
+                    <div className={styles["card-body"]}>
                       {cliente.telefone && (
-                        <div className="info-item">
-                          <FaPhone className="info-icon" />
+                        <div className={styles["info-item"]}>
+                          <FaPhone className={styles["info-icon"]} />
                           <span>{formatPhone(cliente.telefone)}</span>
                         </div>
                       )}
 
                       {cliente.email && (
-                        <div className="info-item">
-                          <FaEnvelope className="info-icon" />
+                        <div className={styles["info-item"]}>
+                          <FaEnvelope className={styles["info-icon"]} />
                           <span>{cliente.email}</span>
                         </div>
                       )}
 
                       {(cliente.cidade || cliente.uf) && (
-                        <div className="info-item">
-                          <FaMapMarkerAlt className="info-icon" />
+                        <div className={styles["info-item"]}>
+                          <FaMapMarkerAlt className={styles["info-icon"]} />
                           <span>
                             {cliente.cidade && cliente.uf
                               ? `${cliente.cidade} / ${cliente.uf}`
@@ -370,31 +380,31 @@ export const VisualizarClientes: React.FC = () => {
                       )}
 
                       {cliente.categoria && (
-                        <div className="info-item">
-                          <span className="info-label">Categoria:</span>
+                        <div className={styles["info-item"]}>
+                          <span className={styles["info-label"]}>Categoria:</span>
                           <span>{cliente.categoria}</span>
                         </div>
                       )}
 
                       {cliente.consultor && (
-                        <div className="info-item">
-                          <span className="info-label">Consultor:</span>
+                        <div className={styles["info-item"]}>
+                          <span className={styles["info-label"]}>Consultor:</span>
                           <span>{cliente.consultor}</span>
                         </div>
                       )}
                     </div>
 
-                    <div className="card-actions">
+                    <div className={styles["card-actions"]}>
                       <button
-                        className="action-button view"
+                        className={styles["action-button"] + ' ' + styles["view"]}
                         onClick={() => handleView(cliente)}
                         title="Visualizar detalhes"
                       >
-                        <FaEye />
-                        Visualizar
+                        <FaFileAlt />
+                        Relatório
                       </button>
                       <button
-                        className="action-button edit"
+                        className={styles["action-button"] + ' ' + styles["edit"]}
                         onClick={() => handleEdit(cliente)}
                         title="Editar cliente"
                       >
@@ -407,10 +417,10 @@ export const VisualizarClientes: React.FC = () => {
               </div>
 
               {pagination.totalPages > 1 && (
-                <div className="pagination-container">
-                  <div className="pagination">
+                <div className={styles["pagination-container"]}>
+                  <div className={styles["pagination"]}>
                     <button
-                      className="pagination-button"
+                      className={styles["pagination-button"]}
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
                       disabled={pagination.currentPage === 1}
                     >
@@ -418,17 +428,44 @@ export const VisualizarClientes: React.FC = () => {
                       Anterior
                     </button>
 
-                    <div className="pagination-info">
-                      <span className="page-numbers">
-                        Página {pagination.currentPage} de {pagination.totalPages}
-                      </span>
-                      <span className="items-info">
+                    <div className={styles["pagination-info"]}>
+                      <div className={styles["page-group"]}>
+                        <span>Página</span>
+                        <input
+                          type="text"
+                          className={styles["page-input"]}
+                          defaultValue={pagination.currentPage}
+                          min="1"
+                          max={pagination.totalPages}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const page = Number(e.currentTarget.value);
+                              if (page >= 1 && page <= pagination.totalPages) {
+                                handlePageChange(page);
+                              }
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const page = Number(e.target.value);
+                            if (page >= 1 && page <= pagination.totalPages) {
+                              handlePageChange(page);
+                            } else {
+                              e.target.value = pagination.currentPage.toString();
+                            }
+                          }}
+                          onFocus={(e) => e.target.select()}
+                        />
+                        <span> de {pagination.totalPages}</span>
+                      </div>
+
+                      <div className={styles["items-info"]}>
                         ({pagination.itemsPerPage} itens por página)
-                      </span>
+                      </div>
                     </div>
 
+
                     <button
-                      className="pagination-button"
+                      className={styles["pagination-button"]}
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
                       disabled={pagination.currentPage === pagination.totalPages}
                     >
@@ -440,8 +477,8 @@ export const VisualizarClientes: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="empty-state">
-              <FaUser className="empty-icon" />
+            <div className={styles["empty-state"]}>
+              <FaUser className={styles["empty-icon"]} />
               <h3>Nenhum cliente encontrado</h3>
               <p>Tente ajustar os filtros de busca ou verifique se há clientes cadastrados.</p>
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaSearch, FaTimes, FaToggleOn, FaToggleOff, FaChevronDown } from 'react-icons/fa';
-import './css/SearchLayout.css';
+import styles from './css/SearchLayout.module.css';
 
 interface Cliente {
   id: number;
@@ -30,6 +30,7 @@ interface DropdownSearchConfig {
 interface SearchLayoutProps {
   fields?: SearchField[];
   onSearch?: (filters: Record<string, string>) => void;
+  onClear?: () => void;
   dropdownSearch?: DropdownSearchConfig;
 }
 
@@ -41,7 +42,7 @@ interface CustomSelectProps {
   id: string;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, placeholder, id }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
@@ -59,22 +60,22 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, p
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className="custom-select" ref={selectRef}>
-      <div className={`select-trigger ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(!isOpen)}>
-        <span className={selectedOption ? 'selected' : 'placeholder'}>
+    <div className={styles["custom-select"]} ref={selectRef}>
+      <div className={`${styles["select-trigger"]} ${isOpen ? `${styles["open"]}` : ''}`} onClick={() => setIsOpen(!isOpen)}>
+        <span className={selectedOption ? `${styles["selected"]}` : `${styles["placeholder"]}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
-        <FaChevronDown className="select-arrow" />
+        <FaChevronDown className={styles["select-arrow"]} />
       </div>
       {isOpen && (
-        <div className="select-dropdown">
-          <div className="select-option placeholder" onClick={() => { onChange(''); setIsOpen(false); }}>
+        <div className={styles["select-dropdown"]}>
+          <div className={`${styles["select-option"]} ${styles["placeholder"]}`} onClick={() => { onChange(''); setIsOpen(false); }}>
             {placeholder}
           </div>
           {options.map(option => (
             <div
               key={option.value}
-              className={`select-option ${value === option.value ? 'selected' : ''}`}
+              className={`${styles["select-option"]} ${value === option.value ? `${styles["selected"]}` : ''}`}
               onClick={() => { onChange(option.value); setIsOpen(false); }}
             >
               {option.label}
@@ -89,6 +90,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, p
 export const SearchLayout: React.FC<SearchLayoutProps> = ({
   fields = [],
   onSearch,
+  onClear,
   dropdownSearch = { enabled: false }
 }) => {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
@@ -164,6 +166,9 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     setFilters({});
     setMainSearchQuery('');
     setShowDropdown(false);
+    if (onClear) {
+      onClear();
+    }
   };
 
   const formatDocument = (doc: string) => {
@@ -182,11 +187,11 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
   }
 
   return (
-    <div className="search-layout">
+    <div className={styles["search-layout"]}>
       {shouldShowToggle && (
-        <div className="search-header">
+        <div className={styles["search-header"]}>
           <div className="search-toggle">
-            <button className="toggle-button" onClick={toggleAdvancedMode} title={isAdvancedMode ? "Busca simples" : "Busca avançada"}>
+            <button className={styles["toggle-button"]} onClick={toggleAdvancedMode} title={isAdvancedMode ? "Busca simples" : "Busca avançada"}>
               {isAdvancedMode ? <FaToggleOn /> : <FaToggleOff />}
               <span>{isAdvancedMode ? "Busca Avançada" : "Busca Simples"}</span>
             </button>
@@ -195,43 +200,43 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
       )}
 
       {dropdownSearch.enabled && (!shouldShowToggle || !isAdvancedMode) && (
-        <div className="main-search-container" ref={searchRef}>
-          <div className="search-input-wrapper">
-            <FaSearch className="search-icon" />
+        <div className={styles["main-search-container"]} ref={searchRef}>
+          <div className={styles["search-input-wrapper"]}>
+            <FaSearch className={styles["search-icon"]} />
             <input
               type="text"
-              className="main-search-input"
+              className={styles["main-search-input"]}
               placeholder={dropdownSearch.placeholder || "Buscar..."}
               value={mainSearchQuery}
               onChange={(e) => handleMainSearchChange(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
             />
             {mainSearchQuery && (
-              <button className="clear-button" onClick={handleClearFilters} title="Limpar busca">
+              <button className={styles["clear-button"]} onClick={handleClearFilters} title="Limpar busca">
                 <FaTimes />
               </button>
             )}
           </div>
 
           {showDropdown && (
-            <div className="search-dropdown">
+            <div className={styles["search-dropdown"]}>
               {isSearching ? (
-                <div className="dropdown-item loading">
+                <div className={`${styles["dropdown-item"]} ${styles["loading"]}`}>
                   <span>Buscando...</span>
                 </div>
               ) : (
                 searchResults.map((cliente) => (
-                  <div key={cliente.id} className="dropdown-item" onClick={() => handleClienteSelect(cliente)}>
-                    <div className="cliente-info">
-                      <div className="cliente-name">
+                  <div key={cliente.id} className={styles["dropdown-item"]} onClick={() => handleClienteSelect(cliente)}>
+                    <div className={styles["cliente-info"]}>
+                      <div className={styles["cliente-name"]}>
                         {cliente.fantasia || cliente.razao || 'Nome não informado'}
                       </div>
-                      <div className="cliente-details">
+                      <div className={styles["cliente-details"]}>
                         {cliente.documento && (
-                          <span className="documento">{formatDocument(cliente.documento)}</span>
+                          <span className={styles["documento"]}>{formatDocument(cliente.documento)}</span>
                         )}
                         {cliente.cidade && cliente.uf && (
-                          <span className="location">{cliente.cidade} / {cliente.uf}</span>
+                          <span className={styles["location"]}>{cliente.cidade} / {cliente.uf}</span>
                         )}
                       </div>
                     </div>
@@ -244,11 +249,11 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
       )}
 
       {fields.length > 0 && (!shouldShowToggle || isAdvancedMode) && (
-        <div className="advanced-search-container">
-          <div className="search-fields-grid">
+        <div className={styles["advanced-search-container"]}>
+          <div className={styles["search-fields-grid"]}>
             {fields.map((field) => (
-              <div key={field.name} className="search-field">
-                <label htmlFor={field.name} className="field-label">{field.label}</label>
+              <div key={field.name} className={styles["search-field"]}>
+                <label htmlFor={field.name} className={styles["field-label"]}>{field.label}</label>
                 {field.type === 'select' ? (
                   <CustomSelect
                     id={field.name}
@@ -261,7 +266,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
                   <input
                     id={field.name}
                     type="text"
-                    className="field-input"
+                    className={styles["field-input"]}
                     placeholder={`Digite ${field.label.toLowerCase()}...`}
                     value={filters[field.name] || ''}
                     onChange={(e) => handleFilterChange(field.name, e.target.value)}
@@ -271,12 +276,12 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
             ))}
           </div>
 
-          <div className="search-actions">
-            <button className="search-button primary" onClick={handleAdvancedSearch}>
+          <div className={styles["search-actions"]}>
+            <button className={`${styles["search-button"]} ${styles["primary"]}`} onClick={handleAdvancedSearch}>
               <FaSearch />
               Buscar
             </button>
-            <button className="search-button secondary" onClick={handleClearFilters}>
+            <button className={`${styles["search-button"]} ${styles["secondary"]}`} onClick={handleClearFilters}>
               <FaTimes />
               Limpar
             </button>

@@ -1,3 +1,4 @@
+//controller front
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
@@ -35,10 +36,11 @@ pub struct ConsultorResponse {
 #[command]
 pub async fn buscar_categorias() -> CategoriaResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/clientes/categorias", url);
 
     let res = match client
-        .post("http://192.168.15.26:8082/clientes/buscar")
-        .json(&request_data)
+        .get(&full_url)
         .send()
         .await
     {
@@ -69,10 +71,11 @@ pub async fn buscar_categorias() -> CategoriaResponse {
 #[command]
 pub async fn buscar_consultores() -> ConsultorResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/clientes/consultores", url);
 
     let res = match client
-        .post("http://192.168.15.26:8082/clientes/dropdown")
-        .json(&request_data)
+        .get(&full_url)
         .send()
         .await
     {

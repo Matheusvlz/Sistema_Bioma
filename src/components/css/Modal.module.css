@@ -75,3 +75,41 @@
 .modal-warning .modal-button:hover {
   background: #eab308;
 }
+
+/* Adicione estas regras no seu Modal.module.css */
+
+.modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.modal-button-cancel {
+  background: #6b7280;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-button-cancel:hover {
+  background: #4b5563;
+}
+
+.modal-button-confirm {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.modal-button-confirm:hover {
+  background: #dc2626;
+}

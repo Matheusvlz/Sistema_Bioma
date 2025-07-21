@@ -31,7 +31,8 @@ use controller::notification_controller::{
 }; // This import is correct and already there.
 use controller::settings_controller::update_user_settings;
 use socket_listener::send_ws_message; // Importar o novo comando
-192.168.15.26
+
+use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
 fn main() {
     dotenvy::dotenv().ok();
 
@@ -83,7 +84,11 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            get_users
+            get_users,
+            buscar_categorias_cadastro,
+            criar_categoria,
+            editar_categoria,
+            excluir_categoria
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

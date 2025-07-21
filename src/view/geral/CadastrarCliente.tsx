@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaUser, FaMoneyBill, FaTags, FaAddressBook, FaPlus, FaTrash, FaCopy } from 'react-icons/fa';
-import './css/CadastrarCliente.css';
+import style from './css/CadastrarCliente.module.css';
 import { core } from "@tauri-apps/api";
 import { listen } from '@tauri-apps/api/event';
 import { useModal } from "../../hooks/useModal";
 import { Modal } from "../../components/Modal";
 import { emit } from '@tauri-apps/api/event';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { UFSelect, ConsultorSelect } from './CustomSelect';
+import { UFSelect, ConsultorSelect } from '../../components/SelectGeral';
+import CustomDatePicker from '../../components/CustomDatePicker';
+import { WindowManager } from '../../hooks/WindowManager';
 
 interface Categoria {
   id: number;
@@ -99,12 +101,6 @@ interface ClientePreenchimento {
   categorias_selecionadas?: number[];
   contatos_existentes?: Contato[];
 }
-
-const ESTADOS_BRASIL = [
-  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
-  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
-  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-];
 
 const aplicarMascaraCPF = (valor: string): string => {
   return valor
@@ -416,6 +412,38 @@ export const CadastrarClientes: React.FC = () => {
     };
 
     carregarDadosIniciais();
+
+    // Listener para atualização de categorias em tempo real
+    const setupCategoryListener = async () => {
+      try {
+        const unlisten = await listen('category-updated', async () => {
+          console.log('Evento category-updated recebido, recarregando categorias...');
+          try {
+            const categoriasResponse: GeralResponse = await core.invoke<{ success: boolean }>('cliente_categoria');
+            if (categoriasResponse.success && categoriasResponse.data) {
+              setCategorias(categoriasResponse.data);
+            }
+          } catch (error) {
+            console.error('Erro ao recarregar categorias:', error);
+          }
+        });
+
+        return unlisten;
+      } catch (error) {
+        console.error('Erro ao configurar listener de categorias:', error);
+      }
+    };
+
+    let categoryUnlisten: (() => void) | undefined;
+    setupCategoryListener().then(unlisten => {
+      categoryUnlisten = unlisten;
+    });
+
+    return () => {
+      if (categoryUnlisten) {
+        categoryUnlisten();
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -610,11 +638,19 @@ export const CadastrarClientes: React.FC = () => {
     ));
   };
 
+  const handleCategoria = useCallback(async () => {
+    try {
+      await WindowManager.openCadastrarCategoria();
+    } catch (error) {
+      console.error('Erro ao abrir janela de cadastro:', error);
+    }
+  }, []);
+
   const renderGuiaGeral = () => (
-    <div className="formulario-conteudo">
-      <div className="form-grid">
+    <div className={style["formulario-conteudo"]}>
+      <div className={style["form-grid"]}>
         {/* Checkbox de Ativo no canto superior */}
-        <div className="form-group" style={{ gridColumn: '1 / -1', marginBottom: '1rem' }}>
+        <div className={style["form-group"]} style={{ gridColumn: '1 / -1', marginBottom: '1rem' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '0.5rem' }}>
             <label style={{ fontWeight: 600, color: '#374151', fontSize: '0.95rem' }}>
               <input
@@ -633,10 +669,10 @@ export const CadastrarClientes: React.FC = () => {
           </div>
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Tipo de Documento</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className={style["radio-group"]}>
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumento"
@@ -646,7 +682,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               CPF
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumento"
@@ -656,7 +692,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               CNPJ
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumento"
@@ -669,7 +705,7 @@ export const CadastrarClientes: React.FC = () => {
           </div>
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Documento</label>
           <input
             type="text"
@@ -679,10 +715,10 @@ export const CadastrarClientes: React.FC = () => {
             placeholder={dadosGerais.tipoDocumento === 'CPF' ? '000.000.000-00' : dadosGerais.tipoDocumento === 'CNPJ' ? '00.000.000/0000-00' : ''}
             className={erros.documento ? 'erro' : ''}
           />
-          {erros.documento && <span className="erro-texto">{erros.documento}</span>}
+          {erros.documento && <span className={style["erro-texto"]}>{erros.documento}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Fantasia</label>
           <input
             type="text"
@@ -691,7 +727,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Razão Social</label>
           <input
             type="text"
@@ -700,10 +736,10 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Tipo de Registro</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className={style["radio-group"]}>
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoRegistro"
@@ -713,7 +749,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               IE
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoRegistro"
@@ -726,7 +762,7 @@ export const CadastrarClientes: React.FC = () => {
           </div>
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Registro</label>
           <input
             type="text"
@@ -735,7 +771,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>CEP</label>
           <input
             type="text"
@@ -744,10 +780,10 @@ export const CadastrarClientes: React.FC = () => {
             placeholder="00000-000"
             className={erros.cep ? 'erro' : ''}
           />
-          {erros.cep && <span className="erro-texto">{erros.cep}</span>}
+          {erros.cep && <span className={style["erro-texto"]}>{erros.cep}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Endereço</label>
           <input
             type="text"
@@ -756,7 +792,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Número</label>
           <input
             type="text"
@@ -765,7 +801,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Bairro</label>
           <input
             type="text"
@@ -774,7 +810,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Cidade</label>
           <input
             type="text"
@@ -783,16 +819,16 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>UF</label>
           <UFSelect
-  id="uf-gerais"
-  value={dadosGerais.uf}
-  onChange={(value) => setDadosGerais({ ...dadosGerais, uf: value })}
-/>
+            id="uf-gerais"
+            value={dadosGerais.uf}
+            onChange={(value) => setDadosGerais({ ...dadosGerais, uf: value })}
+          />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Telefone</label>
           <input
             type="text"
@@ -802,7 +838,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Celular</label>
           <input
             type="text"
@@ -812,7 +848,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Email</label>
           <input
             type="email"
@@ -823,10 +859,10 @@ export const CadastrarClientes: React.FC = () => {
             }}
             className={erros.email ? 'erro' : ''}
           />
-          {erros.email && <span className="erro-texto">{erros.email}</span>}
+          {erros.email && <span className={style["erro-texto"]}>{erros.email}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Site</label>
           <input
             type="url"
@@ -835,7 +871,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group full-width">
+        <div className={`${style["form-group"]} ${style["full-width"]}`}>
           <label>Observação</label>
           <textarea
             value={dadosGerais.observacao}
@@ -844,21 +880,21 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Consultor</label>
           <ConsultorSelect
-  id="consultor-gerais"
-  value={dadosGerais.consultorId}
-  onChange={(value) => setDadosGerais({ ...dadosGerais, consultorId: value })}
-  consultores={consultores}
-/>
+            id="consultor-gerais"
+            value={dadosGerais.consultorId}
+            onChange={(value) => setDadosGerais({ ...dadosGerais, consultorId: value })}
+            consultores={consultores}
+          />
         </div>
 
-        <div className="form-group full-width">
+        <div className={`${style["form-group"]} ${style["full-width"]}`}>
           <label>Setores Portal</label>
-          <div className="checkbox-grid">
+          <div className={style["checkbox-grid"]}>
             {setoresPortal.map(setor => (
-              <label key={setor.id} className="checkbox-label">
+              <label key={setor.id} className={style["checkbox-label"]}>
                 <input
                   type="checkbox"
                   checked={dadosGerais.setoresPortal.includes(setor.id)}
@@ -874,12 +910,12 @@ export const CadastrarClientes: React.FC = () => {
   );
 
   const renderGuiaCobranca = () => (
-    <div className="formulario-conteudo">
-      <div className="cobranca-header">
+    <div className={style["formulario-conteudo"]}>
+      <div className={style["cobranca-header"]}>
         <h3>Dados de Cobrança</h3>
         <button
           type="button"
-          className="btn-copiar"
+          className={style["btn-copiar"]}
           onClick={copiarDadosGeraisParaCobranca}
           title="Copiar dados gerais para cobrança"
         >
@@ -887,11 +923,11 @@ export const CadastrarClientes: React.FC = () => {
         </button>
       </div>
 
-      <div className="form-grid">
-        <div className="form-group">
+      <div className={style["form-grid"]}>
+        <div className={style["form-group"]}>
           <label>Tipo de Documento</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className={style["radio-group"]}>
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumentoCobranca"
@@ -901,7 +937,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               CPF
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumentoCobranca"
@@ -911,7 +947,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               CNPJ
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoDocumentoCobranca"
@@ -924,7 +960,7 @@ export const CadastrarClientes: React.FC = () => {
           </div>
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Documento</label>
           <input
             type="text"
@@ -934,10 +970,10 @@ export const CadastrarClientes: React.FC = () => {
             placeholder={dadosCobranca.tipoDocumento === 'CPF' ? '000.000.000-00' : dadosCobranca.tipoDocumento === 'CNPJ' ? '00.000.000/0000-00' : ''}
             className={erros.cobranca_documento ? 'erro' : ''}
           />
-          {erros.cobranca_documento && <span className="erro-texto">{erros.cobranca_documento}</span>}
+          {erros.cobranca_documento && <span className={style["erro-texto"]}>{erros.cobranca_documento}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Fantasia</label>
           <input
             type="text"
@@ -946,7 +982,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Razão Social</label>
           <input
             type="text"
@@ -955,10 +991,10 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Tipo de Registro</label>
-          <div className="radio-group">
-            <label className="radio-label">
+          <div className={style["radio-group"]}>
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoRegistroCobranca"
@@ -968,7 +1004,7 @@ export const CadastrarClientes: React.FC = () => {
               />
               IE
             </label>
-            <label className="radio-label">
+            <label className={style["radio-label"]}>
               <input
                 type="radio"
                 name="tipoRegistroCobranca"
@@ -981,7 +1017,7 @@ export const CadastrarClientes: React.FC = () => {
           </div>
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Registro</label>
           <input
             type="text"
@@ -990,7 +1026,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>CEP</label>
           <input
             type="text"
@@ -999,10 +1035,10 @@ export const CadastrarClientes: React.FC = () => {
             placeholder="00000-000"
             className={erros.cobranca_cep ? 'erro' : ''}
           />
-          {erros.cobranca_cep && <span className="erro-texto">{erros.cobranca_cep}</span>}
+          {erros.cobranca_cep && <span className={style["erro-texto"]}>{erros.cobranca_cep}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Endereço</label>
           <input
             type="text"
@@ -1011,7 +1047,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Número</label>
           <input
             type="text"
@@ -1020,7 +1056,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Bairro</label>
           <input
             type="text"
@@ -1029,7 +1065,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Cidade</label>
           <input
             type="text"
@@ -1038,16 +1074,16 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>UF</label>
           <UFSelect
-  id="uf-cobranca"
-  value={dadosCobranca.uf}
-  onChange={(value) => setDadosCobranca({ ...dadosCobranca, uf: value })}
-/>
+            id="uf-cobranca"
+            value={dadosCobranca.uf}
+            onChange={(value) => setDadosCobranca({ ...dadosCobranca, uf: value })}
+          />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Telefone</label>
           <input
             type="text"
@@ -1057,7 +1093,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Celular</label>
           <input
             type="text"
@@ -1067,7 +1103,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Email</label>
           <input
             type="email"
@@ -1078,10 +1114,10 @@ export const CadastrarClientes: React.FC = () => {
             }}
             className={erros.cobranca_email ? 'erro' : ''}
           />
-          {erros.cobranca_email && <span className="erro-texto">{erros.cobranca_email}</span>}
+          {erros.cobranca_email && <span className={style["erro-texto"]}>{erros.cobranca_email}</span>}
         </div>
 
-        <div className="form-group">
+        <div className={style["form-group"]}>
           <label>Site</label>
           <input
             type="url"
@@ -1090,7 +1126,7 @@ export const CadastrarClientes: React.FC = () => {
           />
         </div>
 
-        <div className="form-group full-width">
+        <div className={`${style["form-group"]} ${style["full-width"]}`}>
           <label>Observação</label>
           <textarea
             value={dadosCobranca.observacao}
@@ -1103,11 +1139,20 @@ export const CadastrarClientes: React.FC = () => {
   );
 
   const renderGuiaCategorias = () => (
-    <div className="formulario-conteudo">
-      <h3>Selecione as Categorias</h3>
-      <div className="checkbox-grid">
+    <div className={style["formulario-conteudo"]}>
+      <div className={style["contatos-header"]}>
+        <h3>Selecione as Categorias</h3>
+        <button 
+          className={style["btn-adicionar"]}
+          onClick={() => handleCategoria()}
+          type="button"
+        >
+          <span>+</span>
+        </button>
+    </div>
+      <div className={style["checkbox-grid"]}>
         {categorias.map(categoria => (
-          <label key={categoria.id} className="checkbox-label categoria-item">
+          <label key={categoria.id} className={`${style["checkbox-label"]} ${style["categoria-item"]}`}>
             <input
               type="checkbox"
               checked={categoriasSelecionadas.includes(categoria.id)}
@@ -1121,30 +1166,30 @@ export const CadastrarClientes: React.FC = () => {
   );
 
   const renderGuiaContatos = () => (
-    <div className="formulario-conteudo">
-      <div className="contatos-header">
+    <div className={style["formulario-conteudo"]}>
+      <div className={style["contatos-header"]}>
         <h3>Contatos</h3>
-        <button type="button" className="btn-adicionar" onClick={adicionarContato}>
+        <button type="button" className={style["btn-adicionar"]} onClick={adicionarContato}>
           <FaPlus /> Adicionar Contato
         </button>
       </div>
 
-      <div className="contatos-lista">
+      <div className={style["contatos-lista"]}>
         {contatos.map((contato, index) => (
-          <div key={contato.id} className="contato-item">
-            <div className="contato-header">
+          <div key={contato.id} className={style["contato-item"]}>
+            <div className={style["contato-header"]}>
               <h4>Contato {index + 1}</h4>
               <button
                 type="button"
-                className="btn-remover"
+                className={style["btn-remover"]}
                 onClick={() => removerContato(contato.id)}
               >
                 <FaTrash />
               </button>
             </div>
 
-            <div className="form-grid">
-              <div className="form-group">
+            <div className={style["form-grid"]}>
+              <div className={style["form-group"]}>
                 <label>Nome</label>
                 <input
                   type="text"
@@ -1153,7 +1198,7 @@ export const CadastrarClientes: React.FC = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className={style["form-group"]}>
                 <label>Cargo</label>
                 <input
                   type="text"
@@ -1162,7 +1207,7 @@ export const CadastrarClientes: React.FC = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className={style["form-group"]}>
                 <label>Email</label>
                 <input
                   type="email"
@@ -1170,10 +1215,10 @@ export const CadastrarClientes: React.FC = () => {
                   onChange={(e) => atualizarContato(contato.id, 'email', e.target.value)}
                   className={erros[`contato_${contato.id}_email`] ? 'erro' : ''}
                 />
-                {erros[`contato_${contato.id}_email`] && <span className="erro-texto">{erros[`contato_${contato.id}_email`]}</span>}
+                {erros[`contato_${contato.id}_email`] && <span className={style["erro-texto"]}>{erros[`contato_${contato.id}_email`]}</span>}
               </div>
 
-              <div className="form-group">
+              <div className={style["form-group"]}>
                 <label>Telefone</label>
                 <input
                   type="text"
@@ -1183,36 +1228,37 @@ export const CadastrarClientes: React.FC = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className={style["form-group"]}>
                 <label>Data de Nascimento</label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={contato.dataNascimento}
-                  onChange={(e) => atualizarContato(contato.id, 'dataNascimento', e.target.value)}
+                  onChange={(value) => atualizarContato(contato.id, 'dataNascimento', value)}
+                  placeholder="dd/mm/aaaa"
                 />
               </div>
+
               {/* Mini Painel de Setores para o Contato */}
               {dadosGerais.setoresPortal.length > 0 && (
-                <div className="form-group full-width">
+                <div className={`${style["form-group"]} ${style["full-width"]}`}>
                   <label>Setores Portal para este Contato</label>
-                  <div className="mini-painel-setores-contato">
-                    <div className="mini-painel-header-contato">
-                      <span className="mini-painel-titulo">Setores Disponíveis</span>
-                      <span className="contador-setores-contato">
+                  <div className={style["mini-painel-setores-contato"]}>
+                    <div className={style["mini-painel-header-contato"]}>
+                      <span className={style["mini-painel-titulo"]}>Setores Disponíveis</span>
+                      <span className={style["contador-setores-contato"]}>
                         {contato.setoresContato.length}/{dadosGerais.setoresPortal.length}
                       </span>
                     </div>
-                    <div className="mini-painel-conteudo-contato">
+                    <div className={style["mini-painel-conteudo-contato"]}>
                       {setoresPortal
                         .filter(setor => dadosGerais.setoresPortal.includes(setor.id))
                         .map(setor => (
-                          <label key={setor.id} className="mini-setor-item-contato">
+                          <label key={setor.id} className={style["mini-setor-item-contato"]}>
                             <input
                               type="checkbox"
                               checked={contato.setoresContato.includes(setor.id)}
                               onChange={() => toggleSetorContato(contato.id, setor.id)}
                             />
-                            <span className="mini-setor-nome-contato">{setor.nome}</span>
+                            <span className={style["mini-setor-nome-contato"]}>{setor.nome}</span>
                           </label>
                         ))}
                     </div>
@@ -1224,7 +1270,7 @@ export const CadastrarClientes: React.FC = () => {
         ))}
 
         {contatos.length === 0 && (
-          <div className="sem-contatos">
+          <div className={style["sem-contatos"]}>
             <p>Nenhum contato adicionado. Clique em "Adicionar Contato" para começar.</p>
           </div>
         )}
@@ -1366,38 +1412,37 @@ export const CadastrarClientes: React.FC = () => {
   }
 
   return (
-    <div className="formulario-cliente-container">
-      <h1 className="formulario-titulo">Cadastro de Cliente</h1>
+    <div className={style["formulario-cliente-container"]}>
+      <h1 className={style["formulario-titulo"]}>Cadastro de Cliente</h1>
 
-      <div className="guias-container">
-        <div className="guias-header">
+      <div className={style["guias-container"]}>
+        <div className={style["guias-header"]}>
           <button
-            className={`guia-btn ${guiaAtiva === 'geral' ? 'ativa' : ''}`}
-            onClick={() => setGuiaAtiva('geral')}
+            className={`${style["guia-btn"]} ${guiaAtiva === 'geral' ? style["ativa"] : ''}`} onClick={() => setGuiaAtiva('geral')}
           >
             <FaUser /> Dados Gerais
           </button>
           <button
-            className={`guia-btn ${guiaAtiva === 'cobranca' ? 'ativa' : ''}`}
+            className={`${style["guia-btn"]} ${guiaAtiva === 'cobranca' ? style["ativa"] : ''}`}
             onClick={() => setGuiaAtiva('cobranca')}
           >
             <FaMoneyBill /> Cobrança
           </button>
           <button
-            className={`guia-btn ${guiaAtiva === 'categorias' ? 'ativa' : ''}`}
+            className={`${style["guia-btn"]} ${guiaAtiva === 'categorias' ? style["ativa"] : ''}`}
             onClick={() => setGuiaAtiva('categorias')}
           >
             <FaTags /> Categorias
           </button>
           <button
-            className={`guia-btn ${guiaAtiva === 'contatos' ? 'ativa' : ''}`}
+            className={`${style["guia-btn"]} ${guiaAtiva === 'contatos' ? style["ativa"] : ''}`}
             onClick={() => setGuiaAtiva('contatos')}
           >
             <FaAddressBook /> Contatos
           </button>
         </div>
 
-        <div className="guia-conteudo">
+        <div className={style["guia-conteudo"]}>
           {guiaAtiva === 'geral' && renderGuiaGeral()}
           {guiaAtiva === 'cobranca' && renderGuiaCobranca()}
           {guiaAtiva === 'categorias' && renderGuiaCategorias()}
@@ -1405,11 +1450,11 @@ export const CadastrarClientes: React.FC = () => {
         </div>
       </div>
 
-      <div className="formulario-acoes">
-        <button type="button" className="btn-cancelar" onClick={fecharJanela}>
+      <div className={style["formulario-acoes"]}>
+        <button type="button" className={style["btn-cancelar"]} onClick={fecharJanela}>
           Cancelar
         </button>
-        <button type="button" className="btn-salvar" onClick={salvarCliente}>
+        <button type="button" className={style["btn-salvar"]} onClick={salvarCliente}>
           {isEditing ? 'Editar Cliente' : 'Salvar Cliente'}
         </button>
       </div>

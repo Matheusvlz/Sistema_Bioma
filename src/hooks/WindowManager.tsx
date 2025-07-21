@@ -1,4 +1,5 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { availableMonitors } from '@tauri-apps/api/window'
 
 export interface WindowConfig {
   label: string;
@@ -6,6 +7,9 @@ export interface WindowConfig {
   url: string;
   width?: number;
   height?: number;
+  x?: number;
+  y?: number;
+  center?: boolean;
   resizable?: boolean;
   maximized?: boolean;
   data?: any;
@@ -46,9 +50,11 @@ export class WindowManager {
         title: config.title,
         width: config.width || 1200,
         height: config.height || 800,
+        x: config.x,
+        y: config.y,
         resizable: config.resizable !== false,
         maximized: config.maximized || false,
-        center: true,
+        center: config.center !== false,
         decorations: true,
         alwaysOnTop: false,
         skipTaskbar: false,
@@ -113,7 +119,7 @@ export class WindowManager {
       title: 'Cadastro de Clientes',
       url: '/#/cadastrar-clientes',
       width: 900,
-      height: 600,
+      height: 700,
       data: clienteData,
       allowMultiple: true
     });
@@ -121,28 +127,68 @@ export class WindowManager {
 
   static async openVisualizarCliente(clienteData?: any): Promise<WebviewWindow> {
     return this.openWindow({
-      label: 'visualizar-cliente',
-      title: 'Visualizar Cliente',
-      url: '/#/visualizar-cliente',
-      width: 900,
-      height: 600,
+      label: 'visualizar-clientes',
+      title: 'Visualizar Clientes',
+      url: '/#/visualizar-clientes',
+      width: 1200,
+      height: 800,
       data: clienteData,
       allowMultiple: true
     });
   }
 
-   static async openChat(): Promise<WebviewWindow>
-    {
+  static async openCadastrarCategoria(): Promise<WebviewWindow> {
+    try {
+      const monitors = await availableMonitors();
+      if (!monitors || monitors.length === 0) {
+        throw new Error('Não foi possível obter informações dos monitores');
+      }
+
+      const primaryMonitor = monitors[0];
+      const screenWidth = primaryMonitor.size.width;
+      const screenHeight = primaryMonitor.size.height;
+      const taskbarHeight = 70;
+      
+      const windowWidth = 500;
+      const windowHeight = screenHeight - taskbarHeight;
+      const windowX = screenWidth - windowWidth;
+      const windowY = 0;
+
+      return this.openWindow({
+        label: 'gerenciar-categoria',
+        title: 'Gerenciar Categoria',
+        url: '/#/gerenciar-categoria',
+        width: windowWidth,
+        height: windowHeight,
+        allowMultiple: true,
+        x: windowX,
+        y: windowY,
+        center: false,
+        resizable: true,
+        data: { openedBy: 'cadastrar-cliente' }
+      });
+    } catch (error) {
+      console.error('Erro ao abrir janela de cadastrar categoria:', error);
+      return this.openWindow({
+        label: 'gerenciar-categoria',
+        title: 'Gerenciar Categoria',
+        url: '/#/gerenciar-categoria',
+        width: 500,
+        height: 800,
+        allowMultiple: true,
+        data: { openedBy: 'cadastrar-cliente' }
+      });
+    }
+  }
+
+  static async openChat(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'chat',
       title: 'Chat',
       url: '/#/chat',
       width: 1200,
-      height: 900,
+      height: 600,
       allowMultiple: true
     });
   }
 }
-
-
-

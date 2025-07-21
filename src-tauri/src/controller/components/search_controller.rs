@@ -37,13 +37,16 @@ pub async fn buscar_clientes_filtros(
     limit: u32,
 ) -> ClienteResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/clientes/buscar", url);
     let request_data = ClienteRequest {
         filters,
         page,
         limit,
     };
+
     let res = match client
-        .post("http://192.168.15.26:8082/clientes/buscar")
+        .post(&full_url)
         .json(&request_data)
         .send()
         .await
@@ -85,9 +88,12 @@ pub async fn buscar_clientes_filtros(
 #[command]
 pub async fn buscar_clientes_dropdown(query: String) -> ClienteResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/clientes/dropdown", url);
     let request_data = ClienteDropdownRequest { query };
+
     let res = match client
-        .post("http://192.168.15.26:8082/clientes/dropdown")
+        .post(&full_url)
         .json(&request_data)
         .send()
         .await
