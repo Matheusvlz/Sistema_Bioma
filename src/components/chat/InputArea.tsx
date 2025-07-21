@@ -70,4 +70,3 @@ export const InputArea: React.FC<InputAreaProps> = ({
         </div>
     );
 };
-
