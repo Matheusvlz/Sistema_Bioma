@@ -1,30 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Plus, Menu, Check, CheckCheck, X, File, Image, Download, Upload, AlertCircle, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
-import { Users } from 'lucide-react';
+import { listen } from "@tauri-apps/api/event";
 import './style/ChatContainer.css';
-
-// Componentes modularizados
-import { Sidebar } from './Sidebar';
-import { ChatHeader } from './ChatHeader';
-import { MessagesArea } from './MessagesArea';
-import { InputArea } from './InputArea';
-import { FilePreview } from './FilePreview';
-import { ImageViewer } from './ImageViewer';
-import { PdfViewer } from './PdfViewer';
-import { OnlineStatusIndicator } from './OnlineStatusIndicator';
-import { TypingIndicator } from './TypingIndicator';
-import { OnlineUsersList } from './OnlineUsersList';
-
-// Hooks customizados
-import { useChatWebSocket} from './useChatWebSocket';
-import { useFileManagement } from './useFileManagement';
-import { useMediaViewers } from './useMediaViewers';
-import { useOnlineStatus } from './useOnlineStatus';
-import { useTypingStatus } from './useTypingStatus';
-
-// Utilitários
-import { formatTime, formatMessageTime, formatReadTime, formatFileSize } from './formatters';
-import { getFileIcon } from './fileIcons';
 
 // --- Interfaces ---
 interface Message {
@@ -50,6 +28,7 @@ interface BackendUser {
     nome_completo: string | null;
     cargo: string | null;
     profile_photo_path: string | null;
+    logado?: boolean; // Campo opcional para status de login
 }
 
 interface Usuario {
@@ -100,6 +79,60 @@ interface GetMessagesResponse {
     messages: Message[];
 }
 
+interface FileUpload {
+    file: File;
+    preview?: string;
+    type: 'image' | 'document';
+    uploading?: boolean;
+    uploadProgress?: number;
+    error?: string;
+}
+
+// Interface para mensagens WebSocket
+interface WebSocketMessage {
+    type: string;
+    data: any;
+}
+
+// Interface para notificação de mensagem de chat
+interface ChatMessageNotification {
+    type: string;
+    sender_id: number;
+    chat_id: number;
+    sender_name: string;
+    sender_avatar: string | null;
+    content: string;
+    timestamp: string;
+}
+
+// Interface para mensagem de chat via WebSocket
+interface ChatMessageWebSocket {
+    type: string;
+    chat_id: number;
+    message: Message;
+}
+
+// Interface para informações de usuário online
+interface OnlineUserInfo {
+    user_id: number;
+    user_name: string;
+    last_activity: string;
+}
+
+// Interface para lista de usuários online
+interface OnlineUsersListMessage {
+    type: string;
+    online_users: OnlineUserInfo[];
+}
+
+// Interface para mudança de status online
+interface UserOnlineStatusChangedMessage {
+    type: string;
+    user_id: number;
+    user_name: string;
+    is_online: boolean;
+}
+
 export const ChatContainer: React.FC = () => {
     // --- State Hooks ---
     const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -111,93 +144,32 @@ export const ChatContainer: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<number>(1);
     const [currentUserName, setCurrentUserName] = useState<string>('Você');
+    const [selectedFiles, setSelectedFiles] = useState<FileUpload[]>([]);
+    const [showFilePreview, setShowFilePreview] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [isConnectedToWebSocket, setIsConnectedToWebSocket] = useState(false);
-    const [showOnlineUsersList, setShowOnlineUsersList] = useState(false);
+    const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
 
-    // Hooks customizados para status online e digitação
-    const {
-        onlineUsers,
-        chatOnlineUsers,
-        updateUserOnlineStatus,
-        updateChatOnlineUsers,
-        updateUserStatusInChat,
-        isUserOnline,
-        getUserStatus,
-        getCurrentChatOnlineUsers,
-        getCurrentChatOnlineCount
-    } = useOnlineStatus({ currentUserId, selectedConversation });
+    // Estados para visualizadores
+    const [imageViewerOpen, setImageViewerOpen] = useState(false);
+    const [currentImageUrl, setCurrentImageUrl] = useState<string>('');
+    const [currentImageName, setCurrentImageName] = useState<string>('');
+    const [imageZoom, setImageZoom] = useState(1);
+    const [imageRotation, setImageRotation] = useState(0);
+    const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+    const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('');
+    const [currentPdfName, setCurrentPdfName] = useState<string>('');
 
-    const {
-        typingUsers,
-        isCurrentUserTyping,
-        updateUserTypingStatus,
-        handleTyping,
-        stopTypingImmediately,
-        getTypingText,
-        isSomeoneTypingInCurrentChat
-    } = useTypingStatus({ currentUserId, selectedConversation });
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Hooks customizados existentes
-    const {
-        selectedFiles,
-        showFilePreview,
-        isDragging,
-        handleFileSelect,
-        handleDragOver,
-        handleDragLeave,
-        handleDrop,
-        removeFile,
-        uploadFile,
-        downloadFile,
-        clearFiles
-    } = useFileManagement({ selectedConversation, currentUserId });
-
-    const {
-        imageViewerOpen,
-        currentImageUrl,
-        currentImageName,
-        imageZoom,
-        imageRotation,
-        openImageViewer,
-        closeImageViewer,
-        zoomIn,
-        zoomOut,
-        rotateImage,
-        resetImageView,
-        pdfViewerOpen,
-        currentPdfUrl,
-        currentPdfName,
-        openPdfViewer,
-        closePdfViewer
-    } = useMediaViewers();
-
-    // Função para buscar mensagens do chat
-    const fetchChatMessages = useCallback(async (chatId: number) => {
-        try {
-            const response = await invoke<GetMessagesResponse>('get_chat_messages', { chatId });
-            console.log('Mensagens recebidas do backend:', response.messages);
-            setMessages(response.messages);
-        } catch (error) {
-            console.error('Erro ao buscar mensagens:', error);
-        }
-    }, []);
-
-    // Hook WebSocket aprimorado
-    const { initializeWebSocketConnection } = useChatWebSocket({
-        currentUserId,
-        selectedConversation,
-        setMessages,
-        setConversations,
-        setIsConnectedToWebSocket,
-        fetchChatMessages,
-        updateUserTypingStatus,
-        updateUserOnlineStatus,
-        updateUserStatusInChat
-    });
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     // Função para buscar o usuário logado
-    const fetchCurrentUser = useCallback(async () => {
+    const fetchCurrentUser = async () => {
         try {
             const user: Usuario | null = await invoke('usuario_logado');
             if (user) {
@@ -210,9 +182,234 @@ export const ChatContainer: React.FC = () => {
         } catch (error) {
             console.error('Erro ao buscar usuário logado:', error);
         }
-    }, [initializeWebSocketConnection]);
+    };
 
-    const fetchUsers = useCallback(async () => {
+    // Função para inicializar a conexão WebSocket
+    const initializeWebSocketConnection = async (userId: number) => {
+        try {
+            // Enviar mensagem de identificação via WebSocket
+            const identificationMessage = `user_id:${userId}`;
+            await invoke('send_ws_message', { message: identificationMessage });
+            console.log('Mensagem de identificação enviada via WebSocket:', identificationMessage);
+        } catch (error) {
+            console.error('Erro ao enviar mensagem de identificação WebSocket:', error);
+        }
+    };
+
+    // Listener para eventos WebSocket
+    useEffect(() => {
+        const setupWebSocketListener = async () => {
+            try {
+                // Escutar eventos de nova mensagem WebSocket
+                const unlistenWebSocket = await listen<string>('nova_mensagem_ws', (event) => {
+                    console.log('Evento WebSocket recebido:', event.payload);
+                    
+                    try {
+                        // Tentar parsear como JSON primeiro
+                        const parsedMessage = JSON.parse(event.payload);
+                        handleWebSocketMessage(parsedMessage);
+                    } catch (jsonError) {
+                        // Se não for JSON, tratar como mensagem de texto simples
+                        handleWebSocketTextMessage(event.payload);
+                    }
+                });
+
+                // Cleanup function
+                return () => {
+                    unlistenWebSocket();
+                };
+            } catch (error) {
+                console.error('Erro ao configurar listener WebSocket:', error);
+            }
+        };
+
+        setupWebSocketListener();
+    }, [selectedConversation, currentUserId]);
+
+    // Função para lidar com mensagens WebSocket estruturadas
+    const handleWebSocketMessage = (message: any) => {
+        console.log('Processando mensagem WebSocket estruturada:', message);
+
+        // Verificar se é uma lista de usuários online
+        if (message.type === 'OnlineUsersList') {
+            const onlineListMessage = message as OnlineUsersListMessage;
+            const onlineUserIds = new Set(onlineListMessage.online_users.map(user => user.user_id));
+            setOnlineUsers(onlineUserIds);
+            console.log('Lista de usuários online recebida:', onlineUserIds);
+        }
+        
+        // Verificar se é uma mudança de status online
+        else if (message.type === 'UserOnlineStatusChanged') {
+            const statusMessage = message as UserOnlineStatusChangedMessage;
+            setOnlineUsers(prevOnlineUsers => {
+                const newOnlineUsers = new Set(prevOnlineUsers);
+                if (statusMessage.is_online) {
+                    newOnlineUsers.add(statusMessage.user_id);
+                } else {
+                    newOnlineUsers.delete(statusMessage.user_id);
+                }
+                console.log(`Usuário ${statusMessage.user_name} (ID: ${statusMessage.user_id}) está agora ${statusMessage.is_online ? 'online' : 'offline'}`);
+                return newOnlineUsers;
+            });
+        }
+
+        // Verificar se é uma notificação de mensagem de chat
+        else if (message.type === 'chat_message_notification') {
+            const notification = message as ChatMessageNotification;
+            
+            // Verificar se a notificação é para o chat atualmente selecionado
+            if (selectedConversation && notification.chat_id === selectedConversation.chatId) {
+                // Recarregar mensagens do chat atual
+                 fetchChatMessages(selectedConversation.chatId);
+            }
+            
+            // Atualizar a lista de conversas com a nova mensagem
+            updateConversationWithNewMessage(notification);
+            
+            // Mostrar notificação visual (opcional)
+            showChatNotification(notification);
+        }
+        
+        // Verificar se é uma mensagem de chat direta
+        else if (message.type === 'chat_message') {
+            const chatMessage = message as ChatMessageWebSocket;
+            
+            // Se for para o chat atualmente selecionado, adicionar a mensagem
+            if (selectedConversation && chatMessage.chat_id === selectedConversation.chatId) {
+                setMessages(prevMessages => {
+                    // Verificar se a mensagem já existe para evitar duplicatas
+                    const messageExists = prevMessages.some(msg => msg.id === chatMessage.message.id);
+                    if (!messageExists) {
+                        return [...prevMessages, chatMessage.message];
+                    }
+                    return prevMessages;
+                });
+            }
+            
+            // Atualizar lista de conversas
+            updateConversationWithDirectMessage(chatMessage);
+        }
+    };
+
+    // Função para lidar com mensagens de texto simples do WebSocket
+    const handleWebSocketTextMessage = (message: string) => {
+        console.log('Processando mensagem WebSocket de texto:', message);
+        
+        // Verificar se é uma mensagem de confirmação de conexão
+        if (message.includes('Conectado como usuário') && message.includes('Bem-vindo ao sistema!')) {
+            setIsConnectedToWebSocket(true);
+            console.log('Conexão WebSocket confirmada!');
+            
+            // Mostrar notificação de conexão (opcional)
+            showConnectionNotification('Conectado ao sistema de chat em tempo real!');
+        }
+    };
+
+    // Função para atualizar conversa com nova mensagem (notificação)
+    const updateConversationWithNewMessage = (notification: ChatMessageNotification) => {
+        setConversations(prevConversations => {
+            return prevConversations.map(conv => {
+                if (conv.chatId === notification.chat_id) {
+                    return {
+                        ...conv,
+                        lastMessage: notification.content,
+                        lastMessageTime: new Date(notification.timestamp),
+                        unreadCount: conv.unreadCount + 1
+                    };
+                }
+                return conv;
+            });
+        });
+    };
+
+    // Função para atualizar conversa com mensagem direta
+    const updateConversationWithDirectMessage = (chatMessage: ChatMessageWebSocket) => {
+        setConversations(prevConversations => {
+            return prevConversations.map(conv => {
+                if (conv.chatId === chatMessage.chat_id) {
+                    return {
+                        ...conv,
+                        lastMessage: chatMessage.message.content,
+                        lastMessageTime: new Date(chatMessage.message.timestamp),
+                        unreadCount: chatMessage.message.user_id !== currentUserId ? conv.unreadCount + 1 : conv.unreadCount
+                    };
+                }
+                return conv;
+            });
+        });
+    };
+
+    // Função para mostrar notificação de chat
+    const showChatNotification = (notification: ChatMessageNotification) => {
+        // Não mostrar notificação se for do próprio usuário
+        if (notification.sender_id === currentUserId) return;
+        
+        // Criar elemento de notificação
+        const notificationElement = document.createElement('div');
+        notificationElement.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 12px 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                max-width: 300px;
+                animation: slideIn 0.3s ease-out;
+            ">
+                <div style="font-weight: 600; color: #1f2937; margin-bottom: 4px;">
+                    ${notification.sender_name}
+                </div>
+                <div style="color: #6b7280; font-size: 14px;">
+                    ${notification.content}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(notificationElement);
+        
+        // Remover após 5 segundos
+        setTimeout(() => {
+            if (document.body.contains(notificationElement)) {
+                document.body.removeChild(notificationElement);
+            }
+        }, 5000);
+    };
+
+    // Função para mostrar notificação de conexão
+    const showConnectionNotification = (message: string) => {
+        const notificationElement = document.createElement('div');
+        notificationElement.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                border-radius: 8px;
+                padding: 12px 16px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            ">
+                ${message}
+            </div>
+        `;
+        
+        document.body.appendChild(notificationElement);
+        
+        // Remover após 3 segundos
+        setTimeout(() => {
+            if (document.body.contains(notificationElement)) {
+                document.body.removeChild(notificationElement);
+            }
+        }, 3000);
+    };
+
+    const fetchUsers = async () => {
         try {
             const response = await invoke<GetUsersResponse>('get_users');
             console.log('Usuários recebidos do backend:', response.usuarios);
@@ -220,9 +417,9 @@ export const ChatContainer: React.FC = () => {
         } catch (error) {
             console.error('Erro ao buscar usuários:', error);
         }
-    }, []);
+    };
 
-    const fetchUserChats = useCallback(async () => {
+    const fetchUserChats = async () => {
         try {
             const response = await invoke<GetChatsResponse>('get_user_chats', { userId: currentUserId });
             console.log('Chats recebidos do backend:', response.chats);
@@ -258,9 +455,24 @@ export const ChatContainer: React.FC = () => {
         } catch (error) {
             console.error('Erro ao buscar chats:', error);
         }
-    }, [currentUserId]);
+    };
 
-    const handleSelectUserAndStartChat = useCallback(async (targetUser: BackendUser) => {
+    const fetchChatMessages = async (chatId: number) => {
+        try {
+            if(selectedConversation?.chatId === chatId)
+            {
+                console.log("value:", selectedConversation?.chatId );
+                  const response = await invoke<GetMessagesResponse>('get_chat_messages', { chatId });
+                console.log('Mensagens recebidas do backend:', response.messages);
+            setMessages(response.messages);
+            }
+          
+        } catch (error) {
+            console.error('Erro ao buscar mensagens:', error);
+        }
+    };
+
+    const handleSelectUserAndStartChat = async (targetUser: BackendUser) => {
         const existingConversation = conversations.find(conv => 
             conv.members.length === 2 && conv.members.some(member => member.id === targetUser.id)
         );
@@ -297,18 +509,347 @@ export const ChatContainer: React.FC = () => {
             }
         }
         setSearchQuery('');
-    }, [conversations, currentUserId]);
+    };
 
-    const handleSendMessage = useCallback(async () => {
+    // Funções para manipulação de arquivos
+    const validateFile = (file: File): string | null => {
+        const allowedTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+            'application/pdf', 'application/msword', 
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'text/plain', 'text/csv'
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            return `Tipo de arquivo não permitido: ${file.type}`;
+        }
+
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (file.size > maxSize) {
+            return `Arquivo muito grande. Tamanho máximo: 50MB`;
+        }
+
+        return null;
+    };
+
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            handleFiles(Array.from(files));
+        }
+        // Reset input value to allow selecting the same file again
+        event.target.value = '';
+    };
+
+    const handleFiles = (files: File[]) => {
+        const newFiles: FileUpload[] = [];
+
+        files.forEach(file => {
+            const validationError = validateFile(file);
+            if (validationError) {
+                console.error(validationError);
+                // You could show a toast notification here
+                return;
+            }
+
+            const isImage = file.type.startsWith('image/');
+            const fileUpload: FileUpload = {
+                file,
+                type: isImage ? 'image' : 'document',
+                uploading: false,
+                uploadProgress: 0,
+                error: undefined
+            };
+
+            if (isImage) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    fileUpload.preview = e.target?.result as string;
+                    setSelectedFiles(prev => [...prev, fileUpload]);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                newFiles.push(fileUpload);
+            }
+        });
+
+        if (newFiles.length > 0) {
+            setSelectedFiles(prev => [...prev, ...newFiles]);
+        }
+
+        setShowFilePreview(true);
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragging(false);
+        
+        const files = Array.from(e.dataTransfer.files);
+        handleFiles(files);
+    };
+
+    const removeFile = (index: number) => {
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+        if (selectedFiles.length <= 1) {
+            setShowFilePreview(false);
+        }
+    };
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    };
+
+    const getFileIcon = (fileName: string) => {
+        const extension = fileName.split('.').pop()?.toLowerCase();
+        switch (extension) {
+            case 'pdf':
+                return <File className="text-red-500" size={24} />;
+            case 'doc':
+            case 'docx':
+                return <File className="text-blue-500" size={24} />;
+            case 'xls':
+            case 'xlsx':
+                return <File className="text-green-500" size={24} />;
+            case 'txt':
+                return <File className="text-gray-500" size={24} />;
+            default:
+                return <File className="text-gray-500" size={24} />;
+        }
+    };
+
+    // Funções para download de arquivos usando Tauri
+    const downloadFile = async (url: string, fileName: string) => {
+        try {
+            // Mostrar indicador de loading
+            const loadingToast = document.createElement('div');
+            loadingToast.textContent = 'Baixando arquivo...';
+            loadingToast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #3b82f6;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(loadingToast);
+
+            // Usar a função que salva na pasta Downloads
+            const filePath = await invoke('download_file_to_downloads', {
+                url: url,
+                fileName: fileName
+            });
+            
+            console.log('Arquivo baixado com sucesso:', filePath);
+            
+            // Remover loading e mostrar sucesso
+            document.body.removeChild(loadingToast);
+            
+            const successToast = document.createElement('div');
+            successToast.textContent = 'Arquivo baixado com sucesso!';
+            successToast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(successToast);
+            
+            setTimeout(() => {
+                if (document.body.contains(successToast)) {
+                    document.body.removeChild(successToast);
+                }
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Erro ao fazer download do arquivo:', error);
+            
+            // Remover loading se existir
+            const loadingToast = document.querySelector('div[style*="Baixando arquivo"]');
+            if (loadingToast) {
+                document.body.removeChild(loadingToast);
+            }
+            
+            // Mostrar erro
+            const errorToast = document.createElement('div');
+            errorToast.textContent = 'Erro ao fazer download do arquivo';
+            errorToast.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #ef4444;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            document.body.appendChild(errorToast);
+            
+            setTimeout(() => {
+                if (document.body.contains(errorToast)) {
+                    document.body.removeChild(errorToast);
+                }
+            }, 3000);
+        }
+    };
+
+    // Funções para visualizador de imagens
+    const openImageViewer = (imageUrl: string, imageName: string) => {
+        setCurrentImageUrl(imageUrl);
+        setCurrentImageName(imageName);
+        setImageZoom(1);
+        setImageRotation(0);
+        setImageViewerOpen(true);
+    };
+
+    const closeImageViewer = () => {
+        setImageViewerOpen(false);
+        setCurrentImageUrl('');
+        setCurrentImageName('');
+        setImageZoom(1);
+        setImageRotation(0);
+    };
+
+    const zoomIn = () => {
+        setImageZoom(prev => Math.min(prev + 0.25, 3));
+    };
+
+    const zoomOut = () => {
+        setImageZoom(prev => Math.max(prev - 0.25, 0.25));
+    };
+
+    const rotateImage = () => {
+        setImageRotation(prev => (prev + 90) % 360);
+    };
+
+    const resetImageView = () => {
+        setImageZoom(1);
+        setImageRotation(0);
+    };
+
+    // Funções para visualizador de PDF
+    const openPdfViewer = (pdfUrl: string, pdfName: string) => {
+        setCurrentPdfUrl(pdfUrl);
+        setCurrentPdfName(pdfName);
+        setPdfViewerOpen(true);
+    };
+
+    const closePdfViewer = () => {
+        setPdfViewerOpen(false);
+        setCurrentPdfUrl('');
+        setCurrentPdfName('');
+    };
+
+    const uploadFile = async (fileUpload: FileUpload): Promise<Message | null> => {
+        try {
+            // Update file upload state
+            setSelectedFiles(prev => 
+                prev.map(f => 
+                    f.file === fileUpload.file 
+                        ? { ...f, uploading: true, uploadProgress: 0, error: undefined }
+                        : f
+                )
+            );
+
+            const reader = new FileReader();
+            return new Promise((resolve, reject) => {
+                reader.onload = async (e) => {
+                    try {
+                        const base64Content = e.target?.result as string;
+                        const base64Data = base64Content.split(',')[1]; // Remove the prefix 'data:image/png;base64,'
+
+                        // Simulate progress updates
+                        for (let progress = 10; progress <= 90; progress += 20) {
+                            setSelectedFiles(prev => 
+                                prev.map(f => 
+                                    f.file === fileUpload.file 
+                                        ? { ...f, uploadProgress: progress }
+                                        : f
+                                )
+                            );
+                            await new Promise(resolve => setTimeout(resolve, 100));
+                        }
+
+                        const response = await invoke<Message>('send_file_message', {
+                            chatId: selectedConversation!.chatId,
+                            userId: currentUserId,
+                            fileName: fileUpload.file.name,
+                            fileType: fileUpload.file.type,
+                            fileSize: fileUpload.file.size,
+                            fileContent: base64Data
+                        });
+
+                        // Update to 100% progress
+                        setSelectedFiles(prev => 
+                            prev.map(f => 
+                                f.file === fileUpload.file 
+                                    ? { ...f, uploading: false, uploadProgress: 100 }
+                                    : f
+                            )
+                        );
+
+                        resolve(response);
+                    } catch (error) {
+                        console.error('Erro ao enviar arquivo:', error);
+                        setSelectedFiles(prev => 
+                            prev.map(f => 
+                                f.file === fileUpload.file 
+                                    ? { ...f, uploading: false, error: 'Erro ao enviar arquivo' }
+                                    : f
+                            )
+                        );
+                        reject(error);
+                    }
+                };
+                reader.onerror = () => {
+                    setSelectedFiles(prev => 
+                        prev.map(f => 
+                            f.file === fileUpload.file 
+                                ? { ...f, uploading: false, error: 'Erro ao ler arquivo' }
+                                : f
+                        )
+                    );
+                    reject(new Error('Erro ao ler arquivo'));
+                };
+                reader.readAsDataURL(fileUpload.file);
+            });
+        } catch (error) {
+            console.error('Erro no upload:', error);
+            return null;
+        }
+    };
+
+    const handleSendMessage = async () => {
         if (!selectedConversation) return;
 
         const hasTextMessage = newMessage.trim().length > 0;
         const hasFiles = selectedFiles.length > 0;
 
         if (!hasTextMessage && !hasFiles) return;
-
-        // Parar de digitar imediatamente ao enviar mensagem
-        stopTypingImmediately();
 
         setIsUploading(true);
         const now = new Date();
@@ -369,7 +910,8 @@ export const ChatContainer: React.FC = () => {
                 }
 
                 // Clear files after upload attempt
-                clearFiles();
+                setSelectedFiles([]);
+                setShowFilePreview(false);
             }
 
             // Update conversation list
@@ -406,193 +948,444 @@ export const ChatContainer: React.FC = () => {
         } finally {
             setIsUploading(false);
         }
-    }, [selectedConversation, newMessage, selectedFiles, currentUserId, currentUserName, uploadFile, clearFiles, stopTypingImmediately]);
-
-    // Função para lidar com mudanças no input de mensagem
-    const handleMessageInputChange = useCallback((value: string) => {
-        setNewMessage(value);
-        
-        // Gerenciar status de digitação
-        if (value.trim().length > 0) {
-            handleTyping();
-        }
-    }, [handleTyping]);
+    };
 
     // --- Effects ---
     useEffect(() => {
         fetchCurrentUser();
-    }, [fetchCurrentUser]);
+    }, []);
 
     useEffect(() => {
-        if (currentUserId > 0) {
-            fetchUsers();
-            fetchUserChats();
-        }
-    }, [currentUserId, fetchUsers, fetchUserChats]);
+        fetchUsers();
+        fetchUserChats();
+    }, [currentUserId]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     useEffect(() => {
         if (selectedConversation) {
             fetchChatMessages(selectedConversation.chatId);
         }
-    }, [selectedConversation, fetchChatMessages]);
+    }, [selectedConversation]);
 
-    // Memoized filtered and sorted users
-    const filteredAndSortedUsers = useMemo(() => {
-        return users
-            .filter(user =>
-                user.id !== currentUserId &&
-                user.nome.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            .sort((a, b) => {
-                const convA = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === a.id));
-                const convB = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === b.id));
-                
-                const timeA = convA?.lastMessageTime || new Date(0);
-                const timeB = convB?.lastMessageTime || new Date(0);
-                
-                return timeB.getTime() - timeA.getTime();
-            });
-    }, [users, currentUserId, searchQuery, conversations]);
+    // Fechar modais com ESC
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                if (imageViewerOpen) {
+                    closeImageViewer();
+                } else if (pdfViewerOpen) {
+                    closePdfViewer();
+                }
+            }
+        };
 
-    // Handlers
-    const handleToggleSidebar = useCallback(() => {
-        setSidebarOpen(prev => !prev);
-    }, []);
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [imageViewerOpen, pdfViewerOpen]);
 
-    // Componente do cabeçalho do chat aprimorado
-    const EnhancedChatHeader = useCallback(() => {
-        if (!selectedConversation) return null;
+    const filteredAndSortedUsers = users
+        .filter(user =>
+            user.id !== currentUserId &&
+            user.nome.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => {
+            const convA = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === a.id));
+            const convB = conversations.find(conv => conv.members.length === 2 && conv.members.some(m => m.id === b.id));
+            
+            const timeA = convA?.lastMessageTime || new Date(0);
+            const timeB = convB?.lastMessageTime || new Date(0);
+            
+            return timeB.getTime() - timeA.getTime();
+        });
 
-        const otherUser = selectedConversation.members.find(member => member.id !== currentUserId);
-        const isOnline = otherUser ? isUserOnline(otherUser.id) : false;
-        const userStatus = otherUser ? getUserStatus(otherUser.id) : 'offline';
-        const onlineCount = getCurrentChatOnlineCount();
+    // Funções de formatação de data/hora
+    const formatTime = (date: Date) => {
+        const now = new Date();
+        if(!date || isNaN(date.getTime())) return '';
+        const diff = now.getTime() - date.getTime();
+        if (diff < 60000) return 'agora';
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
+        if (diff < 86400000) return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        if (diff < 604800000) return date.toLocaleDateString('pt-BR', { weekday: 'short' });
+        return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    };
 
-        return (
-            <div className="chat-header">
-                <button 
-                    className="sidebar-toggle"
-                    onClick={handleToggleSidebar}
-                >
-                    ☰
-                </button>
-                
-                <div className="chat-header-info">
-                    <div className="chat-avatar-container">
-                        <img 
-                            src={selectedConversation.avatar} 
-                            alt={selectedConversation.name}
-                            className="chat-avatar"
-                        />
-                        {otherUser && (
-                            <div className="avatar-status-indicator">
-                                <OnlineStatusIndicator 
-                                    isOnline={isOnline}
-                                    status={userStatus}
-                                    size="small"
-                                />
-                            </div>
-                        )}
-                    </div>
-                    
-                    <div className="chat-info">
-                        <h3 className="chat-name">{selectedConversation.name}</h3>
-                        <div className="chat-status">
-                            {otherUser && (
-                                <OnlineStatusIndicator 
-                                    isOnline={isOnline}
-                                    status={userStatus}
-                                    size="small"
-                                    showText={true}
-                                />
-                            )}
-                        </div>
-                    </div>
-                </div>
+    const formatMessageTime = (timestamp: string) => {
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
 
-                <div className="chat-header-actions">
-                    {onlineCount > 0 && (
-                        <button 
-                            className="online-users-button"
-                            onClick={() => setShowOnlineUsersList(true)}
-                            title={`${onlineCount} usuário(s) online`}
-                        >
-                            <Users size={20} />
-                            <span className="online-count">{onlineCount}</span>
-                        </button>
-                    )}
-                </div>
-            </div>
-        );
-    }, [selectedConversation, currentUserId, isUserOnline, getUserStatus, getCurrentChatOnlineCount, handleToggleSidebar]);
+    const formatReadTime = (timestamp: string | null) => {
+        if (!timestamp) return null;
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    };
 
     return (
         <div className="chat-container">
+       
+
             {/* Sidebar */}
-            <Sidebar
-                sidebarOpen={sidebarOpen}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                filteredAndSortedUsers={filteredAndSortedUsers}
-                conversations={conversations}
-                selectedConversation={selectedConversation}
-                onSelectUser={handleSelectUserAndStartChat}
-                formatTime={formatTime}
-                isUserOnline={isUserOnline}
-                getUserStatus={getUserStatus}
-            />
+            <div className={`sidebar ${!sidebarOpen ? 'closed' : ''}`}>
+                {/* Sidebar Header */}
+                <div className="sidebar-header">
+                    <div className="sidebar-header-top">
+                        <h1 className="sidebar-title">Contatos</h1>
+                    </div>
+                    {/* Search Bar */}
+                    <div className="search-container">
+                        <Search className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Pesquisar contatos..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
+                </div>
+
+                {/* Lista de Contatos */}
+                <div className="conversations-list">
+                    {filteredAndSortedUsers.map((user) => {
+                        const conversation = conversations.find(conv => 
+                            conv.members.length === 2 && conv.members.some(m => m.id === user.id)
+                        );
+                        
+                        const isSelected = selectedConversation?.members.some(m => m.id === user.id);
+                        // Considerar online se estiver conectado via WebSocket OU se o status no banco for true
+                        const isOnline = onlineUsers.has(user.id) || (user.logado === true);
+
+                        return (
+                            <div
+                                key={user.id}
+                                onClick={() => handleSelectUserAndStartChat(user)}
+                                className={`conversation-item ${isSelected ? 'selected' : ''}`}
+                            >
+                                <div className="conversation-content">
+                                    <div className="avatar-container">
+                                        <img
+                                            src={user.profile_photo_path
+                                                ? `http://192.168.15.26:8082${user.profile_photo_path}`
+                                                : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome)}&background=random`
+                                            }
+                                            alt={user.nome}
+                                            className="avatar"
+                                        />
+                                        <div className={`status-indicator ${isOnline ? 'status-online' : 'status-offline'}`}></div>
+                                    </div>
+                                    <div className="conversation-info">
+                                        <div className="conversation-header">
+                                            <h3 className="conversation-name">{user.nome}</h3>
+                                            {conversation && (
+                                                <span className="conversation-time">
+                                                    {formatTime(conversation.lastMessageTime)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="conversation-footer">
+                                            <p className="conversation-message">
+                                                {conversation?.lastMessage || user.cargo || (isOnline ? 'Online' : 'Offline')}
+                                            </p>
+                                            {conversation && conversation.unreadCount > 0 && (
+                                                <span className="unread-badge">
+                                                    {conversation.unreadCount}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
             {/* Main Chat Area */}
             <div className="chat-main">
                 {selectedConversation ? (
                     <>
-                        {/* Chat Header Aprimorado */}
-                        <EnhancedChatHeader />
+                        {/* Chat Header */}
+                        <div className="chat-header">
+                            <div className="chat-header-left">
+                                <button
+                                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                                    className="menu-button"
+                                >
+                                    <Menu />
+                                </button>
+                                <div className="avatar-container">
+                                    <img
+                                        src={selectedConversation.avatar}
+                                        alt={selectedConversation.name}
+                                        className="chat-header-avatar"
+                                    />
+                                    {selectedConversation.members.length === 2 && (
+                                        <div className={`status-indicator ${
+                                            (() => {
+                                                const otherMember = selectedConversation.members.find(m => m.id !== currentUserId);
+                                                if (!otherMember) return 'status-offline';
+                                                // Considerar online se estiver conectado via WebSocket OU se o status no banco for true
+                                                const isOnline = onlineUsers.has(otherMember.id) || (otherMember.logado === true);
+                                                return isOnline ? 'status-online' : 'status-offline';
+                                            })()
+                                        }`}></div>
+                                    )}
+                                </div>
+                                <div className="chat-header-info">
+                                    <h2>{selectedConversation.name}</h2>
+                                    <p>
+                                        {selectedConversation.members.length === 2 
+                                            ? (() => {
+                                                const otherMember = selectedConversation.members.find(m => m.id !== currentUserId);
+                                                if (!otherMember) return 'Offline';
+                                                // Considerar online se estiver conectado via WebSocket OU se o status no banco for true
+                                                const isOnline = onlineUsers.has(otherMember.id) || (otherMember.logado === true);
+                                                return isOnline ? 'Online' : 'Offline';
+                                            })()
+                                            : `${selectedConversation.members.length} membros`
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="chat-header-actions">
+                                <button className="action-button"><Search /></button>
+                                <button className="action-button"><Phone /></button>
+                                <button className="action-button"><Video /></button>
+                                <button className="action-button"><MoreVertical /></button>
+                            </div>
+                        </div>
 
                         {/* Messages Area */}
-                        <MessagesArea
-                            messages={messages}
-                            currentUserId={currentUserId}
-                            isDragging={isDragging}
+                        <div 
+                            className={`messages-area ${isDragging ? 'dragging' : ''}`}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
-                            onOpenImageViewer={openImageViewer}
-                            onOpenPdfViewer={openPdfViewer}
-                            onDownloadFile={downloadFile}
-                            formatMessageTime={formatMessageTime}
-                            formatReadTime={formatReadTime}
-                            formatFileSize={formatFileSize}
-                            getFileIcon={getFileIcon}
-                        />
-
-                        {/* Indicador de Digitação */}
-                        <TypingIndicator 
-                            typingText={getTypingText()}
-                            isVisible={isSomeoneTypingInCurrentChat()}
-                        />
+                        >
+                            {isDragging && (
+                                <div className="drag-overlay">
+                                    <div className="drag-message">
+                                        <Paperclip size={48} />
+                                        <p>Solte os arquivos aqui para enviar</p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {messages.map((message) => (
+                                <div
+                                    key={message.id}
+                                    className={`message-container ${message.user_id === currentUserId ? 'user' : 'other'}`}
+                                >
+                                    <div className={`message ${message.user_id === currentUserId ? 'user' : 'other'}`}>
+                                        {message.user_id !== currentUserId && (
+                                            <div className="message-sender">{message.user_name}</div>
+                                        )}
+                                        
+                                        {message.arquivo && message.arquivo_tipo?.startsWith('image/') && message.arquivo_url ? (
+                                            <div className="message-image">
+                                                <img 
+                                                    src={message.arquivo_url} 
+                                                    alt={message.arquivo_nome}
+                                                    className="message-image-content"
+                                                    onClick={() => openImageViewer(message.arquivo_url!, message.arquivo_nome || 'Imagem')}
+                                                    style={{ cursor: 'pointer' }}
+                                                />
+                                                <div className="message-image-info">
+                                                    <span>{message.arquivo_nome}</span>
+                                                    <span>{message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}</span>
+                                                </div>
+                                                <div className="message-image-actions">
+                                                    <button 
+                                                        className="image-action-button"
+                                                        onClick={() => openImageViewer(message.arquivo_url!, message.arquivo_nome || 'Imagem')}
+                                                        title="Ver em tela cheia"
+                                                    >
+                                                        <ZoomIn size={16} />
+                                                    </button>
+                                                    <button 
+                                                        className="image-action-button"
+                                                        onClick={() => downloadFile(message.arquivo_url!, message.arquivo_nome || 'imagem')}
+                                                        title="Baixar arquivo"
+                                                    >
+                                                        <Download size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : message.arquivo ? (
+                                            <div className="message-file">
+                                                <div className="message-file-icon">
+                                                    {getFileIcon(message.arquivo_nome || '')}
+                                                </div>
+                                                <div className="message-file-info">
+                                                    <span className="file-name">{message.arquivo_nome}</span>
+                                                    <span className="file-size">
+                                                        {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}
+                                                    </span>
+                                                </div>
+                                                <div className="message-file-actions">
+                                                    {message.arquivo_tipo === 'application/pdf' && message.arquivo_url && (
+                                                        <button 
+                                                            className="file-action-button"
+                                                            onClick={() => openPdfViewer(message.arquivo_url!, message.arquivo_nome || 'PDF')}
+                                                            title="Visualizar PDF"
+                                                        >
+                                                            <Search size={16} />
+                                                        </button>
+                                                    )}
+                                                    <button 
+                                                        className="file-action-button"
+                                                        onClick={() => downloadFile(message.arquivo_url!, message.arquivo_nome || 'arquivo')}
+                                                        title="Baixar arquivo"
+                                                    >
+                                                        <Download size={16} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="message-text">{message.content}</p>
+                                        )}
+                                        
+                                        <div className={`message-footer ${message.user_id === currentUserId ? 'user' : 'other'}`}>
+                                            <span className="message-time">{formatMessageTime(message.timestamp)}</span>
+                                            {message.user_id === currentUserId && (
+                                                <div className="status-checkmarks">
+                                                    {message.visualizado ? (
+                                                        <CheckCheck size={16} color="#3b82f6" />
+                                                    ) : (
+                                                        <Check size={16} color="#6b7280" />
+                                                    )}
+                                                </div>
+                                            )}
+                                            {message.user_id === currentUserId && message.visualizado_hora && (
+                                                <span className="read-time">
+                                                    Lido às {formatReadTime(message.visualizado_hora)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
 
                         {/* File Preview */}
-                        <FilePreview
-                            showFilePreview={showFilePreview}
-                            selectedFiles={selectedFiles}
-                            onRemoveFile={removeFile}
-                            onClosePreview={clearFiles}
-                            isUploading={isUploading}
-                            formatFileSize={formatFileSize}
-                            getFileIcon={getFileIcon}
-                        />
+                        {showFilePreview && selectedFiles.length > 0 && (
+                            <div className="file-preview-container">
+                                <div className="file-preview-header">
+                                    <span>Arquivos selecionados ({selectedFiles.length})</span>
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedFiles([]);
+                                            setShowFilePreview(false);
+                                        }}
+                                        className="close-preview-button"
+                                        disabled={isUploading}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                <div className="file-preview-list">
+                                    {selectedFiles.map((fileUpload, index) => (
+                                        <div key={index} className="file-preview-item">
+                                            {fileUpload.type === 'image' && fileUpload.preview ? (
+                                                <img 
+                                                    src={fileUpload.preview} 
+                                                    alt={fileUpload.file.name}
+                                                    className="file-preview-image"
+                                                />
+                                            ) : (
+                                                <div className="file-preview-document">
+                                                    {getFileIcon(fileUpload.file.name)}
+                                                </div>
+                                            )}
+                                            <div className="file-preview-info">
+                                                <span className="file-preview-name">{fileUpload.file.name}</span>
+                                                <span className="file-preview-size">{formatFileSize(fileUpload.file.size)}</span>
+                                                {fileUpload.uploading && (
+                                                    <div className="upload-progress">
+                                                        <div className="progress-bar">
+                                                            <div 
+                                                                className="progress-fill" 
+                                                                style={{ width: `${fileUpload.uploadProgress || 0}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="progress-text">{fileUpload.uploadProgress || 0}%</span>
+                                                    </div>
+                                                )}
+                                                {fileUpload.error && (
+                                                    <div className="upload-error">
+                                                        <AlertCircle size={14} />
+                                                        <span>{fileUpload.error}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {!fileUpload.uploading && (
+                                                <button 
+                                                    onClick={() => removeFile(index)}
+                                                    className="remove-file-button"
+                                                    disabled={isUploading}
+                                                >
+                                                    <X size={16} />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Input Area */}
-                        <InputArea
-                            newMessage={newMessage}
-                            setNewMessage={handleMessageInputChange}
-                            onSendMessage={handleSendMessage}
-                            onFileSelect={handleFileSelect}
-                            isUploading={isUploading}
-                            selectedFilesCount={selectedFiles.length}
-                            isTyping={isCurrentUserTyping}
-                        />
+                        <div className="input-area">
+                            <div className="input-container">
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    multiple
+                                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
+                                    onChange={handleFileSelect}
+                                    style={{ display: 'none' }}
+                                />
+                                <button 
+                                    className="attachment-button"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                >
+                                    {isUploading ? <Upload className="animate-pulse" /> : <Paperclip />}
+                                </button>
+                                <div className="input-wrapper">
+                                    <input
+                                        type="text"
+                                        value={newMessage}
+                                        onChange={(e) => setNewMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendMessage();
+                                            }
+                                        }}
+                                        placeholder="Digite sua mensagem..."
+                                        className="message-input"
+                                        disabled={isUploading}
+                                    />
+                                    <button className="emoji-button" disabled={isUploading}>
+                                        <Smile />
+                                    </button>
+                                </div>
+                                <button
+                                    onClick={handleSendMessage}
+                                    disabled={(!newMessage.trim() && selectedFiles.length === 0) || isUploading}
+                                    className="send-button"
+                                >
+                                    {isUploading ? <Upload className="animate-pulse" /> : <Send />}
+                                </button>
+                            </div>
+                        </div>
                     </>
                 ) : (
                     <div className="no-conversation-selected">
@@ -601,39 +1394,82 @@ export const ChatContainer: React.FC = () => {
                 )}
             </div>
 
-            {/* Lista de Usuários Online */}
-            <OnlineUsersList
-                users={getCurrentChatOnlineUsers()}
-                currentUserId={currentUserId}
-                isVisible={showOnlineUsersList}
-                onClose={() => setShowOnlineUsersList(false)}
-            />
-
             {/* Visualizador de Imagens */}
-            <ImageViewer
-                isOpen={imageViewerOpen}
-                imageUrl={currentImageUrl}
-                imageName={currentImageName}
-                zoom={imageZoom}
-                rotation={imageRotation}
-                onClose={closeImageViewer}
-                onZoomIn={zoomIn}
-                onZoomOut={zoomOut}
-                onRotate={rotateImage}
-                onReset={resetImageView}
-                onDownload={downloadFile}
-            />
+            {imageViewerOpen && (
+                <div className="image-viewer-overlay" onClick={closeImageViewer}>
+                    <div className="image-viewer-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="image-viewer-header">
+                            <h3 className="image-viewer-title">{currentImageName}</h3>
+                            <div className="image-viewer-controls">
+                                <button onClick={zoomOut} className="viewer-control-button" title="Diminuir zoom">
+                                    <ZoomOut size={20} />
+                                </button>
+                                <span className="zoom-level">{Math.round(imageZoom * 100)}%</span>
+                                <button onClick={zoomIn} className="viewer-control-button" title="Aumentar zoom">
+                                    <ZoomIn size={20} />
+                                </button>
+                                <button onClick={rotateImage} className="viewer-control-button" title="Girar">
+                                    <RotateCw size={20} />
+                                </button>
+                                <button onClick={resetImageView} className="viewer-control-button" title="Resetar">
+                                    Resetar
+                                </button>
+                                <button 
+                                    onClick={() => downloadFile(currentImageUrl, currentImageName)} 
+                                    className="viewer-control-button" 
+                                    title="Baixar"
+                                >
+                                    <Download size={20} />
+                                </button>
+                                <button onClick={closeImageViewer} className="viewer-close-button" title="Fechar">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="image-viewer-content">
+                            <img
+                                src={currentImageUrl}
+                                alt={currentImageName}
+                                className="image-viewer-image"
+                                style={{
+                                    transform: `scale(${imageZoom}) rotate(${imageRotation}deg)`,
+                                    transition: 'transform 0.3s ease'
+                                }}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Visualizador de PDF */}
-            <PdfViewer
-                isOpen={pdfViewerOpen}
-                pdfUrl={currentPdfUrl}
-                pdfName={currentPdfName}
-                onClose={closePdfViewer}
-                onDownload={downloadFile}
-            />
-
-      
+            {pdfViewerOpen && (
+                <div className="pdf-viewer-overlay" onClick={closePdfViewer}>
+                    <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
+                        <div className="pdf-viewer-header">
+                            <h3 className="pdf-viewer-title">{currentPdfName}</h3>
+                            <div className="pdf-viewer-controls">
+                                <button 
+                                    onClick={() => downloadFile(currentPdfUrl, currentPdfName)} 
+                                    className="viewer-control-button" 
+                                    title="Baixar"
+                                >
+                                    <Download size={20} />
+                                </button>
+                                <button onClick={closePdfViewer} className="viewer-close-button" title="Fechar">
+                                    <X size={24} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="pdf-viewer-content">
+                            <iframe
+                                src={currentPdfUrl}
+                                className="pdf-viewer-iframe"
+                                title={currentPdfName}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
