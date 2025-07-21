@@ -10,7 +10,9 @@ import { Financeiro } from '../view/Financeiro';
 import { Frota } from '../view/Frota';
 import { Qualidade } from '../view/Qualidade';
 import { CadastrarClientes } from '../view/geral/CadastrarCliente';
+import { VisualizarClientes } from '../view/geral/VisualizarCliente';
 import { ChatContainer } from '../components/chat/ChatContainer';
+import { GerenciarCategoria } from '../view/geral/GerenciarCategoria';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -33,7 +35,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 // No layout for this route
   
   'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false }, // No layout for this route
-  'cadastrar-categoria': { component: <Inicio />, hasLayout: false }, // Example, keep layout
+  'visualizar-clientes': { component: <VisualizarClientes />, hasLayout: false },
+  'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false }, // Example, keep layout
   'cadastro-usuario-portal': { component: <Inicio />, hasLayout: false },
   'cadastrar-setor-usuario': { component: <Inicio />, hasLayout: false },
   'cadastrar-consultor': { component: <Inicio />, hasLayout: false },

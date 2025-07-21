@@ -66,7 +66,7 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     'administracao': FaUserCog,
     'cadastrar-clientes': FaUsers,
     'visualizar-cliente': FaUsers,
-    'cadastrar-categoria': FaUsers,
+    'gerenciar-categoria': FaUsers,
     'cadastro-usuario-portal': FaUsers,
     'cadastrar-setor-usuario': FaUsers,
     'cadastrar-consultor': FaUsers,

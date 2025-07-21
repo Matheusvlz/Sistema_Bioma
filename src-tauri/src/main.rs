@@ -38,6 +38,8 @@ use controller::chat::chat_controller::{
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 
+use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
+
 fn main() {
     dotenvy::dotenv().ok();
 
@@ -87,7 +89,10 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            // Funções do Chat
+            buscar_categorias_cadastro,
+            criar_categoria,
+            editar_categoria,
+            excluir_categoria,
             get_users,
             create_chat,
             get_user_chats,

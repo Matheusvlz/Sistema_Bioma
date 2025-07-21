@@ -2,9 +2,10 @@ import { useState } from 'react';
 
 interface ModalState {
   isOpen: boolean;
-  type: 'success' | 'error' | 'warning';
+  type: 'success' | 'error' | 'warning' | 'confirm';
   title: string;
   message: string;
+  onConfirm?: () => void;
 }
 
 export const useModal = () => {
@@ -24,8 +25,12 @@ export const useModal = () => {
   };
 
   const showWarning = (title: string, message: string) => {
-    setModal({ isOpen: true, type: 'warning', title, message});
-  }
+    setModal({ isOpen: true, type: 'warning', title, message });
+  };
+
+  const showConfirm = (title: string, message: string, onConfirm?: () => void) => {
+    setModal({ isOpen: true, type: 'confirm', title, message, onConfirm })
+  };
 
   const closeModal = () => {
     setModal(prev => ({ ...prev, isOpen: false }));
@@ -36,6 +41,7 @@ export const useModal = () => {
     showSuccess,
     showError,
     showWarning,
+    showConfirm,
     closeModal
   };
 };

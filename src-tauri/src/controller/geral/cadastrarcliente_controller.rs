@@ -154,9 +154,12 @@ pub async fn setor_portal() -> GeralResponse {
 #[command]
 pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/salvar_cliente", url);
     println!("Dados recebidos em salvar_cliente_api: {:#?}", dados);
+    
     let res = client
-        .post("http://192.168.15.26:8082/salvar_cliente")
+        .post(&full_url)
         .json(&dados)
         .send()
         .await;
@@ -189,9 +192,12 @@ pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
 #[command]
 pub async fn editar_cliente(dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/editar_cliente", url);
     println!("Dados recebidos em editar_cliente_api: {:#?}", dados);
+
     let res = client
-        .post("http://192.168.15.26:8082/editar_cliente")
+        .post(&full_url)
         .json(&dados)
         .send()
         .await;
@@ -224,13 +230,15 @@ pub async fn editar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
 #[command]
 pub async fn get_cliente_data(client_id: u32) -> GeralResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/cadastrar-cliente", url);
     let request_data = serde_json::json!({
         "client_id": client_id,
         "consulta_tipo": "cliente_data"
     });
 
     let res = match client
-        .post("http://192.168.15.26:8082/cadastrar-cliente")
+        .post(&full_url)
         .json(&request_data)
         .send()
         .await
@@ -281,10 +289,12 @@ pub async fn get_cliente_data(client_id: u32) -> GeralResponse {
 
 async fn consulta_geral(consulta_tipo: String) -> GeralResponse {
     let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/cadastrar-cliente", url);
     let request_data = GeralRequest { consulta_tipo };
 
     let res = match client
-        .post("http://192.168.15.26:8082/cadastrar-cliente")
+        .post(&full_url)
         .json(&request_data)
         .send()
         .await

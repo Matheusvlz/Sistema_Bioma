@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
+import styles from './css/SelectGeral.module.css';
 
 interface CustomSelectProps {
   value: string;
@@ -9,7 +10,7 @@ interface CustomSelectProps {
   id: string;
 }
 
-const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, placeholder, id }) => {
+const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, placeholder }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
@@ -27,22 +28,30 @@ const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, p
   const selectedOption = options.find(opt => opt.value === value);
 
   return (
-    <div className="custom-select" ref={selectRef}>
-      <div className={`select-trigger ${isOpen ? 'open' : ''}`} onClick={() => setIsOpen(!isOpen)}>
-        <span className={selectedOption ? 'selected' : 'placeholder'}>
-          {selectedOption ? selectedOption.label : placeholder}
+    <div className={styles["custom-select"]} ref={selectRef}>
+    <div className={`${styles["select-trigger"]} ${isOpen ? `${styles["open"]}` : ''}`} onClick={() => setIsOpen(!isOpen)}>
+        <span className={selectedOption ? `${styles["selected"]}` : `${styles["placeholder"]}`}>
+          {selectedOption ? selectedOption.label : placeholder || 'Selecione'}
         </span>
-        <FaChevronDown className="select-arrow" />
+        <FaChevronDown className={styles["select-arrow"]} />
       </div>
       {isOpen && (
-        <div className="select-dropdown">
-          <div className="select-option placeholder" onClick={() => { onChange(''); setIsOpen(false); }}>
-            {placeholder}
-          </div>
+        <div className={styles["select-dropdown"]}>
+          {placeholder && (
+            <div
+              className={`${styles["select-option"]} ${styles["placeholder"]}`}
+              onClick={() => {
+                onChange('');
+                setIsOpen(false);
+              }}
+            >
+              {placeholder}
+            </div>
+          )}
           {options.map(option => (
             <div
               key={option.value}
-              className={`select-option ${value === option.value ? 'selected' : ''}`}
+              className={`${styles["select-option"]} ${value === option.value ? `${styles["selected"]} `: ''}`}
               onClick={() => { onChange(option.value); setIsOpen(false); }}
             >
               {option.label}
@@ -107,6 +116,33 @@ export const ConsultorSelect: React.FC<{
       onChange={(val) => onChange(val ? Number(val) : null)}
       options={options}
       placeholder="Selecione um consultor..."
+    />
+  );
+};
+
+export const YearSelect: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  id: string;
+}> = ({ value, onChange, id }) => {
+  const yearOptions = [];
+
+  const currentYear = new Date().getFullYear();
+  const startYear = currentYear - 100;
+
+  for (let year = currentYear; year >= startYear; year--) {
+    yearOptions.push({
+      value: String(year),
+      label: String(year),
+    });
+  }
+
+  return (
+    <CustomSelect
+      id={id}
+      value={value}
+      onChange={onChange}
+      options={yearOptions}
     />
   );
 };

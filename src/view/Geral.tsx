@@ -1,11 +1,10 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Layout } from '../components/Layout';
 import { core } from "@tauri-apps/api";
 import { useRouter } from '../routes/Router';
 import { FaUsers, FaTruck, FaFileAlt, FaGlobe, FaBuilding, FaHandshake, FaWallet, FaSpinner, FaSync } from 'react-icons/fa';
 import { MdOutlineUnpublished, MdOutlinePlaylistAddCheck } from 'react-icons/md';
 import { WindowManager } from '../hooks/WindowManager';
-import './css/Geral.css';
+import styles from './css/Geral.module.css';
 
 interface CardProps {
   title: string;
@@ -98,7 +97,7 @@ const Card: React.FC<CardProps & { onSubtitleClick?: (index: number) => void }> 
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isClickable = onClick ? true : false;
-  const colorClass = textColor === '#111827' ? 'text-dark' : 'text-light';
+  const colorClass = textColor === '#111827' ? `${styles["text-dark"]}` : `${styles["text-light"]}`;
 
   const handleMouseEnter = () => {
     if (subtitles && subtitles.length > 0) {
@@ -117,29 +116,29 @@ const Card: React.FC<CardProps & { onSubtitleClick?: (index: number) => void }> 
 
   return (
     <div
-      className={`card-base ${isClickable ? 'card-clickable' : ''} ${colorClass} ${isExpanded ? 'expanded' : ''}`}
+      className={`${styles["card-base"]} ${isClickable ? `${styles["card-clickable"]}` : ''} ${colorClass} ${isExpanded ? `${styles["expanded"]}` : ''}`}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{ background: bgColor, color: textColor }}
     >
-      <div className="card-icon">
-        {loading ? <FaSpinner className="spin" /> : icon}
+      <div className={styles["card-icon"]}>
+        {loading ? <FaSpinner className={styles["spin"]} /> : icon}
       </div>
-      <h3 className="card-title">{title}</h3>
+      <h3 className={styles["card-title"]}>{title}</h3>
       {subtitles && (
-        <div className="card-subtitles-container">
+        <div className={styles["card-subtitles-container"]}>
           {subtitles.map((sub, index) => (
             <React.Fragment key={index}>
               <span
-                className="card-subtitle-item subtitle-clickable"
+                className={`${styles["card-subtitle-item"]} ${styles["subtitle-clickable"]}`}
                 onClick={(e) => handleSubtitleClick(e, index)}
                 style={{ cursor: 'pointer' }}
               >
                 {sub}
               </span>
               {index < subtitles.length - 1 && (
-                <span className="card-subtitle-separator" style={{ background: textColor }}></span>
+                <span className={styles["card-subtitle-separator"]} style={{ background: textColor }}></span>
               )}
             </React.Fragment>
           ))}
@@ -190,38 +189,38 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay modal-fade-in" onClick={handleOverlayClick}>
-      <div className="modal-content2" onClick={handleContentClick}>
-        <button onClick={onClose} className="modal-close-button" aria-label="Fechar Modal">&times;</button>
-        <h2 className="modal-title">{title}</h2>
-        <ul className="modal-list">
+    <div className={`${styles["modal-overlay"]} ${styles["modal-fade-in"]}`} onClick={handleOverlayClick}>
+      <div className={styles["modal-content2"]} onClick={handleContentClick}>
+        <button onClick={onClose} className={styles["modal-close-button"]} aria-label="Fechar Modal">&times;</button>
+        <h2 className={styles["modal-title"]}>{title}</h2>
+        <ul className={styles["modal-list"]}>
           {isAmostraModal ? (
             (content as GroupedAmostra[]).map((group, groupIndex) => (
-              <li key={`group-${groupIndex}`} className="modal-list-item modal-item-card">
-                <div className="modal-item-content">
-                  <div className="modal-date-header">{group.date}</div>
+              <li key={`group-${groupIndex}`} className={`${styles["modal-list-item"]} ${styles["modal-item-card"]}`}>
+                <div className={styles["modal-item-content"]}>
+                  <div className={styles["modal-date-header"]}>{group.date}</div>
                   {group.samples.map((amostra, sampleIndex) => (
-                    <div key={`sample-${sampleIndex}`} className="modal-item-row">
-                      <span className="modal-label">Identificação:</span>
-                      <span className="modal-item-text">{amostra.identificacao || 'N/A'}</span>
-                      <span className="modal-identificacao">{amostra.horacoleta ? `(${amostra.horacoleta})` : ''}</span>
+                    <div key={`sample-${sampleIndex}`} className={styles["modal-item-row"]}>
+                      <span className={styles["modal-label"]}>Identificação:</span>
+                      <span className={styles["modal-item-text"]}>{amostra.identificacao || 'N/A'}</span>
+                      <span className={styles["modal-identificacao"]}>{amostra.horacoleta ? `(${amostra.horacoleta})` : ''}</span>
                     </div>
                   ))}
                 </div>
-                <button className="modal-button" onClick={() => handleItemClick(group)}>
+                <button className={styles["modal-button"]} onClick={() => handleItemClick(group)}>
                   Abrir
                 </button>
               </li>
             ))
           ) : (
             (content as string[]).map((item, index) => (
-              <li key={`item-${index}`} className="modal-list-item modal-item-card">
-                <div className="modal-item-content">
+              <li key={`item-${index}`} className={`${styles["modal-list-item"]} ${styles["modal-item-card"]}`}>
+                <div className={styles["modal-item-content"]}>
                   {item.split('\n').map((line, lineIndex) => (
-                    <p key={`line-${lineIndex}`} className="modal-item-text">{line}</p>
+                    <p key={`line-${lineIndex}`} className={styles["modal-item-text"]}>{line}</p>
                   ))}
                 </div>
-                <button className="modal-button" onClick={() => handleItemClick(item, index)}>
+                <button className={styles["modal-button"]} onClick={() => handleItemClick(item, index)}>
                   Abrir
                 </button>
               </li>
@@ -256,10 +255,10 @@ const ClienteModal: React.FC<ClienteModalProps> = React.memo(({ isOpen, onClose,
   if (!isOpen || !cliente) return null;
 
   return (
-    <div className="modal-overlay modal-fade-in" onClick={handleOverlayClick}>
-      <div className="modal-content2" onClick={handleContentClick} style={{ maxWidth: '500px' }}>
-        <button onClick={onClose} className="modal-close-button" aria-label="Fechar Modal">&times;</button>
-        <h2 className="modal-title">Cliente Não Cadastrado</h2>
+    <div className={`${styles["modal-overlay"]} ${styles["modal-fade-in"]}`} onClick={handleOverlayClick}>
+      <div className={styles["modal-content2"]} onClick={handleContentClick} style={{ maxWidth: '500px' }}>
+        <button onClick={onClose} className={styles["modal-close-button"]} aria-label="Fechar Modal">&times;</button>
+        <h2 className={styles["modal-title"]}>Cliente Não Cadastrado</h2>
 
         <div style={{ padding: '20px 0' }}>
           <p><strong>Nome:</strong> {cliente.nome_cliente || 'Não informado'}</p>
@@ -270,21 +269,21 @@ const ClienteModal: React.FC<ClienteModalProps> = React.memo(({ isOpen, onClose,
 
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
           <button
-            className="modal-button"
+            className={styles["modal-button"]}
             onClick={() => onNovoCadastro(cliente)}
             style={{ backgroundColor: '#10B981', color: 'white' }}
           >
             Novo Cadastro
           </button>
           <button
-            className="modal-button"
+            className={styles["modal-button"]}
             onClick={onCadastroExistente}
             style={{ backgroundColor: '#3B82F6', color: 'white' }}
           >
             Cadastro Existente
           </button>
           <button
-            className="modal-button"
+            className={styles["modal-button"]}
             onClick={onClose}
             style={{ backgroundColor: '#6B7280', color: 'white' }}
           >
@@ -326,7 +325,7 @@ export const Geral: React.FC = () => {
 
   const subtitleRoutes = {
     clientes: [
-      'cadastrar-clientes', 'visualizar-cliente', 'cadastrar-categoria',
+      'cadastrar-clientes', 'visualizar-clientes', 'gerenciar-categoria',
       'cadastro-usuario-portal', 'cadastrar-setor-usuario', 'cadastrar-consultor',
       'cadastrar-laboratorio-terceirizado'
     ],
@@ -346,28 +345,27 @@ export const Geral: React.FC = () => {
   const handleSubtitleNavigation = async (category: keyof typeof subtitleRoutes, index: number) => {
     const route = subtitleRoutes[category][index];
     if (route) {
-      // Se for uma rota de cliente, abre em nova janela
       if (category === 'clientes') {
         try {
           switch (route) {
             case 'cadastrar-clientes':
               await WindowManager.openCadastroClientes();
               break;
-            case 'visualizar-cliente':
+            case 'visualizar-clientes':
               await WindowManager.openVisualizarCliente();
               break;
+            case 'gerenciar-categoria':
+              await WindowManager.openCadastrarCategoria();
+              break;
             default:
-              // Para outras rotas de clientes, usa navegação normal por enquanto
               navigate(route as any);
               break;
           }
         } catch (error) {
           console.error('Erro ao abrir janela:', error);
-          // Fallback para navegação normal
           navigate(route as any);
         }
       } else {
-        // Para outras categorias, usa navegação normal
         navigate(route as any);
       }
     }
@@ -510,7 +508,6 @@ export const Geral: React.FC = () => {
 
   const handleNovoCadastro = useCallback(async (cliente: ClienteDetalhes) => {
     try {
-      // Prepara os dados do cliente para passar para a nova janela
       const clienteData = {
         id: cliente.id,
         nome_cliente: cliente.nome_cliente,
@@ -520,13 +517,10 @@ export const Geral: React.FC = () => {
         origem: cliente.origem
       };
 
-      // Abre o cadastro de clientes em uma nova janela
       await WindowManager.openCadastroClientes(clienteData);
-      
       closeClienteModal();
     } catch (error) {
       console.error('Erro ao abrir janela de cadastro:', error);
-      // Fallback para navegação normal se houver erro
       navigate('cadastrar-clientes' as any);
       localStorage.setItem('clientePreenchimento', JSON.stringify(cliente));
       closeClienteModal();
@@ -535,13 +529,11 @@ export const Geral: React.FC = () => {
 
   const handleCadastroExistente = useCallback(async () => {
     try {
-      // Abre a visualização de cliente em uma nova janela
       await WindowManager.openVisualizarCliente();
       closeClienteModal();
     } catch (error) {
       console.error('Erro ao abrir janela de visualização:', error);
-      // Fallback para navegação normal se houver erro
-      navigate('visualizar-cliente' as any);
+      navigate('visualizar-clientes' as any);
       closeClienteModal();
     }
   }, [closeClienteModal, navigate]);
@@ -649,7 +641,7 @@ export const Geral: React.FC = () => {
     {
       title: 'Clientes',
       icon: <FaUsers />,
-      subtitles: ['Cadastrar Clientes', 'Visualizar Cliente', 'Cadastrar Categoria', 'Cadastro de Usuário no Portal', 'Cadastrar Setor de Usuário', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
+      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Cadastrar Setor de Usuário', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
       category: 'clientes' as const,
     },
     {
@@ -676,25 +668,25 @@ export const Geral: React.FC = () => {
 
   return (
     <> {/* Added React Fragment here */}
-      <div className="geral-container">
-        <div className="geral-header">
+      <div className={styles["geral-container"]}>
+        <div className={styles["geral-header"]}>
 
-          <h1 className="geral-title">
+          <h1 className={styles["geral-title"]}>
             Geral {isAnyLoading && <span style={{ fontSize: '14px', color: '#666' }}>(Carregando...)</span>}
           </h1>
           {/* Botão de Reload */}
           <button
-            className="reload-button"
+            className={styles["reload-button"]}
             onClick={handleReload}
             disabled={isReloading}
             title="Recarregar dados"
           >
-            <FaSync className={`reload-icon ${isReloading ? 'spinning' : ''}`} />
+            <FaSync className={`${styles["reload-icon"]} ${isReloading ? `${styles["spinning"]}` : ''}`} />
             {isReloading ? 'Recarregando...' : 'Recarregar'}
           </button>
         </div>
 
-        <div className="top-cards-grid">
+        <div className={styles["top-cards-grid"]}>
           {topCardsData.map((card, index) => (
             <Card
               key={`top-${index}`}
@@ -707,7 +699,7 @@ export const Geral: React.FC = () => {
           ))}
         </div>
 
-        <div className="bottom-cards-container">
+        <div className={styles["bottom-cards-container"]}>
           {bottomCardsData.map((card, index) => (
             <Card
               key={`bottom-${index}`}
