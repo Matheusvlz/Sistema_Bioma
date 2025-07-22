@@ -357,6 +357,9 @@ export const Geral: React.FC = () => {
             case 'gerenciar-categoria':
               await WindowManager.openCadastrarCategoria();
               break;
+            case 'cadastro-usuario-portal':
+              await WindowManager.openUsuarioPortal();
+              break;
             default:
               navigate(route as any);
               break;

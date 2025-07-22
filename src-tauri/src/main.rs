@@ -4,24 +4,31 @@ mod controller;
 mod model;
 mod socket_listener;
 
-use controller::geral::cadastrarcliente_controller::{
-    cliente_categoria, consultor, editar_cliente, get_cliente_data, salvar_cliente, setor_portal,
+//COMPONENTES
+use controller::components::search_controller::{
+    buscar_clientes_dropdown, buscar_clientes_filtros, buscar_usuarios_dropdown
 };
+
+//GERAL
 use controller::geral_controller::{
-    buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas,
-    buscar_coletas_portal, buscar_solicitacoes_usuarios,
+    buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas, buscar_coletas_portal, buscar_solicitacoes_usuarios
 };
+use controller::geral::cadastrarcliente_controller::{
+    cliente_categoria, consultor, editar_cliente, get_cliente_data, salvar_cliente, setor_portal
+};
+use controller::geral::visualizarcliente_controller::{
+    buscar_categorias, buscar_consultores
+};
+use controller::geral::categoria_controller::{
+    buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
+};
+use controller::geral::usuarioportal_controller::{
+    buscar_clientes_usuario, buscar_setores_portal
+};
+
 use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
-
-//use controller::geral::visualizarcliente_controller::{buscar_categorias, buscar_consultores};
-
-use controller::components::search_controller::{
-    buscar_clientes_dropdown, buscar_clientes_filtros,
-};
-
-
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::settings_controller::update_user_settings;
 use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
@@ -38,7 +45,6 @@ use controller::chat::chat_controller::{
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 
-use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
 
 fn main() {
     dotenvy::dotenv().ok();
@@ -63,24 +69,37 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            //SearchLayout
+            buscar_clientes_filtros,
+            buscar_clientes_dropdown,
+            buscar_usuarios_dropdown, 
+
+            //GERAL
+            buscar_clientes_sem_cadastro,//Geral
+            buscar_amostras_pre_cadastradas,//Geral
+            buscar_coletas,//Geral
+            buscar_solicitacoes_usuarios,//Geral
+            buscar_coletas_portal,//Geral
+            cliente_categoria,//Cadastrar Clientes
+            consultor,//Cadastrar Clientes
+            setor_portal,//Cadastrar Clientes
+            salvar_cliente,//Cadastrar Clientes
+            editar_cliente,//Cadastrar Clientes
+            get_cliente_data,//Cadastrar Clientes
+            buscar_categorias,//Visualizar Clientes
+            buscar_consultores,//Visualizar Clientes
+            buscar_categorias_cadastro,//Gerenciar Categorias
+            criar_categoria,//Gerenciar Categorias
+            editar_categoria,//Gerenciar Categorias
+            excluir_categoria,//Gerenciar Categorias
+            buscar_clientes_usuario,
+            buscar_setores_portal,
+
             fazer_login,
-            buscar_clientes_sem_cadastro,
-            buscar_amostras_pre_cadastradas,
-            buscar_coletas,
-            buscar_solicitacoes_usuarios,
-            buscar_coletas_portal,
             usuario_logado,
             verificar_autenticacao,
-            cliente_categoria,
-            consultor,
-            setor_portal,
-            salvar_cliente,
             get_data_inicio,
             get_data_for_screen,
-            editar_cliente,
-            get_cliente_data,
-            buscar_clientes_filtros,  //SearchLayout
-            buscar_clientes_dropdown, //SearchLayout
             update_user_settings,
             salvar_ticket,
             send_ws_message,
@@ -89,10 +108,6 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            buscar_categorias_cadastro,
-            criar_categoria,
-            editar_categoria,
-            excluir_categoria,
             get_users,
             create_chat,
             get_user_chats,
@@ -101,7 +116,6 @@ fn main() {
             create_direct_chat,
             send_file_message,
             download_file_to_downloads
-    
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

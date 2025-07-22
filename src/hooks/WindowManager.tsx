@@ -181,6 +181,17 @@ export class WindowManager {
     }
   }
 
+  static async openUsuarioPortal(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastro-usuario-portal',
+      title: 'Gerenciar Usuários do Portal',
+      url: '/#/cadastro-usuario-portal',
+      width: 900,
+      height: 700,
+      allowMultiple: true
+    });
+  }
+
   static async openChat(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'chat',

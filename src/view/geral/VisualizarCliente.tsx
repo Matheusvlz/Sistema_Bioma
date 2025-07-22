@@ -83,7 +83,6 @@ export const VisualizarClientes: React.FC = () => {
   });
   const [currentFilters, setCurrentFilters] = useState<SearchFilters>({});
 
-  // Campos disponíveis para busca avançada
   const searchFields = [
     { name: 'fantasia', label: 'Fantasia', type: 'text' as const },
     { name: 'razao', label: 'Razão Social', type: 'text' as const },
@@ -138,15 +137,14 @@ export const VisualizarClientes: React.FC = () => {
     }
   ];
 
-  // Configuração do dropdown de busca
   const dropdownSearchConfig = {
     enabled: true,
+    type: 'cliente' as const,
     placeholder: "Buscar por fantasia, razão social ou documento...",
     onSearch: buscarClientesDropdown,
     onSelect: handleClienteSelect
   };
 
-  // Carregar clientes iniciais
   useEffect(() => {
     buscarClientes({}, 1);
     carregarCategorias();
@@ -175,7 +173,6 @@ export const VisualizarClientes: React.FC = () => {
     }
   };
 
-  // Buscar clientes com filtros e paginação
   const buscarClientes = async (filters: SearchFilters, page: number = 1) => {
     setLoading(true);
     try {
@@ -206,7 +203,6 @@ export const VisualizarClientes: React.FC = () => {
     }
   };
 
-  // Busca principal para dropdown
   async function buscarClientesDropdown(query: string): Promise<Cliente[]> {
     try {
       const response: ClienteResponse = await core.invoke('buscar_clientes_dropdown', {
@@ -223,7 +219,6 @@ export const VisualizarClientes: React.FC = () => {
     }
   }
 
-  // Manipular busca avançada
   const handleAdvancedSearch = useCallback((filters: Record<string, string>) => {
     const searchFilters: SearchFilters = {};
 
@@ -236,7 +231,6 @@ export const VisualizarClientes: React.FC = () => {
     buscarClientes(searchFilters, 1);
   }, []);
 
-  // Selecionar cliente do dropdown
   function handleClienteSelect(cliente: Cliente) {
     setClientes([cliente]);
     setPagination(prev => ({
@@ -248,14 +242,12 @@ export const VisualizarClientes: React.FC = () => {
     setCurrentFilters({});
   }
 
-  // Navegação de páginas
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
       buscarClientes(currentFilters, newPage);
     }
   };
 
-  // Formatar documento
   const formatDocument = (doc: string) => {
     if (!doc) return '';
 
@@ -270,7 +262,6 @@ export const VisualizarClientes: React.FC = () => {
     return doc;
   };
 
-  // Formatar telefone
   const formatPhone = (phone: string) => {
     if (!phone) return '';
 
@@ -320,7 +311,7 @@ export const VisualizarClientes: React.FC = () => {
       <SearchLayout
         fields={searchFields}
         onSearch={handleAdvancedSearch}
-         onClear={() => { buscarClientes({}, 1) }}
+        onClear={() => { buscarClientes({}, 1) }}
         dropdownSearch={dropdownSearchConfig}
       />
 

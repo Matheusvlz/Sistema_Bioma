@@ -13,6 +13,7 @@ import { CadastrarClientes } from '../view/geral/CadastrarCliente';
 import { VisualizarClientes } from '../view/geral/VisualizarCliente';
 import { ChatContainer } from '../components/chat/ChatContainer';
 import { GerenciarCategoria } from '../view/geral/GerenciarCategoria';
+import { UsuarioPortal } from '../view/geral/UsuarioPortal';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -37,7 +38,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false }, // No layout for this route
   'visualizar-clientes': { component: <VisualizarClientes />, hasLayout: false },
   'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false }, // Example, keep layout
-  'cadastro-usuario-portal': { component: <Inicio />, hasLayout: false },
+  'cadastro-usuario-portal': { component: <UsuarioPortal />, hasLayout: false },
   'cadastrar-setor-usuario': { component: <Inicio />, hasLayout: false },
   'cadastrar-consultor': { component: <Inicio />, hasLayout: false },
   'cadastrar-laboratorio-terceirizado': { component: <Inicio />, hasLayout: false },
