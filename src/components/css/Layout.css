@@ -126,6 +126,7 @@ body.dark-mode .logo-small {
   color: #6b7280; /* Default icon color */
 }
 
+
 .header-icon-button:hover {
   background-color: #f0fdf4; /* Subtle hover background */
   transform: translateY(-2px); /* Slight lift effect */
@@ -659,6 +660,12 @@ body.dark-mode .layout-main::before {
     display: inline-block;
 }
 
+.messages-container,
+.tasks-container {
+    position: relative;
+    display: inline-block;
+}
+
 .notification-badge {
     position: absolute;
     top: -4px; /* Adjusted for better placement */
@@ -673,6 +680,22 @@ body.dark-mode .layout-main::before {
     min-width: 20px; /* Ensure circular shape for single digits */
     text-align: center;
     box-shadow: 0 0 0 2px white; /* White border around badge */
+}
+
+.messages-badge {
+    position: absolute;
+    top: -4px; /* Adjusted for better placement */
+    right: -4px; /* Adjusted for better placement */
+    background-color: #ff4d4f; /* Red badge */
+    color: white;
+    border-radius: 50%;
+    padding: 3px 7px; /* Slightly larger padding */
+    font-size: 0.7em;
+    font-weight: bold;
+    line-height: 1;
+    min-width: 20px; /* Ensure circular shape for single digits */
+    text-align: center;
+
 }
 
 body.dark-mode .notification-badge {

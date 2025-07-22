@@ -18,6 +18,7 @@ pub struct GetInicioDataPayload {
 pub struct ApiInicioResponse {
     pub pending_notifications: Vec<ApiNotification>,
     pub kanban_cards: Vec<ApiKanbanCard>,
+    pub pending_messages: Option<u32>
 }
 
 // Structure for notifications returned by your API

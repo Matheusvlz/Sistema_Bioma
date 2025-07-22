@@ -76,6 +76,7 @@ interface InicioApiResponse {
     tags: string;
     card_color?: string;
   }[];
+   pending_messages: number;
 }
 
 interface Usuario {
@@ -139,7 +140,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [showClearNotificationsConfirmModal, setShowClearNotificationsConfirmModal] = useState(false);
   const [showConfirmTaskModal, setShowConfirmTaskModal] = useState(false);
   const [taskToFinalize, setTaskToFinalize] = useState<Task | null>(null);
-
+const [messages, setMessages] = useState<number>(0); 
   // Refs and flags
   const tauriListenerRegistered = useRef(false);
   const userIdSentToWsRef = useRef(false);
@@ -182,52 +183,57 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Implement task acceptance logic here
   };
 
-  const fetchInicioData = useCallback(async () => {
-    try {
-      const fetchedData: InicioApiResponse = await invoke('get_inicio_data_from_api');
+const fetchInicioData = useCallback(async () => {
+  try {
+    const fetchedData: InicioApiResponse = await invoke('get_inicio_data_from_api');
 
-      const formattedNotifications: SavedNotification[] = fetchedData.pending_notifications.map(notif => ({
-        id: notif.id,
-        name: notif.nome,
-        description: notif.descricao,
-        icon: notif.icon,
-        type: notif.type,
-        finalizado: notif.finalizado,
-        userId: notif.user_id,
-        createdAt: notif.created_at,
-      }));
-      setSavedNotifications(formattedNotifications);
+    const formattedNotifications: SavedNotification[] = fetchedData.pending_notifications.map(notif => ({
+      id: notif.id,
+      name: notif.nome,
+      description: notif.descricao,
+      icon: notif.icon,
+      type: notif.type,
+      finalizado: notif.finalizado,
+      userId: notif.user_id,
+      createdAt: notif.created_at,
+    }));
+    setSavedNotifications(formattedNotifications);
 
-      const formattedKanbanCards: SavedKanbanCard[] = fetchedData.kanban_cards.map(card => ({
-        id: card.id,
-        urgencia: card.urgencia,
-        cardType: card.card_type,
-        title: card.title,
-        description: card.description,
-        userId: card.user_id,
-        userPhotoUrl: card.user_photo_url,
-        tags: card.tags,
-        cardColor: card.card_color,
-      }));
-      setKanbanCards(formattedKanbanCards);
+    const formattedKanbanCards: SavedKanbanCard[] = fetchedData.kanban_cards.map(card => ({
+      id: card.id,
+      urgencia: card.urgencia,
+      cardType: card.card_type,
+      title: card.title,
+      description: card.description,
+      userId: card.user_id,
+      userPhotoUrl: card.user_photo_url,
+      tags: card.tags,
+      cardColor: card.card_color,
+    }));
+    setKanbanCards(formattedKanbanCards);
 
-      const initialTasks: Task[] = formattedKanbanCards.map(card => ({
-        id: card.id,
-        name: card.title,
-        description: card.description,
-        urgency: card.urgencia,
-        cardType: card.cardType,
-        tags: card.tags,
-        cardColor: card.cardColor,
-        isCompleted: false,
-      }));
-      setTasks(initialTasks);
+    const initialTasks: Task[] = formattedKanbanCards.map(card => ({
+      id: card.id,
+      name: card.title,
+      description: card.description,
+      urgency: card.urgencia,
+      cardType: card.cardType,
+      tags: card.tags,
+      cardColor: card.cardColor,
+      isCompleted: false,
+    }));
+    setTasks(initialTasks);
 
-    } catch (error) {
-      console.error("Erro ao buscar dados iniciais:", error);
-    }
-  }, []);
+    // Set messages to a numeric value.
+    // For example, if you want to set it to the number of pending notifications:
+    setMessages(formattedNotifications.length);
+    // Or to a specific number, e.g., 5:
+    // setMessages(5);
 
+  } catch (error) {
+    console.error("Erro ao buscar dados iniciais:", error);
+  }
+}, []);
 useEffect(() => {
   if (!tauriListenerRegistered.current) {
     tauriListenerRegistered.current = true;
@@ -577,12 +583,14 @@ useEffect(() => {
           </div>
 
           <div className="header-actions-left">
+                       <div className="messages-container">
             <button className="header-icon-button" onClick={() => WindowManager.openChat()}>
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
+                 {messages > 0 && <span className="messages-badge">{messages}</span>}
             </button>
-
+            </div>
             <div className="notifications-container">
               <button className="header-icon-button" onClick={toggleNotificationsModal}>
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
