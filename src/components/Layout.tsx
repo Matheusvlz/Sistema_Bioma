@@ -140,7 +140,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [showClearNotificationsConfirmModal, setShowClearNotificationsConfirmModal] = useState(false);
   const [showConfirmTaskModal, setShowConfirmTaskModal] = useState(false);
   const [taskToFinalize, setTaskToFinalize] = useState<Task | null>(null);
-const [messages, setMessages] = useState<number>(0); 
+  var [messages, setMessages] = useState<number>(0); 
   // Refs and flags
   const tauriListenerRegistered = useRef(false);
   const userIdSentToWsRef = useRef(false);
@@ -252,7 +252,7 @@ useEffect(() => {
           
           setChatNotification(chatNotificationData);
           setShowChatPopup(true);
-          
+          messages =  messages + 1;
           // Auto-hide popup after 6 seconds
           setTimeout(() => {
             setShowChatPopup(false);
@@ -750,6 +750,13 @@ useEffect(() => {
             >
               {getRouteIcon('laboratorio')}
               <span>Laboratório</span>
+            </button>
+            <button
+              className={`nav-item ${currentRoute === 'qualidade' ? 'active' : ''}`}
+              onClick={() => navigate('qualidade')}
+            >
+              {getRouteIcon('qualidade')}
+              <span>Qualidade</span>
             </button>
             <button
               className={`nav-item ${currentRoute === 'financeiro' ? 'active' : ''}`}

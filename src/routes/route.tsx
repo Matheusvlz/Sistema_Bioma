@@ -13,6 +13,8 @@ import { CadastrarClientes } from '../view/geral/CadastrarCliente';
 import { VisualizarClientes } from '../view/geral/VisualizarCliente';
 import { ChatContainer } from '../components/chat/ChatContainer';
 import { GerenciarCategoria } from '../view/geral/GerenciarCategoria';
+import { CriarPlanilha } from '../view/qualidade/CriarPlanilha';
+import { CadastrarPlanilha } from  '../view/qualidade/CadastrarPlanilha';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -71,6 +73,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'visualizar-calculo': { component: <Inicio />, hasLayout: true },
 
   'chat': { component: <ChatContainer />, hasLayout: false }, 
+  'criar-planilha': { component: <CriarPlanilha />, hasLayout: false }, 
+  'cadastrar-planilha': {component: <CadastrarPlanilha />, hasLayout: false}
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
