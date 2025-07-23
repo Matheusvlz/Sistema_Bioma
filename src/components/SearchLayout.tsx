@@ -228,6 +228,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
               value={mainSearchQuery}
               onChange={(e) => handleMainSearchChange(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+              autoComplete="off"
             />
             {mainSearchQuery && (
               <button className={styles["clear-button"]} onClick={handleClearFilters} title="Limpar busca">

@@ -156,7 +156,6 @@ pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
     let full_url = format!("{}/salvar_cliente", url);
-    println!("Dados recebidos em salvar_cliente_api: {:#?}", dados);
     
     let res = client
         .post(&full_url)

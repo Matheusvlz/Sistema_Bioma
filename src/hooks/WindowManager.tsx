@@ -202,4 +202,30 @@ export class WindowManager {
       allowMultiple: true
     });
   }
+
+    static async openCreatePlanilha(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'criar-planilha',
+      title: 'Criar Planilha',
+      url: '/#/criar-planilha',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  }
+
+      static async openCadastrarPlanilha(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-planilha',
+      title: 'Cadastrar Planilha',
+      url: '/#/cadastrar-planilha',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  }
+
+
+
+  
 }

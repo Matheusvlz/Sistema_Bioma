@@ -2,6 +2,8 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
 
+//STRUCT ***********************************************************
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Usuario {
     pub id: u32,
@@ -24,10 +26,19 @@ pub struct SetorPortal {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SetorClientePortal {
+    pub id: u32,
+    pub nome: String,
+    pub do_cliente: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PermissaoSetor {
     pub setor_id: u32,
     pub permitido: bool,
 }
+
+//RESPONSE ***********************************************************
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClienteResponse {
@@ -40,6 +51,13 @@ pub struct ClienteResponse {
 pub struct SetorResponse {
     pub success: bool,
     pub data: Option<Vec<SetorPortal>>,
+    pub message: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SetorClienteResponse {
+    pub success: bool,
+    pub data: Option<Vec<SetorClientePortal>>,
     pub message: Option<String>,
 }
 
@@ -57,13 +75,46 @@ pub struct InvokeResponse {
     pub message: Option<String>,
 }
 
+//JSON ***********************************************************
+
+#[derive(Serialize)]
+struct BuscarClientesRequest {
+    usuario_id: u32,
+}
+
+#[derive(Serialize)]
+struct ClienteCase {
+    usuario_id: Option<u32>,
+    cliente_id: u32,
+}
+
+#[derive(Deserialize)]
+pub struct AlterarPermissaoRequest {
+    #[serde(rename = "usuarioId")]
+    usuario_id: Option<u32>,
+    #[serde(rename = "clienteId")]
+    cliente_id: Option<u32>,
+    #[serde(rename = "setorId")]
+    setor_id: u32,
+    permitido: bool,
+}
+
+//FUNÇÕES ***********************************************************
+
 #[command]
 pub async fn buscar_clientes_usuario(usuario_id: u32) -> ClienteResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!("{}/usuarios/portal/{}/clientes", url, usuario_id);
+    let full_url = format!("{}/usuarios/portal/clientes", url);
+    let request_body = BuscarClientesRequest { usuario_id };
 
-    let res = match client.get(&full_url).send().await {
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
@@ -74,6 +125,15 @@ pub async fn buscar_clientes_usuario(usuario_id: u32) -> ClienteResponse {
             };
         }
     };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return ClienteResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
 
     match res.json::<ClienteResponse>().await {
         Ok(response) => response,
@@ -92,9 +152,19 @@ pub async fn buscar_clientes_usuario(usuario_id: u32) -> ClienteResponse {
 pub async fn buscar_setores_portal(usuario_id: u32, cliente_id: u32) -> SetorResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!("{}/usuarios/portal/{}/setores/{}", url, usuario_id, cliente_id);
+    let full_url = format!("{}/usuarios/portal/setores", url);
+    let request_body = ClienteCase {
+        usuario_id: Some(usuario_id),
+        cliente_id,
+    };
 
-    let res = match client.get(&full_url).send().await {
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
@@ -105,6 +175,15 @@ pub async fn buscar_setores_portal(usuario_id: u32, cliente_id: u32) -> SetorRes
             };
         }
     };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return SetorResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
 
     match res.json::<SetorResponse>().await {
         Ok(response) => response,
@@ -119,17 +198,18 @@ pub async fn buscar_setores_portal(usuario_id: u32, cliente_id: u32) -> SetorRes
     }
 }
 
-// Adicionar cliente a um usuário
 #[command]
-pub async fn adicionar_cliente_usuario(usuario_id: u32, cliente_id: u32) -> InvokeResponse {
+pub async fn alterar_permissao_setor(request: AlterarPermissaoRequest) -> InvokeResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!(
-        "{}/portal/usuarios/{}/clientes/{}",
-        url, usuario_id, cliente_id
-    );
+    let full_url = format!("{}/usuarios/portal/alterar-setor", url);
+    let payload = serde_json::json!({
+        "usuario_id": request.usuario_id,
+        "setor_id": request.setor_id,
+        "permitido": request.permitido
+    });
 
-    let res = match client.post(&full_url).send().await {
+    let res = match client.post(&full_url).json(&payload).send().await {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
@@ -154,24 +234,21 @@ pub async fn adicionar_cliente_usuario(usuario_id: u32, cliente_id: u32) -> Invo
     }
 }
 
-// Buscar permissões de um usuário para um cliente específico
 #[command]
-pub async fn buscar_permissoes_usuario_cliente(
-    usuario_id: u32,
-    cliente_id: u32,
-) -> PermissoesResponse {
+pub async fn adicionar_cliente_usuario(usuario_id: u32, cliente_id: u32) -> InvokeResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!(
-        "{}/portal/usuarios/{}/clientes/{}/permissoes",
-        url, usuario_id, cliente_id
-    );
+    let full_url = format!("{}/usuarios/portal/adicionar-clientes", url);
+    let request_body = ClienteCase {
+        usuario_id: Some(usuario_id),
+        cliente_id,
+    };
 
-    let res = match client.get(&full_url).send().await {
+    let res = match client.post(&full_url).json(&request_body).send().await {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
-            return PermissoesResponse {
+            return InvokeResponse {
                 success: false,
                 data: None,
                 message: Some("Erro de conexão com o servidor".to_string()),
@@ -179,11 +256,11 @@ pub async fn buscar_permissoes_usuario_cliente(
         }
     };
 
-    match res.json::<PermissoesResponse>().await {
+    match res.json::<InvokeResponse>().await {
         Ok(response) => response,
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
-            PermissoesResponse {
+            InvokeResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),
@@ -192,26 +269,102 @@ pub async fn buscar_permissoes_usuario_cliente(
     }
 }
 
-// Alterar permissão de setor para um usuário em um cliente
 #[command]
-pub async fn alterar_permissao_setor(
-    usuario_id: u32,
-    cliente_id: u32,
-    setor_id: u32,
-    permitido: bool,
-) -> InvokeResponse {
+pub async fn remover_cliente_usuario(usuario_id: u32, cliente_id: u32) -> InvokeResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
-    let full_url = format!(
-        "{}/portal/usuarios/{}/clientes/{}/setores/{}/permissao",
-        url, usuario_id, cliente_id, setor_id
-    );
+    let full_url = format!("{}/usuarios/portal/remover-clientes", url);
+    let request_body = ClienteCase {
+        usuario_id: Some(usuario_id),
+        cliente_id,
+    };
 
+    let res = match client.post(&full_url).json(&request_body).send().await {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn buscar_todos_setores_cliente(cliente_id: u32) -> SetorClienteResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/setores-total", url);
+    let request_body = ClienteCase {
+        cliente_id, usuario_id: None
+    };
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return SetorClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return SetorClienteResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<SetorClienteResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            SetorClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn alterar_setor_cliente(request: AlterarPermissaoRequest) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/alterar-setor-cliente", url);
     let payload = serde_json::json!({
-        "permitido": permitido
+        "cliente_id": request.cliente_id,
+        "setor_id": request.setor_id,
+        "permitido": request.permitido
     });
 
-    let res = match client.put(&full_url).json(&payload).send().await {
+    let res = match client.post(&full_url).json(&payload).send().await {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);

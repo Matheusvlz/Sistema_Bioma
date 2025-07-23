@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaUsers, FaBuilding, FaShieldAlt, FaPlus, FaCheck, FaTimes } from 'react-icons/fa';
+import { FaUser, FaUsers, FaBuilding, FaShieldAlt, FaPlus, FaCheck, FaTimes, FaTrash, FaCog } from 'react-icons/fa';
 import styles from './css/UsuarioPortal.module.css';
 import { SearchLayout } from '../../components/SearchLayout';
 import { core } from "@tauri-apps/api";
@@ -14,19 +14,18 @@ interface Cliente {
     id: number;
     fantasia?: string;
     razao?: string;
-    documento?: string;
-    cidade?: string;
-    uf?: string;
-    categoria?: string;
-    consultor?: string;
-    telefone?: string;
-    email?: string;
 }
 
 interface SetorPortal {
     id: number;
     nome: string;
     do_usuario: boolean;
+}
+
+interface SetorCliente {
+    id: number;
+    nome: string;
+    do_cliente: boolean;
 }
 
 interface UsuarioResponse {
@@ -47,9 +46,10 @@ interface SetorResponse {
     message?: string;
 }
 
-interface PermissaoSetor {
-    setorId: number;
-    permitido: boolean;
+interface SetorClienteResponse {
+    success: boolean;
+    data?: SetorCliente[];
+    message?: string;
 }
 
 interface InvokeResponse {
@@ -66,12 +66,75 @@ export const UsuarioPortal: React.FC = () => {
     const [clientesUsuario, setClientesUsuario] = useState<Cliente[]>([]);
     const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null);
     const [setoresPortal, setSetoresPortal] = useState<SetorPortal[]>([]);
-    const [permissoesSetores, setPermissoesSetores] = useState<PermissaoSetor[]>([]);
     const [loading, setLoading] = useState(false);
+
+    // Estados para o modal de setores
+    const [modalSetoresAberto, setModalSetoresAberto] = useState(false);
+    const [setoresCliente, setSetoresCliente] = useState<SetorCliente[]>([]);
+    const [loadingModal, setLoadingModal] = useState(false);
+
+    // Estados para o modal de cadastro de setor
+    const [modalCadastroSetorAberto, setModalCadastroSetorAberto] = useState(false);
 
     useEffect(() => {
 
     }, []);
+
+    async function buscarUsuariosDropdown(query: string): Promise<Usuario[]> {
+        try {
+            const response: UsuarioResponse = await core.invoke('buscar_usuarios_dropdown', {
+                query: query.trim()
+            });
+
+            if (response.success && response.data) {
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('Erro na busca de usuários:', error);
+            return [];
+        }
+    }
+
+    async function buscarClientesDropdown(query: string): Promise<Cliente[]> {
+        try {
+            const response: ClienteResponse = await core.invoke('buscar_clientes_dropdown', {
+                query: query.trim()
+            });
+
+            if (response.success && response.data) {
+                return response.data;
+            }
+            return [];
+        } catch (error) {
+            console.error('Erro na busca de clientes:', error);
+            return [];
+        }
+    }
+
+    const dropdownUsuariosConfig = {
+        enabled: true,
+        placeholder: "Buscar usuário por nome ou email...",
+        type: 'usuario' as const,
+        onSearch: buscarUsuariosDropdown,
+        onSelect: (item: Cliente | Usuario) => {
+            if ('nome' in item && 'usuario' in item) {
+                handleUsuarioSelect(item as Usuario);
+            }
+        }
+    };
+
+    const dropdownClientesConfig = {
+        enabled: true,
+        type: 'cliente' as const,
+        placeholder: "Buscar cliente para adicionar...",
+        onSearch: buscarClientesDropdown,
+        onSelect: (item: Cliente | Usuario) => {
+            if ('fantasia' in item || 'razao' in item) {
+                handleAdicionarCliente(item as Cliente);
+            }
+        }
+    };
 
     const handleUsuarioSelect = async (usuario: Usuario) => {
         setUsuarioSelecionado(usuario);
@@ -89,8 +152,6 @@ export const UsuarioPortal: React.FC = () => {
             }
 
             setClienteSelecionado(null);
-            //            setPermissoesSetores([]);
-
         } catch (error) {
             console.error('Erro ao buscar clientes do usuário:', error);
             setClientesUsuario([]);
@@ -127,14 +188,14 @@ export const UsuarioPortal: React.FC = () => {
 
         try {
             const response: InvokeResponse = await core.invoke('alterar_permissao_setor', {
-                usuarioId: usuarioSelecionado.id,
-                clienteId: clienteSelecionado.id,
-                setorId: setorId,
-                permitido: novoStatus
+                request: {
+                    usuarioId: usuarioSelecionado.id,
+                    setorId: setorId,
+                    permitido: novoStatus
+                }
             });
 
             if (response.success) {
-                // Atualizar estado local
                 setSetoresPortal(prev =>
                     prev.map(s =>
                         s.id === setorId
@@ -147,8 +208,7 @@ export const UsuarioPortal: React.FC = () => {
             console.error('Erro ao alterar permissão:', error);
         }
     };
-
-
+    
     const handleAdicionarCliente = async (cliente: Cliente) => {
         if (!usuarioSelecionado) return;
 
@@ -159,7 +219,6 @@ export const UsuarioPortal: React.FC = () => {
             });
 
             if (response.success) {
-                // Recarregar lista de clientes do usuário
                 handleUsuarioSelect(usuarioSelecionado);
             }
         } catch (error) {
@@ -167,58 +226,101 @@ export const UsuarioPortal: React.FC = () => {
         }
     };
 
-    async function buscarUsuariosDropdown(query: string): Promise<Usuario[]> {
+    const handleRemoverCliente = async (cliente: Cliente) => {
+        if (!usuarioSelecionado) return;
+
         try {
-            const response: UsuarioResponse = await core.invoke('buscar_usuarios_dropdown', {
-                query: query.trim()
+            const response: InvokeResponse = await core.invoke('remover_cliente_usuario', {
+                usuarioId: usuarioSelecionado.id,
+                clienteId: cliente.id
             });
 
-            if (response.success && response.data) {
-                return response.data;
+            if (response.success) {
+                handleUsuarioSelect(usuarioSelecionado);
+                
+                if (clienteSelecionado?.id === cliente.id) {
+                    setClienteSelecionado(null);
+                    setSetoresPortal([]);
+                }
             }
-            return [];
         } catch (error) {
-            console.error('Erro na busca de usuários:', error);
-            return [];
+            console.error('Erro ao remover cliente:', error);
         }
-    }
-
-    async function buscarClientesDropdown(query: string): Promise<Cliente[]> {
-        try {
-            const response: ClienteResponse = await core.invoke('buscar_clientes_dropdown', {
-                query: query.trim()
-            });
-
-            if (response.success && response.data) {
-                return response.data;
-            }
-            return [];
-        } catch (error) {
-            console.error('Erro na busca de clientes:', error);
-            return [];
-        }
-    }
-
-    const formatDocument = (doc: string) => {
-        if (!doc) return '';
-        const numbers = doc.replace(/\D/g, '');
-        if (numbers.length === 11) {
-            return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-        } else if (numbers.length === 14) {
-            return numbers.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-        }
-        return doc;
     };
 
-    const formatPhone = (phone: string) => {
-        if (!phone) return '';
-        const numbers = phone.replace(/\D/g, '');
-        if (numbers.length === 11) {
-            return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-        } else if (numbers.length === 10) {
-            return numbers.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+    const handleAbrirModalSetores = async () => {
+        if (!clienteSelecionado) return;
+
+        setModalSetoresAberto(true);
+        setLoadingModal(true);
+
+        try {
+            const response: SetorClienteResponse = await core.invoke('buscar_todos_setores_cliente', {
+                clienteId: clienteSelecionado.id,
+            });
+
+            if (response.success && response.data) {
+                setSetoresCliente(response.data);
+            }
+        } catch (error) {
+            console.error('Erro ao buscar setores do cliente:', error);
+        } finally {
+            setLoadingModal(false);
         }
-        return phone;
+    };
+
+    const handleToggleSetorModal = async (setorId: number) => {
+        if (!usuarioSelecionado || !clienteSelecionado) return;
+
+        const setor = setoresCliente.find(s => s.id === setorId);
+        const novoStatus = !setor?.do_cliente;
+
+        try {
+            const response: InvokeResponse = await core.invoke('alterar_setor_cliente', {
+                request: {
+                    clienteId: clienteSelecionado.id,
+                    setorId: setorId,
+                    permitido: novoStatus
+                }
+            });
+
+            if (response.success) {
+                // Atualizar lista do modal
+                setSetoresCliente(prev =>
+                    prev.map(s =>
+                        s.id === setorId
+                            ? { ...s, do_cliente: novoStatus }
+                            : s
+                    )
+                );
+
+                handleSelecionarCliente(clienteSelecionado);
+            }
+        } catch (error) {
+            console.error('Erro ao alterar setor do cliente:', error);
+        }
+    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    const handleAbrirCadastroSetor = () => {
+        setModalCadastroSetorAberto(true);
+        // Aqui você implementaria a lógica para abrir a tela de cadastro de setores
+        console.log('Abrir tela de cadastro de setores');
     };
 
     const renderPrimeiraGuia = () => (
@@ -233,28 +335,91 @@ export const UsuarioPortal: React.FC = () => {
         </div>
     );
 
-    const dropdownUsuariosConfig = {
-        enabled: true,
-        placeholder: "Buscar usuário por nome ou email...",
-        type: 'usuario' as const,
-        onSearch: buscarUsuariosDropdown,
-        onSelect: (item: Cliente | Usuario) => {
-            if ('nome' in item && 'usuario' in item) {
-                handleUsuarioSelect(item as Usuario);
-            }
-        }
+    const renderModalSetores = () => {
+        if (!modalSetoresAberto) return null;
+
+        return (
+            <div className={styles["modal-overlay"]} onClick={() => setModalSetoresAberto(false)}>
+                <div className={styles["modal-content"]} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles["modal-header"]}>
+                        <h3>
+                            <FaShieldAlt /> Gerenciar Setores - {clienteSelecionado?.fantasia || clienteSelecionado?.razao}
+                        </h3>
+                        <button 
+                            className={styles["modal-close"]}
+                            onClick={() => setModalSetoresAberto(false)}
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+
+                    <div className={styles["modal-body"]}>
+                        {loadingModal ? (
+                            <div className={styles["loading-container"]}>
+                                <div className={styles["loading-spinner"]}></div>
+                                <span>Carregando setores...</span>
+                            </div>
+                        ) : (
+                            <div className={styles["setores-modal-grid"]}>
+                                {setoresCliente.map((setor) => (
+                                    <div
+                                        key={setor.id}
+                                        className={`${styles["setor-modal-item"]} ${setor.do_cliente ? styles["ativo"] : styles["inativo"]}`}
+                                        onClick={() => handleToggleSetorModal(setor.id)}
+                                    >
+                                        <div className={styles["setor-modal-info"]}>
+                                            <h4>{setor.nome}</h4>
+                                            <span className={styles["setor-modal-status"]}>
+                                                {setor.do_cliente ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </div>
+                                        <div className={styles["setor-modal-toggle"]}>
+                                            {setor.do_cliente ? (
+                                                <FaCheck className={styles["check-icon"]} />
+                                            ) : (
+                                                <FaTimes className={styles["times-icon"]} />
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
-    const dropdownClientesConfig = {
-        enabled: true,
-        type: 'cliente' as const,
-        placeholder: "Buscar cliente para adicionar...",
-        onSearch: buscarClientesDropdown,
-        onSelect: (item: Cliente | Usuario) => {
-            if ('fantasia' in item || 'razao' in item) {
-                handleAdicionarCliente(item as Cliente);
-            }
-        }
+    const renderModalCadastroSetor = () => {
+        if (!modalCadastroSetorAberto) return null;
+
+        return (
+            <div className={styles["modal-overlay"]} onClick={() => setModalCadastroSetorAberto(false)}>
+                <div className={styles["modal-content"]} onClick={(e) => e.stopPropagation()}>
+                    <div className={styles["modal-header"]}>
+                        <h3>
+                            <FaPlus /> Cadastrar Novo Setor
+                        </h3>
+                        <button 
+                            className={styles["modal-close"]}
+                            onClick={() => setModalCadastroSetorAberto(false)}
+                        >
+                            <FaTimes />
+                        </button>
+                    </div>
+
+                    <div className={styles["modal-body"]}>
+                        <div className={styles["cadastro-setor-placeholder"]}>
+                            <div className={styles["placeholder-icon"]}>
+                                <FaCog />
+                            </div>
+                            <h4>Tela de Cadastro de Setor</h4>
+                            <p>Aqui será implementada a funcionalidade de cadastro de novos setores.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     const renderSegundaGuia = () => (
@@ -317,32 +482,20 @@ export const UsuarioPortal: React.FC = () => {
                                                     <FaBuilding />
                                                 </div>
                                                 <div className={styles["cliente-info"]}>
-                                                    <h4>{cliente.fantasia || cliente.razao || 'Nome não informado'}</h4>
-                                                    {cliente.documento && (
-                                                        <span className={styles["cliente-documento"]}>
-                                                            {formatDocument(cliente.documento)}
-                                                        </span>
-                                                    )}
+                                                    <h4>{cliente.fantasia || 'Fantasia não informado'}</h4>
+                                                    <h6>{cliente.razao || 'Razão não informado'}</h6>
                                                 </div>
                                             </div>
-
-                                            <div className={styles["cliente-detalhes"]}>
-                                                {cliente.telefone && (
-                                                    <div className={styles["detalhe-item"]}>
-                                                        <span>📞 {formatPhone(cliente.telefone)}</span>
-                                                    </div>
-                                                )}
-                                                {cliente.email && (
-                                                    <div className={styles["detalhe-item"]}>
-                                                        <span>✉️ {cliente.email}</span>
-                                                    </div>
-                                                )}
-                                                {(cliente.cidade || cliente.uf) && (
-                                                    <div className={styles["detalhe-item"]}>
-                                                        <span>📍 {cliente.cidade && cliente.uf ? `${cliente.cidade}/${cliente.uf}` : cliente.cidade || cliente.uf}</span>
-                                                    </div>
-                                                )}
-                                            </div>
+                                            <button
+                                                className={styles["btn-remover-cliente"]}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRemoverCliente(cliente);
+                                                }}
+                                                title="Remover cliente"
+                                            >
+                                                <FaTrash />
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -381,6 +534,22 @@ export const UsuarioPortal: React.FC = () => {
                         <h3><FaShieldAlt /> Permissões de Setores</h3>
                         <div className={styles["cliente-selecionado-info"]}>
                             <span>Cliente: <strong>{clienteSelecionado.fantasia || clienteSelecionado.razao}</strong></span>
+                            <div className={styles["setores-actions"]}>
+                                <button
+                                    className={styles["btn-gerenciar-setores"]}
+                                    onClick={handleAbrirModalSetores}
+                                    title="Gerenciar setores"
+                                >
+                                    <FaPlus />
+                                </button>
+                                <button
+                                    className={styles["btn-cadastrar-setor"]}
+                                    onClick={handleAbrirCadastroSetor}
+                                    title="Cadastrar novo setor"
+                                >
+                                    <FaPlus />
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -392,7 +561,7 @@ export const UsuarioPortal: React.FC = () => {
                     ) : (
                         <div className={styles["setores-grid"]}>
                             {setoresPortal.map((setor) => {
-                                const permitido = setor.do_usuario; // Usar diretamente o do_usuario
+                                const permitido = setor.do_usuario;
 
                                 return (
                                     <div
@@ -430,6 +599,10 @@ export const UsuarioPortal: React.FC = () => {
                     )}
                 </div>
             )}
+
+            {/* Modais */}
+            {renderModalSetores()}
+            {renderModalCadastroSetor()}
         </div>
     );
 
