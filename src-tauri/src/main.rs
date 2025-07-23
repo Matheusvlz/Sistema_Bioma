@@ -15,18 +15,15 @@ use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
 
-//use controller::geral::visualizarcliente_controller::{buscar_categorias, buscar_consultores};
-
 use controller::components::search_controller::{
     buscar_clientes_dropdown, buscar_clientes_filtros,
 };
 
-
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::settings_controller::update_user_settings;
 use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
-use socket_listener::send_ws_message; // Importar o novo comando
-use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed}; // This import is correct and already there.
+use socket_listener::send_ws_message;
+use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed};
 use controller::chat::chat_controller::{
     get_users, 
     create_chat, 
@@ -40,21 +37,37 @@ use controller::download_controller::{download_file_to_downloads, download_file_
 
 use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
 
+use controller::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
+
+// Importar os comandos de fórmulas melhorados
+use controller::formula_controller::{
+    evaluate_formula,
+    update_spreadsheet_cell,
+    validate_formula,
+    get_formula_suggestions,
+    get_all_formula_functions,
+    parse_cell_range,
+    calculate_range_sum,
+    get_cell_dependencies,
+    format_formula_result,
+    get_formula_categories,
+    get_functions_by_category,
+};
+
 fn main() {
     dotenvy::dotenv().ok();
 
     tauri::Builder::default()
         .setup(|app| {
-            let app_handle = app.handle(); // Obtenha o AppHandle aqui
+            let app_handle = app.handle();
 
             tauri::async_runtime::spawn({
-                let app_handle_clone = app_handle.clone(); // Clone o AppHandle para a nova thread
+                let app_handle_clone = app_handle.clone();
                 async move {
                     // Inicia a conexão WebSocket no backend Rust
-                    // O ID do usuário será enviado pelo frontend *após* o login.
                     socket_listener::iniciar_socket(
                         "ws://192.168.15.26:8082/ws/notificacoes",
-                        app_handle_clone, // Passe o clone do AppHandle
+                        app_handle_clone,
                     )
                     .await;
                 }
@@ -63,6 +76,7 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // Comandos existentes
             fazer_login,
             buscar_clientes_sem_cadastro,
             buscar_amostras_pre_cadastradas,
@@ -79,8 +93,8 @@ fn main() {
             get_data_for_screen,
             editar_cliente,
             get_cliente_data,
-            buscar_clientes_filtros,  //SearchLayout
-            buscar_clientes_dropdown, //SearchLayout
+            buscar_clientes_filtros,
+            buscar_clientes_dropdown,
             update_user_settings,
             salvar_ticket,
             send_ws_message,
@@ -100,8 +114,24 @@ fn main() {
             get_chat_messages,
             create_direct_chat,
             send_file_message,
-            download_file_to_downloads
-    
+            download_file_to_downloads,
+            import_xlsx_file,
+            import_xlsx_from_bytes,
+            get_xlsx_sheet_names,
+            get_xlsx_sheet_names_from_bytes,
+            
+            // Comandos de fórmulas melhorados
+            evaluate_formula,
+            update_spreadsheet_cell,
+            validate_formula,
+            get_formula_suggestions,
+            get_all_formula_functions,
+            parse_cell_range,
+            calculate_range_sum,
+            get_cell_dependencies,
+            format_formula_result,
+            get_formula_categories,
+            get_functions_by_category,
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

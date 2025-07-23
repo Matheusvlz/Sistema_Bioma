@@ -60,5 +60,7 @@ dirs = "6.0.0"
 notify-rust = "4.11.7" # Para notificações (opcional)
 
 # Se você estiver usando tauri-plugin-dialog e tauri-plugin-fs
-tauri-plugin-dialog = "2.3.0"
+tauri-plugin-dialog = "2.3.1"
 tauri-plugin-fs = "2.4.0"
+
+calamine = "0.29.0"
