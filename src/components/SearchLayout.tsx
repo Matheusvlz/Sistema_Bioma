@@ -20,7 +20,6 @@ interface SearchField {
   options?: { value: string; label: string }[];
 }
 
-
 interface SearchLayoutProps {
   fields?: SearchField[];
   onSearch?: (filters: Record<string, string>) => void;
@@ -299,6 +298,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
                     placeholder={`Digite ${field.label.toLowerCase()}...`}
                     value={filters[field.name] || ''}
                     onChange={(e) => handleFilterChange(field.name, e.target.value)}
+                    autoComplete="off"
                   />
                 )}
               </div>

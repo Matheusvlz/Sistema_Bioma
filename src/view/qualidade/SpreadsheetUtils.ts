@@ -1,566 +1,736 @@
-interface CellStyle {
+import { invoke } from '@tauri-apps/api/core';
+
+// Interfaces para tipos de dados
+export interface CellData {
+  value: string;
+  id: string;
+  formula?: string | null;
+  computed_value?: string | null;
+  error?: string | null;
+  is_formula?: boolean;
+  style?: CellStyle;
+  media?: CellMedia;
+  merged?: boolean;
+  masterCell?: { row: number; col: number };
+}
+
+export interface CellStyle {
   fontWeight?: 'normal' | 'bold';
   fontStyle?: 'normal' | 'italic';
-  textDecoration?: 'none' | 'underline';
-  textAlign?: 'left' | 'center' | 'right';
+  textDecoration?: 'none' | 'underline' | 'line-through';
+  textAlign?: 'left' | 'center' | 'right' | 'justify';
   backgroundColor?: string;
   color?: string;
   fontSize?: string;
   fontFamily?: string;
   border?: string;
+  borderTop?: string;
+  borderRight?: string;
+  borderBottom?: string;
+  borderLeft?: string;
+  borderRadius?: string;
+  padding?: string;
+  margin?: string;
   width?: number;
   height?: number;
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+  textTransform?: 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+  letterSpacing?: string;
+  lineHeight?: string;
+  textShadow?: string;
+  boxShadow?: string;
+  opacity?: number;
 }
 
-interface CellData {
+export interface CellMedia {
+  type: 'image' | 'video' | 'audio' | 'link' | 'table';
+  url?: string;
+  data?: string;
+  alt?: string;
+  title?: string;
+  tableData?: string[][];
+}
+
+export interface FormulaResult {
+  success: boolean;
   value: string;
-  id: string;
-  formula?: string | null;
-  style?: CellStyle;
+  error?: string;
+  dependencies: string[];
+  formula_type: string;
 }
 
-interface HistoryEntry {
-  timestamp: Date;
-  action: string;
-  details: string;
+export interface FormulaSuggestion {
+  function_name: string;
+  display_text: string;
+  description: string;
+  insert_text: string;
 }
 
-interface SpreadsheetData {
+export interface FormulaFunction {
   name: string;
+  description: string;
+  syntax: string;
+  example: string;
+  category: string;
+}
+
+export interface SpreadsheetData {
+  cells: Record<string, {
+    value: string;
+    formula?: string;
+    computed_value?: string;
+    error?: string;
+    is_formula: boolean;
+  }>;
   rows: number;
   cols: number;
-  data: CellData[][];
-  history: HistoryEntry[];
-  columnWidths: number[];
-  rowHeights: number[];
-  globalStyles: CellStyle;
-  createdAt?: string;
-  version?: string;
-  metadata?: {
-    author?: string;
-    description?: string;
-    tags?: string[];
-    lastModified?: string;
-  };
 }
 
-interface CSVImportOptions {
-  delimiter?: string;
-  quote?: string;
-  escape?: string;
-  skipEmptyLines?: boolean;
-  trimWhitespace?: boolean;
-  hasHeader?: boolean;
+export interface CellPosition {
+  row: number;
+  col: number;
 }
 
-interface CSVExportOptions {
-  delimiter?: string;
-  quote?: string;
-  includeHeaders?: boolean;
-  dateFormat?: string;
+export interface CellRange {
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+}
+
+// Utilitários para referências de células
+export class CellReferenceUtils {
+  /**
+   * Converte um índice de coluna (0-based) para uma label de coluna (A, B, C, ..., AA, AB, etc.)
+   */
+  static getColumnLabel(index: number): string {
+    let label = '';
+    let num = index;
+    while (num >= 0) {
+      label = String.fromCharCode(65 + (num % 26)) + label;
+      num = Math.floor(num / 26) - 1;
+    }
+    return label;
+  }
+
+  /**
+   * Converte uma label de coluna para um índice (0-based)
+   */
+  static getColumnIndex(label: string): number {
+    let index = 0;
+    for (let i = 0; i < label.length; i++) {
+      index = index * 26 + (label.charCodeAt(i) - 64);
+    }
+    return index - 1;
+  }
+
+  /**
+   * Gera uma referência de célula (ex: A1, B2, etc.)
+   */
+  static getCellReference(row: number, col: number): string {
+    return `${this.getColumnLabel(col)}${row + 1}`;
+  }
+
+  /**
+   * Converte uma referência de célula para posição (row, col)
+   */
+  static parseCellReference(reference: string): CellPosition | null {
+    const match = reference.match(/^([A-Z]+)(\d+)$/);
+    if (!match) return null;
+    
+    const colStr = match[1];
+    const rowStr = match[2];
+    
+    const col = this.getColumnIndex(colStr);
+    const row = parseInt(rowStr) - 1;
+    
+    return { row, col };
+  }
+
+  /**
+   * Verifica se uma string é uma referência de célula válida
+   */
+  static isValidCellReference(reference: string): boolean {
+    return /^[A-Z]+\d+$/.test(reference);
+  }
+
+  /**
+   * Gera uma lista de referências de células em um intervalo
+   */
+  static expandRange(range: string): string[] {
+    if (!range.includes(':')) {
+      return this.isValidCellReference(range) ? [range] : [];
+    }
+
+    const [start, end] = range.split(':');
+    const startPos = this.parseCellReference(start);
+    const endPos = this.parseCellReference(end);
+
+    if (!startPos || !endPos) return [];
+
+    const cells: string[] = [];
+    const minRow = Math.min(startPos.row, endPos.row);
+    const maxRow = Math.max(startPos.row, endPos.row);
+    const minCol = Math.min(startPos.col, endPos.col);
+    const maxCol = Math.max(startPos.col, endPos.col);
+
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        cells.push(this.getCellReference(row, col));
+      }
+    }
+
+    return cells;
+  }
+
+  /**
+   * Verifica se uma célula está dentro de um intervalo
+   */
+  static isCellInRange(cellRef: string, range: string): boolean {
+    const expandedRange = this.expandRange(range);
+    return expandedRange.includes(cellRef);
+  }
+}
+
+// Utilitários para fórmulas
+export class FormulaUtils {
+  /**
+   * Verifica se um valor é uma fórmula (começa com =)
+   */
+  static isFormula(value: string): boolean {
+    return typeof value === 'string' && value.trim().startsWith('=');
+  }
+
+  /**
+   * Remove o prefixo = de uma fórmula
+   */
+  static cleanFormula(formula: string): string {
+    return formula.trim().startsWith('=') ? formula.trim().substring(1) : formula.trim();
+  }
+
+  /**
+   * Adiciona o prefixo = a uma fórmula se não estiver presente
+   */
+  static addFormulaPrefix(formula: string): string {
+    const cleaned = formula.trim();
+    return cleaned.startsWith('=') ? cleaned : `=${cleaned}`;
+  }
+
+  /**
+   * Extrai referências de células de uma fórmula
+   */
+  static extractCellReferences(formula: string): string[] {
+    const cleanedFormula = this.cleanFormula(formula);
+    const cellRefPattern = /[A-Z]+\d+/g;
+    const matches = cleanedFormula.match(cellRefPattern) || [];
+    return [...new Set(matches)]; // Remove duplicatas
+  }
+
+  /**
+   * Extrai intervalos de células de uma fórmula
+   */
+  static extractCellRanges(formula: string): string[] {
+    const cleanedFormula = this.cleanFormula(formula);
+    const rangePattern = /[A-Z]+\d+:[A-Z]+\d+/g;
+    const matches = cleanedFormula.match(rangePattern) || [];
+    return [...new Set(matches)]; // Remove duplicatas
+  }
+
+  /**
+   * Valida a sintaxe básica de uma fórmula
+   */
+  static validateFormulaSyntax(formula: string): { isValid: boolean; error?: string } {
+    const cleanedFormula = this.cleanFormula(formula);
+    
+    // Verificar parênteses balanceados
+    let parenthesesCount = 0;
+    for (const char of cleanedFormula) {
+      if (char === '(') parenthesesCount++;
+      if (char === ')') parenthesesCount--;
+      if (parenthesesCount < 0) {
+        return { isValid: false, error: 'Parênteses não balanceados' };
+      }
+    }
+    
+    if (parenthesesCount !== 0) {
+      return { isValid: false, error: 'Parênteses não balanceados' };
+    }
+
+    // Verificar se não está vazia
+    if (cleanedFormula.trim().length === 0) {
+      return { isValid: false, error: 'Fórmula vazia' };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Substitui referências de células em uma fórmula
+   */
+  static replaceCellReferences(
+    formula: string, 
+    replacements: Record<string, string>
+  ): string {
+    let result = this.cleanFormula(formula);
+    
+    Object.entries(replacements).forEach(([oldRef, newRef]) => {
+      const regex = new RegExp(`\\b${oldRef}\\b`, 'g');
+      result = result.replace(regex, newRef);
+    });
+    
+    return result;
+  }
+
+  /**
+   * Converte uma fórmula para formato de exibição
+   */
+  static formatFormulaForDisplay(formula: string): string {
+    return this.addFormulaPrefix(formula);
+  }
+}
+
+// Utilitários para avaliação de fórmulas
+export class FormulaEvaluationUtils {
+  /**
+   * Avalia uma fórmula usando o backend
+   */
+  static async evaluateFormula(
+    formula: string, 
+    cellData: Record<string, string>
+  ): Promise<FormulaResult> {
+    try {
+      const result = await invoke<FormulaResult>('evaluate_formula', {
+        formula: FormulaUtils.addFormulaPrefix(formula),
+        cellData
+      });
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        value: '#ERROR',
+        error: `Erro na avaliação: ${error}`,
+        dependencies: [],
+        formula_type: 'error'
+      };
+    }
+  }
+
+  /**
+   * Atualiza uma célula da planilha com fórmula
+   */
+  static async updateSpreadsheetCell(
+    cellRef: string,
+    value: string,
+    isFormula: boolean,
+    spreadsheetData: SpreadsheetData
+  ): Promise<{ mainResult: FormulaResult; dependentResults: Array<[string, FormulaResult]> }> {
+    try {
+      const result = await invoke<[FormulaResult, Array<[string, FormulaResult]>]>(
+        'update_spreadsheet_cell',
+        {
+          cellRef,
+          value,
+          isFormula,
+          spreadsheetData
+        }
+      );
+      
+      return {
+        mainResult: result[0],
+        dependentResults: result[1]
+      };
+    } catch (error) {
+      return {
+        mainResult: {
+          success: false,
+          value: '#ERROR',
+          error: `Erro na atualização: ${error}`,
+          dependencies: [],
+          formula_type: 'error'
+        },
+        dependentResults: []
+      };
+    }
+  }
+
+  /**
+   * Valida uma fórmula sem executá-la
+   */
+  static async validateFormula(formula: string): Promise<FormulaResult> {
+    try {
+      const result = await invoke<FormulaResult>('validate_formula', {
+        formula: FormulaUtils.addFormulaPrefix(formula)
+      });
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        value: '#ERROR',
+        error: `Erro na validação: ${error}`,
+        dependencies: [],
+        formula_type: 'error'
+      };
+    }
+  }
+
+  /**
+   * Obtém sugestões de fórmulas
+   */
+  static async getFormulaSuggestions(partialFormula: string): Promise<FormulaSuggestion[]> {
+    try {
+      const suggestions = await invoke<FormulaSuggestion[]>('get_formula_suggestions', {
+        partialFormula
+      });
+      return suggestions;
+    } catch (error) {
+      console.error('Erro ao obter sugestões:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém todas as funções de fórmula disponíveis
+   */
+  static async getAllFormulaFunctions(): Promise<FormulaFunction[]> {
+    try {
+      const functions = await invoke<FormulaFunction[]>('get_all_formula_functions');
+      return functions;
+    } catch (error) {
+      console.error('Erro ao obter funções:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém categorias de fórmulas
+   */
+  static async getFormulaCategories(): Promise<string[]> {
+    try {
+      const categories = await invoke<string[]>('get_formula_categories');
+      return categories;
+    } catch (error) {
+      console.error('Erro ao obter categorias:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Obtém funções por categoria
+   */
+  static async getFunctionsByCategory(category: string): Promise<FormulaFunction[]> {
+    try {
+      const functions = await invoke<FormulaFunction[]>('get_functions_by_category', {
+        category
+      });
+      return functions;
+    } catch (error) {
+      console.error('Erro ao obter funções por categoria:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Calcula a soma de um intervalo
+   */
+  static async calculateRangeSum(
+    range: string, 
+    cellData: Record<string, string>
+  ): Promise<FormulaResult> {
+    try {
+      const result = await invoke<FormulaResult>('calculate_range_sum', {
+        range,
+        cellData
+      });
+      return result;
+    } catch (error) {
+      return {
+        success: false,
+        value: '#ERROR',
+        error: `Erro no cálculo: ${error}`,
+        dependencies: [],
+        formula_type: 'error'
+      };
+    }
+  }
+
+  /**
+   * Obtém dependências de uma célula
+   */
+  static async getCellDependencies(
+    cellRef: string, 
+    spreadsheetData: SpreadsheetData
+  ): Promise<string[]> {
+    try {
+      const dependencies = await invoke<string[]>('get_cell_dependencies', {
+        cellRef,
+        spreadsheetData
+      });
+      return dependencies;
+    } catch (error) {
+      console.error('Erro ao obter dependências:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Formata o resultado de uma fórmula
+   */
+  static async formatFormulaResult(value: string, formatType: string): Promise<string> {
+    try {
+      const formatted = await invoke<string>('format_formula_result', {
+        value,
+        formatType
+      });
+      return formatted;
+    } catch (error) {
+      console.error('Erro ao formatar resultado:', error);
+      return value;
+    }
+  }
 }
 
 // Utilitários para manipulação de dados da planilha
-
-export const createEmptySpreadsheet = (rows: number, cols: number): CellData[][] => {
-  return Array(rows).fill(null).map((_, rowIndex) =>
-    Array(cols).fill(null).map((_, colIndex) => ({
-      value: "",
-      id: `cell-${rowIndex}-${colIndex}`,
-      formula: null,
-      style: {}
-    }))
-  );
-};
-
-export const getColumnLabel = (index: number): string => {
-  let label = "";
-  let num = index;
-  while (num >= 0) {
-    label = String.fromCharCode(65 + (num % 26)) + label;
-    num = Math.floor(num / 26) - 1;
-  }
-  return label;
-};
-
-export const getCellReference = (rowIndex: number, colIndex: number): string => {
-  return `${getColumnLabel(colIndex)}${rowIndex + 1}`;
-};
-
-export const validateSpreadsheetData = (data: any): data is CellData[][] => {
-  if (!Array.isArray(data)) return false;
-  
-  return data.every(row => 
-    Array.isArray(row) && 
-    row.every(cell => 
-      typeof cell === "object" && 
-      cell !== null && 
-      typeof cell.value === "string" &&
-      typeof cell.id === "string"
-    )
-  );
-};
-
-export const exportToJSON = (spreadsheetData: SpreadsheetData): string => {
-  const template: SpreadsheetData = {
-    name: spreadsheetData.name,
-    rows: spreadsheetData.rows,
-    cols: spreadsheetData.cols,
-    data: spreadsheetData.data,
-    history: spreadsheetData.history,
-    columnWidths: spreadsheetData.columnWidths,
-    rowHeights: spreadsheetData.rowHeights,
-    globalStyles: spreadsheetData.globalStyles,
-    createdAt: spreadsheetData.createdAt || new Date().toISOString(),
-    version: "2.0",
-    metadata: {
-      ...spreadsheetData.metadata,
-      lastModified: new Date().toISOString()
-    }
-  };
-
-  return JSON.stringify(template, null, 2);
-};
-
-export const importFromJSON = (jsonString: string): { success: boolean; data?: SpreadsheetData; error?: string } => {
-  try {
-    const template: SpreadsheetData = JSON.parse(jsonString);
+export class SpreadsheetDataUtils {
+  /**
+   * Converte dados de células para o formato esperado pelo backend
+   */
+  static convertCellDataForBackend(data: CellData[][]): Record<string, string> {
+    const cellData: Record<string, string> = {};
     
-    // Validação básica
-    if (!template.name || !template.rows || !template.cols || !template.data) {
-      throw new Error("Template inválido: campos obrigatórios ausentes");
-    }
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const cellRef = CellReferenceUtils.getCellReference(rowIndex, colIndex);
+        cellData[cellRef] = cell.computed_value || cell.value || '';
+      });
+    });
+    
+    return cellData;
+  }
 
-    if (!validateSpreadsheetData(template.data)) {
-      throw new Error("Template inválido: dados da planilha corrompidos");
-    }
+  /**
+   * Converte dados de células para SpreadsheetData
+   */
+  static convertToSpreadsheetData(data: CellData[][], rows: number, cols: number): SpreadsheetData {
+    const cells: Record<string, any> = {};
+    
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const cellRef = CellReferenceUtils.getCellReference(rowIndex, colIndex);
+        cells[cellRef] = {
+          value: cell.value || '',
+          formula: cell.formula || undefined,
+          computed_value: cell.computed_value || undefined,
+          error: cell.error || undefined,
+          is_formula: cell.is_formula || false
+        };
+      });
+    });
+    
+    return { cells, rows, cols };
+  }
 
-    // Garantir que arrays de dimensões existam
-    if (!template.columnWidths) {
-      template.columnWidths = Array(template.cols).fill(100);
+  /**
+   * Atualiza dados da planilha com resultados de fórmulas
+   */
+  static updateDataWithFormulaResults(
+    data: CellData[][],
+    mainResult: FormulaResult,
+    dependentResults: Array<[string, FormulaResult]>,
+    targetRow: number,
+    targetCol: number
+  ): CellData[][] {
+    const newData = data.map(row => [...row]);
+    
+    // Atualizar célula principal
+    if (newData[targetRow] && newData[targetRow][targetCol]) {
+      newData[targetRow][targetCol] = {
+        ...newData[targetRow][targetCol],
+        computed_value: mainResult.value,
+        error: mainResult.error || null
+      };
     }
     
-    if (!template.rowHeights) {
-      template.rowHeights = Array(template.rows).fill(32);
-    }
-
-    if (!template.globalStyles) {
-      template.globalStyles = {};
-    }
-
-    return {
-      success: true,
-      data: template
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-export const parseCSV = (csvContent: string, options: CSVImportOptions = {}): string[][] => {
-  const {
-    delimiter = ',',
-    quote = '"',
-    escape = '"',
-    skipEmptyLines = true,
-    trimWhitespace = true
-  } = options;
-
-  const lines = csvContent.split('\n');
-  const result: string[][] = [];
-
-  for (let line of lines) {
-    if (skipEmptyLines && line.trim() === '') continue;
-
-    const row: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    let i = 0;
-
-    while (i < line.length) {
-      const char = line[i];
-      const nextChar = line[i + 1];
-
-      if (char === quote) {
-        if (inQuotes && nextChar === quote) {
-          // Escape sequence
-          current += quote;
-          i += 2;
-        } else {
-          // Toggle quote state
-          inQuotes = !inQuotes;
-          i++;
-        }
-      } else if (char === delimiter && !inQuotes) {
-        // End of field
-        row.push(trimWhitespace ? current.trim() : current);
-        current = '';
-        i++;
-      } else {
-        current += char;
-        i++;
-      }
-    }
-
-    // Add the last field
-    row.push(trimWhitespace ? current.trim() : current);
-    result.push(row);
-  }
-
-  return result;
-};
-
-export const importFromCSV = (csvContent: string, options: CSVImportOptions = {}): { success: boolean; data?: CellData[][]; rows?: number; cols?: number; error?: string } => {
-  try {
-    const csvData = parseCSV(csvContent, options);
-    
-    if (csvData.length === 0) {
-      throw new Error("Arquivo CSV vazio");
-    }
-
-    const maxCols = Math.max(...csvData.map(row => row.length));
-    const rows = csvData.length;
-    const cols = maxCols;
-
-    // Converter para formato CellData
-    const data: CellData[][] = csvData.map((row, rowIndex) =>
-      Array(maxCols).fill(null).map((_, colIndex) => ({
-        value: row[colIndex] || '',
-        id: `cell-${rowIndex}-${colIndex}`,
-        style: {}
-      }))
-    );
-
-    return {
-      success: true,
-      data,
-      rows,
-      cols
-    };
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-};
-
-export const exportToCSV = (data: CellData[][], options: CSVExportOptions = {}): string => {
-  const {
-    delimiter = ',',
-    quote = '"',
-    includeHeaders = false
-  } = options;
-
-  const escapeField = (field: string): string => {
-    const needsQuoting = field.includes(delimiter) || field.includes(quote) || field.includes('\n') || field.includes('\r');
-    
-    if (needsQuoting) {
-      const escaped = field.replace(new RegExp(quote, 'g'), quote + quote);
-      return quote + escaped + quote;
-    }
-    
-    return field;
-  };
-
-  let result = '';
-
-  // Adicionar headers se solicitado
-  if (includeHeaders && data.length > 0) {
-    const headers = data[0].map((_, colIndex) => getColumnLabel(colIndex));
-    result += headers.map(escapeField).join(delimiter) + '\n';
-  }
-
-  // Adicionar dados
-  for (const row of data) {
-    const csvRow = row.map(cell => escapeField(cell.value.toString()));
-    result += csvRow.join(delimiter) + '\n';
-  }
-
-  return result.trim();
-};
-
-export const calculateSpreadsheetStats = (data: CellData[][]) => {
-  let totalCells = 0;
-  let filledCells = 0;
-  let emptyCells = 0;
-  let numericCells = 0;
-  let textCells = 0;
-
-  data.forEach(row => {
-    row.forEach(cell => {
-      totalCells++;
-      const value = cell.value.trim();
-      
-      if (value !== "") {
-        filledCells++;
-        
-        // Verificar se é numérico
-        if (!isNaN(Number(value)) && value !== "") {
-          numericCells++;
-        } else {
-          textCells++;
-        }
-      } else {
-        emptyCells++;
+    // Atualizar células dependentes
+    dependentResults.forEach(([cellRef, result]) => {
+      const position = CellReferenceUtils.parseCellReference(cellRef);
+      if (position && newData[position.row] && newData[position.row][position.col]) {
+        newData[position.row][position.col] = {
+          ...newData[position.row][position.col],
+          computed_value: result.value,
+          error: result.error || null
+        };
       }
     });
-  });
-
-  return {
-    totalCells,
-    filledCells,
-    emptyCells,
-    numericCells,
-    textCells,
-    fillPercentage: totalCells > 0 ? Math.round((filledCells / totalCells) * 100) : 0
-  };
-};
-
-export const findAndReplace = (data: CellData[][], findValue: string, replaceValue: string, options: { matchCase?: boolean; wholeWord?: boolean; useRegex?: boolean } = {}): { data: CellData[][]; replacements: number } => {
-  const { matchCase = false, wholeWord = false, useRegex = false } = options;
-  let replacements = 0;
-
-  const newData = data.map(row =>
-    row.map(cell => {
-      let cellValue = cell.value;
-      let searchValue = findValue;
-
-      if (useRegex) {
-        try {
-          const flags = matchCase ? 'g' : 'gi';
-          const regex = new RegExp(findValue, flags);
-          const newValue = cellValue.replace(regex, replaceValue);
-          
-          if (newValue !== cellValue) {
-            replacements++;
-            return { ...cell, value: newValue };
-          }
-        } catch (error) {
-          // Regex inválido, ignorar
-        }
-      } else {
-        if (!matchCase) {
-          cellValue = cellValue.toLowerCase();
-          searchValue = searchValue.toLowerCase();
-        }
-
-        if (wholeWord) {
-          const regex = new RegExp(`\\b${searchValue}\\b`, matchCase ? 'g' : 'gi');
-          if (regex.test(cell.value)) {
-            replacements++;
-            return {
-              ...cell,
-              value: cell.value.replace(regex, replaceValue)
-            };
-          }
-        } else {
-          if (cellValue.includes(searchValue)) {
-            replacements++;
-            return {
-              ...cell,
-              value: cell.value.replace(
-                new RegExp(findValue, matchCase ? "g" : "gi"),
-                replaceValue
-              )
-            };
-          }
-        }
-      }
-
-      return cell;
-    })
-  );
-
-  return {
-    data: newData,
-    replacements
-  };
-};
-
-export const resizeSpreadsheet = (currentData: CellData[][], newRows: number, newCols: number): CellData[][] => {
-  const currentRows = currentData.length;
-  const currentCols = currentData[0]?.length || 0;
-
-  // Criar nova matriz com o tamanho desejado
-  const newData = Array(newRows).fill(null).map((_, rowIndex) =>
-    Array(newCols).fill(null).map((_, colIndex) => {
-      // Se a célula existe nos dados atuais, mantê-la
-      if (rowIndex < currentRows && colIndex < currentCols) {
-        return currentData[rowIndex][colIndex];
-      }
-      // Caso contrário, criar nova célula vazia
-      return {
-        value: "",
-        id: `cell-${rowIndex}-${colIndex}`,
-        formula: null,
-        style: {}
-      };
-    })
-  );
-
-  return newData;
-};
-
-export const applyCellStyle = (data: CellData[][], rowIndex: number, colIndex: number, style: Partial<CellStyle>): CellData[][] => {
-  const newData = data.map(row => [...row]);
-  
-  if (newData[rowIndex] && newData[rowIndex][colIndex]) {
-    newData[rowIndex][colIndex] = {
-      ...newData[rowIndex][colIndex],
-      style: {
-        ...newData[rowIndex][colIndex].style,
-        ...style
-      }
-    };
+    
+    return newData;
   }
 
-  return newData;
-};
+  /**
+   * Encontra todas as células que contêm fórmulas
+   */
+  static findFormulaCells(data: CellData[][]): Array<{ row: number; col: number; formula: string }> {
+    const formulaCells: Array<{ row: number; col: number; formula: string }> = [];
+    
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        if (cell.is_formula && cell.formula) {
+          formulaCells.push({
+            row: rowIndex,
+            col: colIndex,
+            formula: cell.formula
+          });
+        }
+      });
+    });
+    
+    return formulaCells;
+  }
 
-export const applyRangeStyle = (data: CellData[][], startRow: number, startCol: number, endRow: number, endCol: number, style: Partial<CellStyle>): CellData[][] => {
-  const newData = data.map(row => [...row]);
-
-  for (let row = startRow; row <= endRow; row++) {
-    for (let col = startCol; col <= endCol; col++) {
-      if (newData[row] && newData[row][col]) {
+  /**
+   * Recalcula todas as fórmulas na planilha
+   */
+  static async recalculateAllFormulas(data: CellData[][], rows: number, cols: number): Promise<CellData[][]> {
+    const formulaCells = this.findFormulaCells(data);
+    let newData = data.map(row => [...row]);
+    
+    for (const { row, col, formula } of formulaCells) {
+      try {
+        const cellData = this.convertCellDataForBackend(newData);
+        const spreadsheetData = this.convertToSpreadsheetData(newData, rows, cols);
+        
+        const result = await FormulaEvaluationUtils.updateSpreadsheetCell(
+          CellReferenceUtils.getCellReference(row, col),
+          formula,
+          true,
+          spreadsheetData
+        );
+        
+        newData = this.updateDataWithFormulaResults(
+          newData,
+          result.mainResult,
+          result.dependentResults,
+          row,
+          col
+        );
+      } catch (error) {
+        console.error(`Erro ao recalcular fórmula em ${CellReferenceUtils.getCellReference(row, col)}:`, error);
         newData[row][col] = {
           ...newData[row][col],
-          style: {
-            ...newData[row][col].style,
-            ...style
-          }
+          error: `Erro: ${error}`,
+          computed_value: '#ERROR'
         };
       }
     }
-  }
-
-  return newData;
-};
-
-export const clearCellStyles = (data: CellData[][], rowIndex: number, colIndex: number): CellData[][] => {
-  const newData = data.map(row => [...row]);
-  
-  if (newData[rowIndex] && newData[rowIndex][colIndex]) {
-    newData[rowIndex][colIndex] = {
-      ...newData[rowIndex][colIndex],
-      style: {}
-    };
-  }
-
-  return newData;
-};
-
-export const duplicateRow = (data: CellData[][], rowIndex: number): CellData[][] => {
-  if (rowIndex < 0 || rowIndex >= data.length) return data;
-
-  const newData = [...data];
-  const rowToDuplicate = data[rowIndex].map((cell, colIndex) => ({
-    ...cell,
-    id: `cell-${data.length}-${colIndex}`
-  }));
-
-  newData.splice(rowIndex + 1, 0, rowToDuplicate);
-  return newData;
-};
-
-export const duplicateColumn = (data: CellData[][], colIndex: number): CellData[][] => {
-  if (colIndex < 0 || (data.length > 0 && colIndex >= data[0].length)) return data;
-
-  const newData = data.map((row, rowIndex) => {
-    const newRow = [...row];
-    const cellToDuplicate = {
-      ...row[colIndex],
-      id: `cell-${rowIndex}-${row.length}`
-    };
-    newRow.splice(colIndex + 1, 0, cellToDuplicate);
-    return newRow;
-  });
-
-  return newData;
-};
-
-export const sortData = (data: CellData[][], columnIndex: number, ascending: boolean = true): CellData[][] => {
-  if (data.length <= 1) return data;
-
-  const newData = [...data];
-  
-  newData.sort((a, b) => {
-    const aValue = a[columnIndex]?.value || '';
-    const bValue = b[columnIndex]?.value || '';
-
-    // Tentar converter para número
-    const aNum = parseFloat(aValue);
-    const bNum = parseFloat(bValue);
-
-    if (!isNaN(aNum) && !isNaN(bNum)) {
-      // Ambos são números
-      return ascending ? aNum - bNum : bNum - aNum;
-    } else {
-      // Comparação de string
-      const comparison = aValue.localeCompare(bValue);
-      return ascending ? comparison : -comparison;
-    }
-  });
-
-  return newData;
-};
-
-export const filterData = (data: CellData[][], columnIndex: number, filterValue: string, filterType: 'contains' | 'equals' | 'startsWith' | 'endsWith' = 'contains'): CellData[][] => {
-  return data.filter(row => {
-    const cellValue = row[columnIndex]?.value || '';
     
-    switch (filterType) {
-      case 'equals':
-        return cellValue === filterValue;
-      case 'startsWith':
-        return cellValue.startsWith(filterValue);
-      case 'endsWith':
-        return cellValue.endsWith(filterValue);
-      case 'contains':
-      default:
-        return cellValue.includes(filterValue);
-    }
-  });
-};
-
-export const getColumnData = (data: CellData[][], columnIndex: number): string[] => {
-  return data.map(row => row[columnIndex]?.value || '');
-};
-
-export const getRowData = (data: CellData[][], rowIndex: number): string[] => {
-  return data[rowIndex]?.map(cell => cell.value) || [];
-};
-
-export const validateCSV = (csvContent: string): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-  
-  if (!csvContent || csvContent.trim() === '') {
-    errors.push('Arquivo CSV está vazio');
-    return { isValid: false, errors };
+    return newData;
   }
 
-  try {
-    const lines = csvContent.split('\n');
-    const firstLineLength = lines[0] ? lines[0].split(',').length : 0;
+  /**
+   * Limpa erros de fórmulas
+   */
+  static clearFormulaErrors(data: CellData[][]): CellData[][] {
+    return data.map(row =>
+      row.map(cell => ({
+        ...cell,
+        error: null
+      }))
+    );
+  }
+
+  /**
+   * Obtém estatísticas da planilha
+   */
+  static getSpreadsheetStats(data: CellData[][]): {
+    totalCells: number;
+    filledCells: number;
+    formulaCells: number;
+    errorCells: number;
+  } {
+    let totalCells = 0;
+    let filledCells = 0;
+    let formulaCells = 0;
+    let errorCells = 0;
     
-    lines.forEach((line, index) => {
-      if (line.trim() === '') return; // Pular linhas vazias
-      
-      const columns = line.split(',');
-      if (columns.length !== firstLineLength) {
-        errors.push(`Linha ${index + 1}: número inconsistente de colunas (esperado: ${firstLineLength}, encontrado: ${columns.length})`);
-      }
+    data.forEach(row => {
+      row.forEach(cell => {
+        totalCells++;
+        if (cell.value || cell.computed_value) filledCells++;
+        if (cell.is_formula) formulaCells++;
+        if (cell.error) errorCells++;
+      });
     });
-  } catch (error) {
-    errors.push('Erro ao analisar o arquivo CSV');
+    
+    return { totalCells, filledCells, formulaCells, errorCells };
+  }
+}
+
+// Utilitários para formatação
+export class FormattingUtils {
+  /**
+   * Formatos de número predefinidos
+   */
+  static readonly NUMBER_FORMATS = {
+    GENERAL: 'general',
+    NUMBER: 'number',
+    CURRENCY: 'currency',
+    PERCENTAGE: 'percentage',
+    DECIMAL_2: 'decimal_2',
+    DECIMAL_4: 'decimal_4',
+    SCIENTIFIC: 'scientific'
+  };
+
+  /**
+   * Aplica formatação a um valor
+   */
+  static async formatValue(value: string, format: string): Promise<string> {
+    return await FormulaEvaluationUtils.formatFormulaResult(value, format);
   }
 
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
+  /**
+   * Detecta o tipo de valor automaticamente
+   */
+  static detectValueType(value: string): 'number' | 'text' | 'boolean' | 'date' | 'formula' {
+    if (FormulaUtils.isFormula(value)) return 'formula';
+    if (value.toLowerCase() === 'true' || value.toLowerCase() === 'false') return 'boolean';
+    if (!isNaN(Number(value)) && value.trim() !== '') return 'number';
+    if (this.isDateString(value)) return 'date';
+    return 'text';
+  }
+
+  /**
+   * Verifica se uma string representa uma data
+   */
+  static isDateString(value: string): boolean {
+    const date = new Date(value);
+    return !isNaN(date.getTime()) && value.includes('/') || value.includes('-');
+  }
+
+  /**
+   * Formata um número como moeda brasileira
+   */
+  static formatCurrency(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
+  }
+
+  /**
+   * Formata um número como porcentagem
+   */
+  static formatPercentage(value: number): string {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'percent',
+      minimumFractionDigits: 2
+    }).format(value / 100);
+  }
+}
+
+// Exportar todas as classes como um objeto padrão
+export default {
+  CellReferenceUtils,
+  FormulaUtils,
+  FormulaEvaluationUtils,
+  SpreadsheetDataUtils,
+  FormattingUtils
 };

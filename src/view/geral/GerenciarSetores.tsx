@@ -6,29 +6,29 @@ import { core } from "@tauri-apps/api";
 import { Modal } from '../../components/Modal';
 import { useModal } from "../../hooks/useModal";
 
-interface Categoria {
+interface Setor {
     id: number;
     nome: string;
 }
 
-interface CategoriaResponse {
+interface SetorResponse {
     success: boolean;
-    data?: Categoria[];
+    data?: Setor[];
     message?: string;
 }
 
-export const GerenciarCategoria: React.FC = () => {
+export const GerenciarSetores: React.FC = () => {
     const { modal, showConfirm, closeModal } = useModal();
-    const [categorias, setCategorias] = useState<Categoria[]>([]);
-    const [nomeCategoria, setNomeCategoria] = useState('');
-    const [categoriaEditando, setCategoriaEditando] = useState<number | null>(null);
+    const [setores, setSetores] = useState<Setor[]>([]);
+    const [nomeSetor, setNomeSetor] = useState('');
+    const [setorEditando, setSetorEditando] = useState<number | null>(null);
     const [loading, setLoading] = useState(false);
     const [salvando, setSalvando] = useState(false);
     const [erro, setErro] = useState<string | null>(null);
     const [sucesso, setSucesso] = useState<string | null>(null);
 
     useEffect(() => {
-        carregarCategorias();
+        carregarSetores();
     }, []);
 
     useEffect(() => {
@@ -41,19 +41,19 @@ export const GerenciarCategoria: React.FC = () => {
         }
     }, [erro, sucesso]);
 
-    const carregarCategorias = async () => {
+    const carregarSetores = async () => {
         setLoading(true);
         setErro(null);
 
         try {
-            const response: CategoriaResponse = await core.invoke('buscar_categorias_cadastro');
+            const response: SetorResponse = await core.invoke('buscar_setores_cadastro');
 
             if (response.success && response.data) {
-                setCategorias(response.data);
+                setSetores(response.data);
             }
         } catch (error) {
-            console.error('Erro ao carregar categorias:', error);
-            setErro('Erro ao carregar categorias. Tente novamente.');
+            console.error('Erro ao carregar setores:', error);
+            setErro('Erro ao carregar setores. Tente novamente.');
         } finally {
             setLoading(false);
         }
@@ -62,8 +62,8 @@ export const GerenciarCategoria: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!nomeCategoria.trim()) {
-            setErro('O nome da categoria é obrigatório.');
+        if (!nomeSetor.trim()) {
+            setErro('O nome do setor é obrigatório.');
             return;
         }
 
@@ -71,90 +71,90 @@ export const GerenciarCategoria: React.FC = () => {
         setErro(null);
 
         try {
-            if (categoriaEditando) {
-                const response = await core.invoke('editar_categoria', {
-                    id: categoriaEditando,
-                    nome: nomeCategoria.trim()
-                }) as CategoriaResponse;
+            if (setorEditando) {
+                const response = await core.invoke('editar_setor', {
+                    id: setorEditando,
+                    nome: nomeSetor.trim()
+                }) as SetorResponse;
 
                 if (response.success) {
-                    setCategorias(prev =>
+                    setSetores(prev =>
                         prev.map(cat =>
-                            cat.id === categoriaEditando
-                                ? { ...cat, nome: nomeCategoria.trim() }
+                            cat.id === setorEditando
+                                ? { ...cat, nome: nomeSetor.trim() }
                                 : cat
                         )
                     );
 
-                    setSucesso("Categoria editada com sucesso!");
-                    setCategoriaEditando(null);
-                    (await getCurrentWebviewWindow()).emit("category-updated");
+                    setSucesso("Setor editado com sucesso!");
+                    setSetorEditando(null);
+                    (await getCurrentWebviewWindow()).emit("setor-updated");
                 } else {
-                    setErro(response.message || 'Erro ao editar categoria');
+                    setErro(response.message || 'Erro ao editar setor');
                 }
             } else {
-                const response = await core.invoke('criar_categoria', {
-                    nome: nomeCategoria.trim()
-                }) as CategoriaResponse;
+                const response = await core.invoke('criar_setor', {
+                    nome: nomeSetor.trim()
+                }) as SetorResponse;
 
                 if (response.success && response.data && response.data.length > 0) {
-                    const novaCategoria = response.data[0];
-                    setCategorias(prev => [...prev, novaCategoria]);
-                    setSucesso("Categoria cadastrada com sucesso!");
-                    (await getCurrentWebviewWindow()).emit("category-updated");
+                    const novoSetor = response.data[0];
+                    setSetores(prev => [...prev, novoSetor]);
+                    setSucesso("Setor cadastrada com sucesso!");
+                    (await getCurrentWebviewWindow()).emit("setor-updated");
                 } else {
-                    setErro(response.message || 'Erro ao criar categoria');
+                    setErro(response.message || 'Erro ao criar setor');
                 }
             }
 
-            setNomeCategoria('');
+            setNomeSetor('');
         } catch (error) {
-            console.error('Erro ao salvar categoria:', error);
-            setErro('Erro ao salvar categoria. Tente novamente.');
+            console.error('Erro ao salvar setor:', error);
+            setErro('Erro ao salvar setor. Tente novamente.');
         } finally {
             setSalvando(false);
         }
     };
 
-    const handleEditar = (categoria: Categoria) => {
-        setNomeCategoria(categoria.nome);
-        setCategoriaEditando(categoria.id);
+    const handleEditar = (setor: Setor) => {
+        setNomeSetor(setor.nome);
+        setSetorEditando(setor.id);
         setErro(null);
         setSucesso(null);
     };
 
     const handleCancelarEdicao = () => {
-        setNomeCategoria('');
-        setCategoriaEditando(null);
+        setNomeSetor('');
+        setSetorEditando(null);
         setErro(null);
     };
 
     const handleExcluir = async (id: number, nome: string) => {
         const executarExclusao = async () => {
             try {
-                const response = await core.invoke('excluir_categoria', { id }) as CategoriaResponse;
+                const response = await core.invoke('excluir_setor', { id }) as SetorResponse;
 
                 if (response.success) {
-                    setCategorias(prev => prev.filter(cat => cat.id !== id));
-                    setSucesso("Categoria excluída com sucesso!");
-                    if (categoriaEditando === id) {
+                    setSetores(prev => prev.filter(cat => cat.id !== id));
+                    setSucesso("Setor excluída com sucesso!");
+                    if (setorEditando === id) {
                         handleCancelarEdicao();
                     }
-                    (await getCurrentWebviewWindow()).emit("category-updated");
+                    (await getCurrentWebviewWindow()).emit("setor-updated");
                 } else {
-                    setErro(response.message || 'Erro ao excluir categoria');
+                    setErro(response.message || 'Erro ao excluir setor');
                 }
             } catch (error) {
-                console.error('Erro ao excluir categoria:', error);
-                setErro('Erro ao excluir categoria. Tente novamente.');
+                console.error('Erro ao excluir setor:', error);
+                setErro('Erro ao excluir setor. Tente novamente.');
             }
             closeModal();
         };
 
-        showConfirm(`Confirme exclusão`, `Tem certeza que deseja excluir a categoria "${nome}"?`, executarExclusao);
+        showConfirm(`Confirme exclusão`, `Tem certeza que deseja excluir a setor "${nome}"?`, executarExclusao);
     };
 
-    const isEditMode = categoriaEditando !== null;
+    const isEditMode = setorEditando !== null;
 
     return (
         <div className={styles["container"]}>
@@ -164,7 +164,7 @@ export const GerenciarCategoria: React.FC = () => {
                         <FaTag />
                     </div>
                     <div className={styles.headerText}>
-                        <h1 className={styles.title}>Gerenciar Categorias</h1>
+                        <h1 className={styles.title}>Gerenciar Setores</h1>
                     </div>
                 </div>
             </div>
@@ -189,7 +189,7 @@ export const GerenciarCategoria: React.FC = () => {
                 <div className={styles.formCard}>
                     <div className={styles.formHeader}>
                         <h2 className={styles.formTitle}>
-                            {isEditMode ? 'Editar Categoria' : 'Nova Categoria'}
+                            {isEditMode ? 'Editar Setor' : 'Novo Setor'}
                         </h2>
                         {isEditMode && (
                             <button
@@ -205,15 +205,15 @@ export const GerenciarCategoria: React.FC = () => {
 
                     <form onSubmit={handleSubmit} className={styles.form}>
                         <div className={styles.inputGroup}>
-                            <label htmlFor="nomeCategoria" className={styles.label}>
-                                Nome da Categoria
+                            <label htmlFor="nomeSetor" className={styles.label}>
+                                Nome do Setor
                             </label>
                             <input
                                 type="text"
-                                id="nomeCategoria"
-                                value={nomeCategoria}
-                                onChange={(e) => setNomeCategoria(e.target.value)}
-                                placeholder="Digite o nome da categoria..."
+                                id="nomeSetor"
+                                value={nomeSetor}
+                                onChange={(e) => setNomeSetor(e.target.value)}
+                                placeholder="Digite o nome do setor..."
                                 className={styles.input}
                                 maxLength={50}
                                 disabled={salvando}
@@ -223,7 +223,7 @@ export const GerenciarCategoria: React.FC = () => {
 
                         <button
                             type="submit"
-                            disabled={salvando || !nomeCategoria.trim()}
+                            disabled={salvando || !nomeSetor.trim()}
                             className={styles.submitButton + (isEditMode ? ' ' + styles.editMode : '')}
                         >
                             {salvando ? (
@@ -234,57 +234,57 @@ export const GerenciarCategoria: React.FC = () => {
                             ) : (
                                 <>
                                     {isEditMode ? <FaEdit /> : <FaPlus />}
-                                    {isEditMode ? 'Salvar Alterações' : 'Salvar Categoria'}
+                                    {isEditMode ? 'Salvar Alterações' : 'Salvar Setor'}
                                 </>
                             )}
                         </button>
                     </form>
                 </div>
 
-                {/* Lista de categorias */}
+                {/* Lista de setores */}
                 <div className={styles.listCard}>
                     <div className={styles.listHeader}>
-                        <h2 className={styles.listTitle}>Categorias Cadastradas</h2>
+                        <h2 className={styles.listTitle}>Setores Cadastrados</h2>
                         <div className={styles.listStats}>
-                            {categorias.length} categoria{categorias.length !== 1 ? 's' : ''}
+                            {setores.length} setor{setores.length !== 1 ? 's' : ''}
                         </div>
                     </div>
 
                     {loading ? (
                         <div className={styles.loadingContainer}>
                             <div className={styles.loadingSpinner}></div>
-                            <span>Carregando categorias...</span>
+                            <span>Carregando setores...</span>
                         </div>
                     ) : (
                         <div className={styles.categoriasList}>
-                            {categorias.length > 0 ? (
-                                categorias.map((categoria) => (
+                            {setores.length > 0 ? (
+                                setores.map((setor) => (
                                     <div
-                                        key={categoria.id}
-                                        className={styles.categoriaItem + (categoriaEditando === categoria.id ? ' ' + styles.editing : '')}
+                                        key={setor.id}
+                                        className={styles.categoriaItem + (setorEditando === setor.id ? ' ' + styles.editing : '')}
                                     >
                                         <div className={styles.categoriaInfo}>
                                             <div className={styles.categoriaIcon}>
                                                 <FaTag />
                                             </div>
                                             <div className={styles.categoriaDetails}>
-                                                <h3 className={styles.categoriaNome}>{categoria.nome}</h3>
+                                                <h3 className={styles.categoriaNome}>{setor.nome}</h3>
                                             </div>
                                         </div>
 
                                         <div className={styles.categoriaActions}>
                                             <button
-                                                onClick={() => handleEditar(categoria)}
+                                                onClick={() => handleEditar(setor)}
                                                 className={styles.actionButton + ' ' + styles.editButton}
-                                                title="Editar categoria"
+                                                title="Editar setor"
                                                 disabled={salvando}
                                             >
                                                 <FaEdit />
                                             </button>
                                             <button
-                                                onClick={() => handleExcluir(categoria.id, categoria.nome)}
+                                                onClick={() => handleExcluir(setor.id, setor.nome)}
                                                 className={styles.actionButton + ' ' + styles.deleteButton}
-                                                title="Excluir categoria"
+                                                title="Excluir setor"
                                                 disabled={salvando}
                                             >
                                                 <FaTrash />
@@ -295,8 +295,8 @@ export const GerenciarCategoria: React.FC = () => {
                             ) : (
                                 <div className={styles.emptyState}>
                                     <FaTag className={styles.emptyIcon} />
-                                    <h3>Nenhuma categoria cadastrada</h3>
-                                    <p>Cadastre a primeira categoria usando o formulário acima.</p>
+                                    <h3>Nenhum setor cadastrado</h3>
+                                    <p>Cadastre o primeiro setor usando o formulário acima.</p>
                                 </div>
                             )}
                         </div>

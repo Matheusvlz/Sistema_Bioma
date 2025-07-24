@@ -9,6 +9,12 @@ pub struct Usuario {
     pub id: u32,
     pub nome: String,
     pub usuario: String,
+    pub ultimoacesso: Option<String>,
+    pub ativo: bool,
+    pub relatorio_email: bool,
+    pub notif_cadastrada: bool,
+    pub notif_iniciada: bool,
+    pub notif_relatorio: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +45,13 @@ pub struct PermissaoSetor {
 }
 
 //RESPONSE ***********************************************************
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct UsuarioResponse {
+    pub success: bool,
+    pub data: Option<Vec<Usuario>>,
+    pub message: Option<String>,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClienteResponse {
@@ -99,7 +112,7 @@ pub struct AlterarPermissaoRequest {
     permitido: bool,
 }
 
-//FUNÇÕES ***********************************************************
+//FUNÇÕES PRIMEIRA GUIA ***********************************************************
 
 #[command]
 pub async fn buscar_clientes_usuario(usuario_id: u32) -> ClienteResponse {
@@ -381,6 +394,57 @@ pub async fn alterar_setor_cliente(request: AlterarPermissaoRequest) -> InvokeRe
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
             InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+//FUNÇÕES SEGUNDA GUIA ***********************************************************
+
+#[command]
+pub async fn buscar_usuarios_cliente(cliente_id: u32) -> UsuarioResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/usuarios", url);
+    let request_body = ClienteCase {
+        cliente_id, usuario_id: None
+    };
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return UsuarioResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return UsuarioResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<UsuarioResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            UsuarioResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),

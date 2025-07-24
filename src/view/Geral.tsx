@@ -326,7 +326,7 @@ export const Geral: React.FC = () => {
   const subtitleRoutes = {
     clientes: [
       'cadastrar-clientes', 'visualizar-clientes', 'gerenciar-categoria',
-      'cadastro-usuario-portal', 'cadastrar-setor-usuario', 'cadastrar-consultor',
+      'cadastro-usuario-portal', 'gerenciar-setor', 'cadastrar-consultor',
       'cadastrar-laboratorio-terceirizado'
     ],
     estruturas: [
@@ -359,6 +359,9 @@ export const Geral: React.FC = () => {
               break;
             case 'cadastro-usuario-portal':
               await WindowManager.openUsuarioPortal();
+              break;
+            case 'gerenciar-setor':
+              await WindowManager.openGerenciarSetor();
               break;
             default:
               navigate(route as any);
@@ -644,7 +647,7 @@ export const Geral: React.FC = () => {
     {
       title: 'Clientes',
       icon: <FaUsers />,
-      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Cadastrar Setor de Usuário', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
+      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Gerenciar Setores', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
       category: 'clientes' as const,
     },
     {

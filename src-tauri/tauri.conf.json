@@ -16,6 +16,7 @@
         "maximized": true,
         "height": 600,
         "resizable": true,
+         "label": "main",
         "title": "Sistema Bioma",
         "width": 800,
         "minWidth": 400,

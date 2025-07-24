@@ -9,3 +9,6 @@ pub mod components;
 pub mod geral;
 pub mod chat;
 pub mod download_controller;
+pub mod xlsx_controller;
+pub mod formula_controller;
+pub mod formula_parser_controller;
