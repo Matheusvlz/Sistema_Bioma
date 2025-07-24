@@ -12,6 +12,7 @@ export interface CellData {
   media?: CellMedia;
   merged?: boolean;
   masterCell?: { row: number; col: number };
+  mergeRange?: { startRow: number; startCol: number; endRow: number; endCol: number };
 }
 
 export interface CellStyle {
@@ -49,6 +50,10 @@ export interface CellMedia {
   alt?: string;
   title?: string;
   tableData?: string[][];
+  x?: number; // Posição X da imagem dentro da célula (em pixels ou porcentagem)
+  y?: number; // Posição Y da imagem dentro da célula (em pixels ou porcentagem)
+  width?: number; // Largura da imagem (em pixels ou porcentagem)
+  height?: number; // Altura da imagem (em pixels ou porcentagem)
 }
 
 export interface FormulaResult {
@@ -96,6 +101,14 @@ export interface CellRange {
   startCol: number;
   endRow: number;
   endCol: number;
+}
+
+export interface MergeResult {
+  success: boolean;
+  error?: string;
+  mergedCells: CellPosition[];
+  masterCell: CellPosition;
+  mergeRange: CellRange;
 }
 
 // Utilitários para referências de células
@@ -286,6 +299,344 @@ export class FormulaUtils {
    */
   static formatFormulaForDisplay(formula: string): string {
     return this.addFormulaPrefix(formula);
+  }
+}
+
+// Utilitários para mesclagem de células
+export class CellMergeUtils {
+  /**
+   * Valida se um intervalo de células pode ser mesclado
+   */
+  static validateMergeRange(
+    data: CellData[][],
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number
+  ): { isValid: boolean; error?: string } {
+    // Verificar se as coordenadas são válidas
+    if (startRow < 0 || startCol < 0 || endRow >= data.length || endCol >= data[0].length) {
+      return { isValid: false, error: 'Coordenadas fora dos limites da planilha' };
+    }
+
+    // Verificar se é um intervalo válido (pelo menos 2 células)
+    if (startRow === endRow && startCol === endCol) {
+      return { isValid: false, error: 'Selecione pelo menos duas células para mesclar' };
+    }
+
+    // Verificar se alguma célula já está mesclada
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        const cell = data[row]?.[col];
+        if (cell?.merged) {
+          return { 
+            isValid: false, 
+            error: `A célula ${CellReferenceUtils.getCellReference(row, col)} já está mesclada` 
+          };
+        }
+      }
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Mescla células em um intervalo especificado
+   */
+  static mergeCells(
+    data: CellData[][],
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number
+  ): MergeResult {
+    // Normalizar coordenadas (garantir que start <= end)
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+
+    // Validar o intervalo
+    const validation = this.validateMergeRange(data, minRow, minCol, maxRow, maxCol);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        error: validation.error,
+        mergedCells: [],
+        masterCell: { row: minRow, col: minCol },
+        mergeRange: { startRow: minRow, startCol: minCol, endRow: maxRow, endCol: maxCol }
+      };
+    }
+
+    const masterCell = { row: minRow, col: minCol };
+    const mergeRange = { startRow: minRow, startCol: minCol, endRow: maxRow, endCol: maxCol };
+    const mergedCells: CellPosition[] = [];
+
+    // Coletar valores de todas as células para combinar
+    let combinedValue = '';
+    let combinedFormula = '';
+    let hasFormula = false;
+    let masterStyle = data[minRow][minCol]?.style || {};
+    let masterMedia = data[minRow][minCol]?.media;
+
+    // Processar todas as células no intervalo
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        const cell = data[row][col];
+        mergedCells.push({ row, col });
+
+        if (row === minRow && col === minCol) {
+          // Célula master - manter seus dados
+          combinedValue = cell.computed_value || cell.value || '';
+          if (cell.is_formula && cell.formula) {
+            combinedFormula = cell.formula;
+            hasFormula = true;
+          }
+        } else {
+          // Células secundárias - combinar valores se houver
+          const cellValue = cell.computed_value || cell.value || '';
+          if (cellValue.trim()) {
+            if (combinedValue.trim()) {
+              combinedValue += ' ' + cellValue;
+            } else {
+              combinedValue = cellValue;
+            }
+          }
+
+          // Se não há fórmula na master cell mas há nesta célula, usar esta fórmula
+          if (!hasFormula && cell.is_formula && cell.formula) {
+            combinedFormula = cell.formula;
+            hasFormula = true;
+          }
+        }
+      }
+    }
+
+    // Atualizar as células
+    for (let row = minRow; row <= maxRow; row++) {
+      for (let col = minCol; col <= maxCol; col++) {
+        if (row === minRow && col === minCol) {
+          // Célula master
+          data[row][col] = {
+            ...data[row][col],
+            value: hasFormula ? `=${combinedFormula}` : combinedValue,
+            formula: hasFormula ? combinedFormula : null,
+            computed_value: hasFormula ? data[row][col].computed_value : null,
+            is_formula: hasFormula,
+            merged: true,
+            masterCell: masterCell,
+            mergeRange: mergeRange,
+            style: masterStyle,
+            media: masterMedia
+          };
+        } else {
+          // Células secundárias
+          data[row][col] = {
+            ...data[row][col],
+            value: '',
+            formula: null,
+            computed_value: null,
+            is_formula: false,
+            merged: true,
+            masterCell: masterCell,
+            mergeRange: mergeRange,
+            style: {},
+            media: undefined
+          };
+        }
+      }
+    }
+
+    return {
+      success: true,
+      mergedCells,
+      masterCell,
+      mergeRange
+    };
+  }
+
+  /**
+   * Desmescla células
+   */
+  static unmergeCells(data: CellData[][], row: number, col: number): MergeResult {
+    const cell = data[row]?.[col];
+    
+    if (!cell?.merged) {
+      return {
+        success: false,
+        error: 'A célula selecionada não está mesclada',
+        mergedCells: [],
+        masterCell: { row, col },
+        mergeRange: { startRow: row, startCol: col, endRow: row, endCol: col }
+      };
+    }
+
+    // Encontrar a célula master e o intervalo de mesclagem
+    let masterCell = cell.masterCell || { row, col };
+    let mergeRange = cell.mergeRange;
+
+    // Se não temos o range, tentar encontrar baseado na master cell
+    if (!mergeRange) {
+      const masterCellData = data[masterCell.row]?.[masterCell.col];
+      mergeRange = masterCellData?.mergeRange;
+    }
+
+    if (!mergeRange) {
+      return {
+        success: false,
+        error: 'Não foi possível encontrar o intervalo de mesclagem',
+        mergedCells: [],
+        masterCell,
+        mergeRange: { startRow: row, startCol: col, endRow: row, endCol: col }
+      };
+    }
+
+    const { startRow, startCol, endRow, endCol } = mergeRange;
+    const unmergedCells: CellPosition[] = [];
+
+    // Obter o valor da célula master para distribuir
+    const masterCellData = data[masterCell.row][masterCell.col];
+    const masterValue = masterCellData.computed_value || masterCellData.value || '';
+    const masterStyle = masterCellData.style || {};
+
+    // Desmesclar todas as células no intervalo
+    for (let r = startRow; r <= endRow; r++) {
+      for (let c = startCol; c <= endCol; c++) {
+        unmergedCells.push({ row: r, col: c });
+        
+        if (r === masterCell.row && c === masterCell.col) {
+          // Célula master - manter valor original
+          data[r][c] = {
+            ...data[r][c],
+            merged: false,
+            masterCell: undefined,
+            mergeRange: undefined
+          };
+        } else {
+          // Células secundárias - limpar e tornar independentes
+          data[r][c] = {
+            ...data[r][c],
+            value: '',
+            formula: null,
+            computed_value: null,
+            is_formula: false,
+            merged: false,
+            masterCell: undefined,
+            mergeRange: undefined,
+            style: {},
+            media: undefined
+          };
+        }
+      }
+    }
+
+    return {
+      success: true,
+      mergedCells: unmergedCells,
+      masterCell,
+      mergeRange
+    };
+  }
+
+  /**
+   * Verifica se uma célula está mesclada
+   */
+  static isCellMerged(data: CellData[][], row: number, col: number): boolean {
+    const cell = data[row]?.[col];
+    return cell?.merged || false;
+  }
+
+  /**
+   * Obtém informações sobre a mesclagem de uma célula
+   */
+  static getMergeInfo(data: CellData[][], row: number, col: number): {
+    isMerged: boolean;
+    isMasterCell: boolean;
+    masterCell?: CellPosition;
+    mergeRange?: CellRange;
+  } {
+    const cell = data[row]?.[col];
+    
+    if (!cell?.merged) {
+      return { isMerged: false, isMasterCell: false };
+    }
+
+    const masterCell = cell.masterCell || { row, col };
+    const isMasterCell = masterCell.row === row && masterCell.col === col;
+
+    return {
+      isMerged: true,
+      isMasterCell,
+      masterCell,
+      mergeRange: cell.mergeRange
+    };
+  }
+
+  /**
+   * Obtém todas as células mescladas em uma planilha
+   */
+  static getAllMergedCells(data: CellData[][]): Array<{
+    masterCell: CellPosition;
+    mergeRange: CellRange;
+    cells: CellPosition[];
+  }> {
+    const mergedGroups = new Map<string, {
+      masterCell: CellPosition;
+      mergeRange: CellRange;
+      cells: CellPosition[];
+    }>();
+
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        if (cell.merged && cell.masterCell && cell.mergeRange) {
+          const key = `${cell.masterCell.row}-${cell.masterCell.col}`;
+          
+          if (!mergedGroups.has(key)) {
+            mergedGroups.set(key, {
+              masterCell: cell.masterCell,
+              mergeRange: cell.mergeRange,
+              cells: []
+            });
+          }
+          
+          mergedGroups.get(key)!.cells.push({ row: rowIndex, col: colIndex });
+        }
+      });
+    });
+
+    return Array.from(mergedGroups.values());
+  }
+
+  /**
+   * Calcula o colspan e rowspan para uma célula mesclada (para renderização HTML)
+   */
+  static getCellSpan(data: CellData[][], row: number, col: number): {
+    colspan: number;
+    rowspan: number;
+    shouldRender: boolean;
+  } {
+    const cell = data[row]?.[col];
+    
+    if (!cell?.merged) {
+      return { colspan: 1, rowspan: 1, shouldRender: true };
+    }
+
+    const mergeInfo = this.getMergeInfo(data, row, col);
+    
+    if (!mergeInfo.isMasterCell) {
+      // Células secundárias não devem ser renderizadas
+      return { colspan: 1, rowspan: 1, shouldRender: false };
+    }
+
+    if (!mergeInfo.mergeRange) {
+      return { colspan: 1, rowspan: 1, shouldRender: true };
+    }
+
+    const { startRow, startCol, endRow, endCol } = mergeInfo.mergeRange;
+    const colspan = endCol - startCol + 1;
+    const rowspan = endRow - startRow + 1;
+
+    return { colspan, rowspan, shouldRender: true };
   }
 }
 
@@ -595,7 +946,6 @@ export class SpreadsheetDataUtils {
     
     for (const { row, col, formula } of formulaCells) {
       try {
-        const cellData = this.convertCellDataForBackend(newData);
         const spreadsheetData = this.convertToSpreadsheetData(newData, rows, cols);
         
         const result = await FormulaEvaluationUtils.updateSpreadsheetCell(
@@ -645,11 +995,13 @@ export class SpreadsheetDataUtils {
     filledCells: number;
     formulaCells: number;
     errorCells: number;
+    mergedCells: number;
   } {
     let totalCells = 0;
     let filledCells = 0;
     let formulaCells = 0;
     let errorCells = 0;
+    let mergedCells = 0;
     
     data.forEach(row => {
       row.forEach(cell => {
@@ -657,10 +1009,11 @@ export class SpreadsheetDataUtils {
         if (cell.value || cell.computed_value) filledCells++;
         if (cell.is_formula) formulaCells++;
         if (cell.error) errorCells++;
+        if (cell.merged) mergedCells++;
       });
     });
     
-    return { totalCells, filledCells, formulaCells, errorCells };
+    return { totalCells, filledCells, formulaCells, errorCells, mergedCells };
   }
 }
 
@@ -730,6 +1083,7 @@ export class FormattingUtils {
 export default {
   CellReferenceUtils,
   FormulaUtils,
+  CellMergeUtils,
   FormulaEvaluationUtils,
   SpreadsheetDataUtils,
   FormattingUtils

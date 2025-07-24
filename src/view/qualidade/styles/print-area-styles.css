@@ -1,0 +1,258 @@
+/* Estilos para funcionalidade de impressão seletiva */
+
+/* Células na área de impressão definida */
+.print-area-cell {
+  box-shadow: 0 0 0 2px #10b981 !important;
+  background-color: #ecfdf5 !important;
+  position: relative;
+}
+
+.print-area-cell::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 40%, rgba(16, 185, 129, 0.1) 50%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Células sendo selecionadas para área de impressão */
+.print-area-selecting {
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+  background-color: #dbeafe !important;
+  position: relative;
+}
+
+.print-area-selecting::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, transparent 40%, rgba(59, 130, 246, 0.2) 50%, transparent 60%);
+  pointer-events: none;
+  animation: selecting-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes selecting-pulse {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Headers das colunas e linhas na área de impressão */
+.print-area-header {
+  background-color: #d1fae5 !important;
+  border: 2px solid #10b981 !important;
+  font-weight: bold;
+  color: #065f46 !important;
+}
+
+/* Botões de área de impressão */
+.button.success {
+  background-color: #10b981;
+  color: white;
+  border: 1px solid #059669;
+}
+
+.button.success:hover {
+  background-color: #059669;
+}
+
+.button.success:disabled {
+  background-color: #9ca3af;
+  border-color: #6b7280;
+  cursor: not-allowed;
+}
+
+/* Indicador de área de impressão */
+.print-area-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #ecfdf5;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #065f46;
+}
+
+.print-area-indicator strong {
+  font-weight: 600;
+}
+
+/* Modo de seleção de área ativo */
+.spreadsheet-container.print-area-mode {
+  cursor: crosshair;
+}
+
+.spreadsheet-container.print-area-mode .cell:not(.header) {
+  cursor: crosshair;
+}
+
+/* Desabilitar interações durante seleção de área */
+.spreadsheet-container.print-area-mode .cell-input {
+  pointer-events: none;
+  cursor: crosshair;
+}
+
+/* Estilos para o modal de impressão com área selecionada */
+.print-preview-area-info {
+  background-color: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.print-preview-area-info .area-highlight {
+  color: #0369a1;
+  font-weight: 600;
+}
+
+/* Animação para transição entre modos */
+.cell {
+  transition: box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+/* Estilos para células mescladas na área de impressão */
+.print-area-cell.merged-cell {
+  box-shadow: 0 0 0 3px #10b981 !important;
+}
+
+.print-area-selecting.merged-cell {
+  box-shadow: 0 0 0 3px #3b82f6 !important;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+  .print-area-indicator {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+  
+  .button.success {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* Estilos para impressão - garantir que área selecionada seja destacada */
+@media print {
+  .print-area-cell {
+    border: 2px solid #000 !important;
+    background-color: #f9f9f9 !important;
+  }
+  
+  .print-area-indicator {
+    display: block !important;
+    background-color: #f0f0f0 !important;
+    border: 1px solid #000 !important;
+    color: #000 !important;
+  }
+}
+
+/* Tooltip para botões de área de impressão */
+.print-area-tooltip {
+  position: relative;
+}
+
+.print-area-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 1000;
+}
+
+.print-area-tooltip:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Estilos para o cursor durante seleção */
+.selecting-print-area {
+  cursor: crosshair !important;
+}
+
+.selecting-print-area * {
+  cursor: crosshair !important;
+}
+
+/* Indicador visual de progresso da seleção */
+.print-area-selection-info {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #1f2937;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos para células com fórmulas na área de impressão */
+.print-area-cell.formula-cell {
+  background-color: #f0fdf4 !important;
+  border-color: #16a34a !important;
+}
+
+.print-area-cell.formula-cell::before {
+  content: '𝑓';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 10px;
+  color: #16a34a;
+  font-weight: bold;
+}
+
+/* Estilos para células com erro na área de impressão */
+.print-area-cell.error-cell {
+  background-color: #fef2f2 !important;
+  border-color: #dc2626 !important;
+}
+
+.print-area-cell.error-cell::before {
+  content: '⚠';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 10px;
+  color: #dc2626;
+}
+
+/* Estilos para células com mídia na área de impressão */
+.print-area-cell.media-cell {
+  background-color: #f0f8ff !important;
+  border-color: #0ea5e9 !important;
+}
+
+.print-area-cell.media-cell::before {
+  content: '📎';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+}
+
