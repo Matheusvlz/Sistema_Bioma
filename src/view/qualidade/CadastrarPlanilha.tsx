@@ -24,7 +24,7 @@ import {
   Link,
   Table,
   Minimize2,
-  Merge,
+  TableCellsMerge,
   Square,
   X,
   GalleryHorizontal,
@@ -554,7 +554,8 @@ export const CadastrarPlanilha: React.FC = () => {
       setDraggedImage(null);
     }
   }, [draggedImage, addToHistory]);
-  // Modificar handleMouseUp para suportar seleção de área de impressão
+
+  // Função para lidar com mouse up global
   const handleMouseUp = useCallback(() => {
     setIsSelecting(false);
     setSelectionRange(null);
@@ -1575,13 +1576,13 @@ useEffect(() => {
         addToHistory('Redimensionar', `${isResizing.type === 'col' ? 'Coluna' : 'Linha'} ${isResizing.index + 1} redimensionada`);
         setIsResizing(null);
       }
+      if (isResizingImage) {
+        addToHistory('Redimensionar Imagem', `Imagem na célula ${getColumnLabel(isResizingImage.col)}${isResizingImage.row + 1} redimensionada`);
+        setIsResizingImage(null);
+      }
     };
 
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-        if (isResizingImage) {
+    if (isResizing || isResizingImage) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -1590,7 +1591,7 @@ useEffect(() => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, isResizingImage,  addToHistory]);
+  }, [isResizing, isResizingImage, addToHistory, getColumnLabel]);
 
 
   const formatTimestamp = (timestamp: Date): string => {
@@ -2210,7 +2211,35 @@ useEffect(() => {
 
   // Event listener global para prevenir scroll com setas do teclado na planilha
   useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsSelecting(false);
+      setSelectionRange(null);
+      setIsSelectingPrintArea(false);
+      if (isResizing) {
+        addToHistory("Redimensionar", `${isResizing.type === 'col' ? 'Coluna' : 'Linha'} ${isResizing.index + 1} redimensionada`);
+        setIsResizing(null);
+      }
+      if (isResizingImage) {
+        addToHistory("Redimensionar Imagem", `Imagem na célula ${getColumnLabel(isResizingImage.col)}${isResizingImage.row + 1} redimensionada`);
+        setIsResizingImage(null);
+      }
+    };
+
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (isResizingImage) {
+          setIsResizingImage(null);
+          addToHistory("Redimensionar Imagem", "Redimensionamento de imagem cancelado");
+        }
+        if (isResizing) {
+          setIsResizing(null);
+          addToHistory("Redimensionar", "Redimensionamento de coluna/linha cancelado");
+        }
+        // Se o foco estiver na barra de fórmulas e o modal de sugestões estiver aberto, fechar sugestões
+        if (formulaBarRef.current === document.activeElement && showSuggestions) {
+          setShowSuggestions(false);
+        }
+      }
       // Verificar se o foco está em uma célula da planilha
       const activeElement = document.activeElement as HTMLElement;
       if (activeElement && activeElement.hasAttribute('data-cell')) {
@@ -2221,19 +2250,14 @@ useEffect(() => {
       }
     };
 
+    document.addEventListener('mouseup', handleGlobalMouseUp);
     document.addEventListener('keydown', handleGlobalKeyDown);
-    
+
     return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseUp]);
+  }, [isResizing, isResizingImage, addToHistory, showSuggestions]);
 
   return (
     <div className={`${styles["container"]} ${styles["maximized"]}`}>
@@ -2658,7 +2682,7 @@ useEffect(() => {
                   disabled={selectedCells.length < 2}
                   title="Mesclar Células"
                 >
-                  <Merge size={16} />
+                  <TableCellsMerge size={16} />
                 </button>
                 <button 
                   className={styles["format-button"]}
