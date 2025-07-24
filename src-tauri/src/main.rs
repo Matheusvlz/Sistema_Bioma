@@ -67,6 +67,15 @@ use controller::formula_controller::{
     get_functions_by_category,
 };
 
+use controller::tauri_print_commands_controller::{
+        generate_pdf_from_html,
+            print_html,
+            save_print_html,
+            get_available_printers,
+            validate_printer,
+            get_default_print_settings
+};
+
 fn main() {
     dotenvy::dotenv().ok();
 
@@ -163,6 +172,14 @@ fn main() {
             format_formula_result,
             get_formula_categories,
             get_functions_by_category,
+            
+            //PDF Printer    
+            generate_pdf_from_html,
+            print_html,
+            save_print_html,
+            get_available_printers,
+            validate_printer,
+            get_default_print_settings
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

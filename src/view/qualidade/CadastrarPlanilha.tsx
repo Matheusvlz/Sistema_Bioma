@@ -1,34 +1,28 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { CellMergeUtils, CellReferenceUtils } from './SpreadsheetUtils'; // Importe as classes necessárias
 
 import {
   Save,
   Plus,
   Minus,
-  RotateCcw,
   Download,
   Upload,
-  Grid3X3,
   History,
   FileSpreadsheet,
   Trash2,
-  Copy,
-  Edit3,
   Bold,
   Italic,
   Underline,
   AlignLeft,
   AlignCenter,
   AlignRight,
-  Palette,
-  Type,
   FileText,
-  Image,
+  Image as ImageIcon,
   Video,
   Music,
   Link,
   Table,
-  Maximize2,
   Minimize2,
   Merge,
   Square,
@@ -38,9 +32,15 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  Printer
+  Printer,
+  MousePointer,
+  Target,
+  ZoomIn,
+  ZoomOut,
+  RotateCw
 } from 'lucide-react';
 import styles from './styles/cadastrarplanilha.module.css';
+import './styles/print-area-styles.css';
 
 interface CellStyle {
   fontWeight?: 'normal' | 'bold';
@@ -77,6 +77,10 @@ interface CellMedia {
   alt?: string;
   title?: string;
   tableData?: string[][]; // Para tabelas
+  x?: number; // Posição X da imagem dentro da célula (em pixels ou porcentagem)
+  y?: number; // Posição Y da imagem dentro da célula (em pixels ou porcentagem)
+  width?: number; // Largura da imagem (em pixels ou porcentagem)
+  height?: number; // Altura da imagem (em pixels ou porcentagem)
 }
 
 interface CellData {
@@ -90,6 +94,7 @@ interface CellData {
   error?: string | null;
   is_formula?: boolean;
   masterCell?: { row: number; col: number };
+  mergeRange?: { startRow: number; startCol: number; endRow: number; endCol: number };
 }
 
 interface HistoryEntry {
@@ -132,6 +137,14 @@ interface CellRange {
   endRow: number;
   endCol: number;
 }
+
+interface PrintArea {
+  startRow: number;
+  startCol: number;
+  endRow: number;
+  endCol: number;
+}
+
 interface FormulaResult {
   success: boolean;
   value: string;
@@ -155,26 +168,100 @@ interface FormulaFunction {
   category: string;
 }
 
-
-
 export const CadastrarPlanilha: React.FC = () => {
   const [spreadsheetName, setSpreadsheetName] = useState('Nova Planilha');
   const [rows, setRows] = useState(20);
-  const [cols, setCols] = useState(10);
+  const [cols, setCols] = useState(20);
   const [selectedCells, setSelectedCells] = useState<CellSelection[]>([]);
   const [selectionRange, setSelectionRange] = useState<CellRange | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [columnWidths, setColumnWidths] = useState<number[]>(() => Array(10).fill(100));
+  
+  // Estados para área de impressão
+  const [printArea, setPrintArea] = useState<PrintArea | null>(null);
+  const [isPrintAreaMode, setIsPrintAreaMode] = useState(false);
+  const [isSelectingPrintArea, setIsSelectingPrintArea] = useState(false);
+  const [printAreaRange, setPrintAreaRange] = useState<CellRange | null>(null);
+  
+  const [columnWidths, setColumnWidths] = useState<number[]>(() => Array(20).fill(100));
   const [rowHeights, setRowHeights] = useState<number[]>(() => Array(20).fill(32));
   const [isResizing, setIsResizing] = useState<{type: 'col' | 'row', index: number} | null>(null);
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio' | 'link' | 'table'>('image');
+  
+  // Estados para configuração de tabela
+  const [tableConfig, setTableConfig] = useState({
+    rows: 3,
+    cols: 3,
+    selectedTemplate: 0
+  });
+
+  // Templates de estilo para tabelas
+  const tableTemplates = [
+    {
+      name: 'Light',
+      headerStyle: { backgroundColor: '#f8f9fa', color: '#212529', fontWeight: 'bold' as const, border: '1px solid #dee2e6' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#f8f9fa', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Blue',
+      headerStyle: { backgroundColor: '#0d6efd', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #0d6efd' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#e7f1ff', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Green',
+      headerStyle: { backgroundColor: '#198754', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #198754' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#d1e7dd', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Orange',
+      headerStyle: { backgroundColor: '#fd7e14', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #fd7e14' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#fff3cd', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Red',
+      headerStyle: { backgroundColor: '#dc3545', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #dc3545' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#f8d7da', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Purple',
+      headerStyle: { backgroundColor: '#6f42c1', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #6f42c1' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#e2d9f3', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Dark',
+      headerStyle: { backgroundColor: '#212529', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #212529' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#f8f9fa', color: '#212529', border: '1px solid #dee2e6' }
+    },
+    {
+      name: 'Teal',
+      headerStyle: { backgroundColor: '#20c997', color: '#ffffff', fontWeight: 'bold' as const, border: '1px solid #20c997' },
+      cellStyle: { backgroundColor: '#ffffff', color: '#212529', border: '1px solid #dee2e6' },
+      alternateRowStyle: { backgroundColor: '#d1ecf1', color: '#212529', border: '1px solid #dee2e6' }
+    }
+  ];
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1); // Estado para controle de zoom
+  const [rowHeaderWidth, setRowHeaderWidth] = useState(60);
+  const [columnHeaderHeight, setColumnHeaderHeight] = useState(32);
+  // Estados para formatação
+  const [currentFontSize, setCurrentFontSize] = useState("0.875rem");
+  const [currentFontFamily, setCurrentFontFamily] = useState("inherit");
+  const [draggedImage, setDraggedImage] = useState<{ media: CellMedia; fromCell: { row: number; col: number } } | null>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [isResizingImage, setIsResizingImage] = useState<{ row: number; col: number; startX: number; startY: number; startWidth: number; startHeight: number } | null>(null);
+  
   const [data, setData] = useState<CellData[][]>(() => 
     Array(20).fill(null).map((_, rowIndex) =>
-      Array(10).fill(null).map((_, colIndex) => ({
+      Array(20).fill(null).map((_, colIndex) => ({
         value: '',
         id: `cell-${rowIndex}-${colIndex}`,
         formula: null,
@@ -185,16 +272,17 @@ export const CadastrarPlanilha: React.FC = () => {
       }))
     )
   );
-    const [showFormulaModal, setShowFormulaModal] = useState(false);
+  const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [autofillStartCell, setAutofillStartCell] = useState<CellSelection | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
-  const xlsxInputRef = useRef<HTMLInputElement>(null); // Novo ref para arquivos XLSX
+  const xlsxInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
   const resizeStartRef = useRef<{x: number, y: number, initialSize: number}>({x: 0, y: 0, initialSize: 0});
   const spreadsheetRef = useRef<HTMLDivElement>(null);
-  const [formulaBarValue, setFormulaBarValue] = useState('');
+  const printContentRef = useRef<HTMLDivElement>(null);
+  const [formulaBarValue, setFormulaBarValue] = useState("");
   const [isEditingFormula, setIsEditingFormula] = useState(false);
   const [formulaSuggestions, setFormulaSuggestions] = useState<FormulaSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -202,7 +290,8 @@ export const CadastrarPlanilha: React.FC = () => {
   const [allFormulas, setAllFormulas] = useState<FormulaFunction[]>([]);
   const [formulaCategories, setFormulaCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
-    const formulaBarRef = useRef<HTMLInputElement>(null);
+  const formulaBarRef = useRef<HTMLInputElement>(null);
+
   const addToHistory = useCallback((action: string, details: string) => {
     const newEntry: HistoryEntry = {
       timestamp: new Date(),
@@ -212,7 +301,275 @@ export const CadastrarPlanilha: React.FC = () => {
     setHistory(prev => [newEntry, ...prev].slice(0, 50));
   }, []);
 
-   const updateCell = useCallback(async (rowIndex: number, colIndex: number, value: string, isFormula: boolean = false) => {
+  // Função para obter o estilo atual das células selecionadas
+  const getCurrentCellStyle = useCallback((): CellStyle => {
+    if (selectedCells.length === 0) return {};
+    const firstCell = selectedCells[0];
+    return data[firstCell.row][firstCell.col].style || {};
+  }, [selectedCells, data]);
+
+  // Atualizar estados de formatação quando a seleção muda
+  useEffect(() => {
+    if (selectedCells.length > 0) {
+      const currentStyle = getCurrentCellStyle();
+      setCurrentFontSize(currentStyle.fontSize || '0.875rem');
+      setCurrentFontFamily(currentStyle.fontFamily || 'inherit');
+    }
+  }, [selectedCells, getCurrentCellStyle]);
+
+  // Funções de controle de zoom
+    const zoomIn = useCallback(() => {
+    setZoomLevel(prev => {
+      const newLevel = Math.min(prev + 0.1, 3); // Máximo 300%
+      const zoomFactor = newLevel / prev;
+      addToHistory('Zoom In', `Zoom aumentado para ${Math.round(newLevel * 100)}%`);
+      
+      // Ajustar dimensões das colunas e linhas baseado no zoom
+      setColumnWidths(prevWidths => prevWidths.map(width => width * zoomFactor));
+      setRowHeights(prevHeights => prevHeights.map(height => height * zoomFactor));
+      setRowHeaderWidth(prev => prev * zoomFactor);
+      setColumnHeaderHeight(prev => prev * zoomFactor);
+      
+      return newLevel;
+    });
+  }, [addToHistory]);
+
+   const zoomOut = useCallback(() => {
+    setZoomLevel(prev => {
+      const newLevel = Math.max(prev - 0.1, 0.3); // Mínimo 30%
+      const zoomFactor = newLevel / prev;
+      addToHistory('Zoom Out', `Zoom reduzido para ${Math.round(newLevel * 100)}%`);
+      
+      // Ajustar dimensões das colunas e linhas baseado no zoom
+      setColumnWidths(prevWidths => prevWidths.map(width => width * zoomFactor));
+      setRowHeights(prevHeights => prevHeights.map(height => height * zoomFactor));
+      setRowHeaderWidth(prev => prev * zoomFactor);
+      setColumnHeaderHeight(prev => prev * zoomFactor);
+      
+      return newLevel;
+    });
+  }, [addToHistory]);
+
+   const resetZoom = useCallback(() => {
+    const currentLevel = zoomLevel;
+    setZoomLevel(1);
+    
+    // Resetar dimensões das colunas e linhas para o tamanho original
+    const resetFactor = 1 / currentLevel;
+    setColumnWidths(prevWidths => prevWidths.map(width => width * resetFactor));
+    setRowHeights(prevHeights => prevHeights.map(height => height * resetFactor));
+    setRowHeaderWidth(prev => prev * resetFactor);
+    setColumnHeaderHeight(prev => prev * resetFactor);
+    
+    addToHistory('Reset Zoom', 'Zoom resetado para 100%');
+  }, [addToHistory, zoomLevel]);
+  // Função para ativar modo de seleção de área de impressão
+  const activatePrintAreaMode = useCallback(() => {
+    setIsPrintAreaMode(true);
+    setSelectedCells([]);
+    setSelectionRange(null);
+    addToHistory('Modo Área de Impressão', 'Modo de seleção de área de impressão ativado');
+  }, [addToHistory]);
+
+  // Função para desativar modo de seleção de área de impressão
+  const deactivatePrintAreaMode = useCallback(() => {
+    setIsPrintAreaMode(false);
+    setIsSelectingPrintArea(false);
+    setPrintAreaRange(null);
+    addToHistory('Modo Área de Impressão', 'Modo de seleção de área de impressão desativado');
+  }, [addToHistory]);
+
+  // Função para confirmar área de impressão selecionada
+  const confirmPrintArea = useCallback(() => {
+    if (printAreaRange) {
+      const { startRow, startCol, endRow, endCol } = printAreaRange;
+      const minRow = Math.min(startRow, endRow);
+      const maxRow = Math.max(startRow, endRow);
+      const minCol = Math.min(startCol, endCol);
+      const maxCol = Math.max(startCol, endCol);
+      
+      setPrintArea({
+        startRow: minRow,
+        startCol: minCol,
+        endRow: maxRow,
+        endCol: maxCol
+      });
+      
+      setIsPrintAreaMode(false);
+      setIsSelectingPrintArea(false);
+      setPrintAreaRange(null);
+      
+      const areaInfo = `${getColumnLabel(minCol)}${minRow + 1}:${getColumnLabel(maxCol)}${maxRow + 1}`;
+      addToHistory('Área de Impressão Definida', `Área selecionada: ${areaInfo}`);
+    }
+  }, [printAreaRange, addToHistory]);
+
+  // Função para limpar área de impressão
+  const clearPrintArea = useCallback(() => {
+    setPrintArea(null);
+    addToHistory('Área de Impressão', 'Área de impressão removida - impressão completa');
+  }, [addToHistory]);
+
+  // Função para verificar se uma célula está na área de impressão
+  const isCellInPrintArea = useCallback((rowIndex: number, colIndex: number): boolean => {
+    if (!printArea) return false;
+    return rowIndex >= printArea.startRow && 
+           rowIndex <= printArea.endRow && 
+           colIndex >= printArea.startCol && 
+           colIndex <= printArea.endCol;
+  }, [printArea]);
+
+  // Função para verificar se uma célula está na área de impressão sendo selecionada
+  const isCellInPrintAreaRange = useCallback((rowIndex: number, colIndex: number): boolean => {
+    if (!printAreaRange) return false;
+    
+    const { startRow, startCol, endRow, endCol } = printAreaRange;
+    const minRow = Math.min(startRow, endRow);
+    const maxRow = Math.max(startRow, endRow);
+    const minCol = Math.min(startCol, endCol);
+    const maxCol = Math.max(startCol, endCol);
+    
+    return rowIndex >= minRow && rowIndex <= maxRow && colIndex >= minCol && colIndex <= maxCol;
+  }, [printAreaRange]);
+
+  // Modificar handleCellMouseDown para suportar seleção de área de impressão
+  const handleCellMouseDown = useCallback((rowIndex: number, colIndex: number, event: React.MouseEvent) => {
+    if (isPrintAreaMode) {
+      // Modo de seleção de área de impressão
+      setIsSelectingPrintArea(true);
+      setPrintAreaRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
+      return;
+    }
+
+    if (event.ctrlKey && formulaBarRef.current === document.activeElement) {
+      event.preventDefault();
+      const cellRef = getCellReference(rowIndex, colIndex);
+      setFormulaBarValue(prev => prev + cellRef);
+      return;
+    }
+    setIsSelecting(true);
+        if (event.ctrlKey) {
+      setSelectedCells(prev => {
+        const exists = prev.some(cell => cell.row === rowIndex && cell.col === colIndex);
+        if (exists) {
+          // Remove se já existe
+          return prev.filter(cell => !(cell.row === rowIndex && cell.col === colIndex));
+        } else {
+          // Adiciona à seleção
+          return [...prev, { row: rowIndex, col: colIndex }];
+        }
+      });
+    } else {
+      // Seleção normal - substitui a seleção atual
+      setSelectedCells([{ row: rowIndex, col: colIndex }]);
+      setSelectionRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
+    }
+    setSelectedCells([{ row: rowIndex, col: colIndex }]);
+    setSelectionRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
+  }, [isPrintAreaMode, formulaBarRef]);
+
+  // Modificar handleCellMouseEnter para suportar seleção de área de impressão
+  const handleCellMouseEnter = useCallback((rowIndex: number, colIndex: number) => {
+    if (isSelectingPrintArea && printAreaRange) {
+      setPrintAreaRange(prev => {
+        if (!prev) return null;
+        return { ...prev, endRow: rowIndex, endCol: colIndex };
+      });
+      return;
+    }
+
+       if (isSelecting && selectionRange) {
+      // Atualizar o range de seleção
+      const newRange = { 
+        ...selectionRange, 
+        endRow: rowIndex, 
+        endCol: colIndex 
+      };
+      setSelectionRange(newRange);
+
+
+      const minRow = Math.min(newRange.startRow, newRange.endRow);
+      const maxRow = Math.max(newRange.startRow, newRange.endRow);
+      const minCol = Math.min(newRange.startCol, newRange.endCol);
+      const maxCol = Math.max(newRange.startCol, newRange.endCol);
+
+      const newSelectedCells: CellSelection[] = [];
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          newSelectedCells.push({ row: r, col: c });
+        }
+      }
+      setSelectedCells(newSelectedCells);
+    }
+  }, [isSelectingPrintArea, printAreaRange, isSelecting, selectionRange]);
+  const handleImageResizeStart = useCallback((e: React.MouseEvent, rowIndex: number, colIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const cell = data[rowIndex][colIndex];
+    if (cell.media && cell.media.type === 'image') {
+      setIsResizingImage({
+        row: rowIndex,
+        col: colIndex,
+        startX: e.clientX,
+        startY: e.clientY,
+        startWidth: cell.media.width || 80,
+        startHeight: cell.media.height || 60,
+      });
+    }
+  }, [data]);
+  const handleCellDrop = useCallback((targetRow: number, targetCol: number, event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    if (draggedImage) {
+      const { media, fromCell } = draggedImage;
+      
+      // Verificar se não está tentando mover para a mesma célula
+      if (fromCell.row === targetRow && fromCell.col === targetCol) {
+        setDraggedImage(null);
+        return;
+      }
+      
+      // Limpar a célula de origem
+      setData(prevData => {
+        const newData = prevData.map(row => [...row]);
+        newData[fromCell.row][fromCell.col] = {
+          ...newData[fromCell.row][fromCell.col],
+          media: undefined,
+        };
+        
+        // Adicionar a imagem à célula de destino
+        newData[targetRow][targetCol] = {
+          ...newData[targetRow][targetCol],
+          media: { ...media, x: undefined, y: undefined }, // Resetar posição para o centro da nova célula
+        };
+        
+        return newData;
+      });
+
+      addToHistory(
+        'Mover Imagem',
+        `Imagem movida de ${getColumnLabel(fromCell.col)}${fromCell.row + 1} para ${getColumnLabel(targetCol)}${targetRow + 1}`
+      );
+      setDraggedImage(null);
+    }
+  }, [draggedImage, addToHistory]);
+  // Modificar handleMouseUp para suportar seleção de área de impressão
+  const handleMouseUp = useCallback(() => {
+    setIsSelecting(false);
+    setSelectionRange(null);
+    setIsSelectingPrintArea(false);
+  }, []);
+
+  // Função para obter informações da área de impressão
+  const getPrintAreaInfo = useCallback((): string => {
+    if (!printArea) return 'Planilha completa';
+    const { startRow, startCol, endRow, endCol } = printArea;
+    return `${getColumnLabel(startCol)}${startRow + 1}:${getColumnLabel(endCol)}${endRow + 1}`;
+  }, [printArea]);
+
+  // Resto das funções existentes (mantendo todas as funções originais)
+  const updateCell = useCallback(async (rowIndex: number, colIndex: number, value: string, isFormula: boolean = false) => {
     const cellRef = getCellReference(rowIndex, colIndex);
     const oldCell = data[rowIndex][colIndex];
     
@@ -331,6 +688,8 @@ export const CadastrarPlanilha: React.FC = () => {
     }
   }, [data, rows, cols, addToHistory]);
 
+
+
   const handleFormulaBarChange = useCallback(async (value: string) => {
     setFormulaBarValue(value);
     
@@ -417,6 +776,7 @@ export const CadastrarPlanilha: React.FC = () => {
       return newData;
     });
   }, [addToHistory]);
+
   useEffect(() => {
     loadAvailableFormulas();
     loadFormulaCategories();
@@ -447,7 +807,7 @@ export const CadastrarPlanilha: React.FC = () => {
     }
   };
 
-    const getCellReference = (rowIndex: number, colIndex: number): string => {
+  const getCellReference = (rowIndex: number, colIndex: number): string => {
     return `${getColumnLabel(colIndex)}${rowIndex + 1}`;
   };
 
@@ -477,6 +837,7 @@ export const CadastrarPlanilha: React.FC = () => {
       console.error('Erro ao carregar categorias:', error);
     }
   };
+
   const updateSelectedCellsStyle = useCallback((styleUpdate: Partial<CellStyle>) => {
     if (selectedCells.length === 0) return;
 
@@ -542,65 +903,89 @@ export const CadastrarPlanilha: React.FC = () => {
     return rowIndex >= minRow && rowIndex <= maxRow && colIndex >= minCol && colIndex <= maxCol;
   }, [selectionRange]);
 
-  const handleCellMouseDown = useCallback((rowIndex: number, colIndex: number, event: React.MouseEvent) => {
-    if (event.ctrlKey && formulaBarRef.current === document.activeElement) {
-      event.preventDefault();
-      const cellRef = getCellReference(rowIndex, colIndex);
-      setFormulaBarValue(prev => prev + cellRef);
-      return;
-    }
-    setIsSelecting(true);
-    setSelectedCells([{ row: rowIndex, col: colIndex }]);
-    setSelectionRange({ startRow: rowIndex, startCol: colIndex, endRow: rowIndex, endCol: colIndex });
-  }, [formulaBarRef, getCellReference]);
-
-  const handleCellMouseEnter = useCallback((rowIndex: number, colIndex: number) => {
-    if (isSelecting && selectionRange) {
-      setSelectionRange(prev => {
-        if (!prev) return null;
-        return { ...prev, endRow: rowIndex, endCol: colIndex };
-      });
-
-      const minRow = Math.min(selectionRange.startRow, rowIndex);
-      const maxRow = Math.max(selectionRange.startRow, rowIndex);
-      const minCol = Math.min(selectionRange.startCol, colIndex);
-      const maxCol = Math.max(selectionRange.startCol, colIndex);
-
-      const newSelectedCells: CellSelection[] = [];
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minCol; c <= maxCol; c++) {
-          newSelectedCells.push({ row: r, col: c });
-        }
-      }
-      setSelectedCells(newSelectedCells);
-    }
-  }, [isSelecting, selectionRange]);
-
-  const handleMouseUp = useCallback(() => {
-    setIsSelecting(false);
-    setSelectionRange(null);
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseUp]);
-
   const handleCellKeyDown = useCallback((event: React.KeyboardEvent, rowIndex: number, colIndex: number) => {
-    if (event.key === 'Enter') {
+    // Navegação com setas do teclado
+    if (event.key === 'ArrowUp') {
+      event.preventDefault(); // Evita o scroll da página
+      if (rowIndex > 0) {
+        setSelectedCells([{ row: rowIndex - 1, col: colIndex }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex - 1}-${colIndex}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
+      }
+    } else if (event.key === 'ArrowDown') {
+      event.preventDefault(); // Evita o scroll da página
+      if (rowIndex < rows - 1) {
+        setSelectedCells([{ row: rowIndex + 1, col: colIndex }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex + 1}-${colIndex}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
+      }
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault(); // Evita o scroll da página
+      if (colIndex > 0) {
+        setSelectedCells([{ row: rowIndex, col: colIndex - 1 }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex}-${colIndex - 1}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
+      }
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault(); // Evita o scroll da página
+      if (colIndex < cols - 1) {
+        setSelectedCells([{ row: rowIndex, col: colIndex + 1 }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex}-${colIndex + 1}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
+      }
+    } else if (event.key === 'Enter') {
       // Mover para a próxima linha
       if (rowIndex < rows - 1) {
         setSelectedCells([{ row: rowIndex + 1, col: colIndex }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex + 1}-${colIndex}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
       }
     } else if (event.key === 'Tab') {
       event.preventDefault();
       // Mover para a próxima coluna
       if (colIndex < cols - 1) {
         setSelectedCells([{ row: rowIndex, col: colIndex + 1 }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex}-${colIndex + 1}"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
       } else if (rowIndex < rows - 1) {
         setSelectedCells([{ row: rowIndex + 1, col: 0 }]);
+        // Focar na nova célula
+        setTimeout(() => {
+          const newCellInput = document.querySelector(`[data-cell="${rowIndex + 1}-0"]`) as HTMLInputElement;
+          if (newCellInput) {
+            newCellInput.focus();
+          }
+        }, 0);
       }
     }
   }, [rows, cols]);
@@ -627,7 +1012,7 @@ export const CadastrarPlanilha: React.FC = () => {
     setData(prevData => {
       const newData = prevData.map((row, rowIndex) => [
         ...row,
-              { 
+        { 
           value: '', 
           id: `cell-${rowIndex}-${cols}`, 
           formula: null,
@@ -672,7 +1057,7 @@ export const CadastrarPlanilha: React.FC = () => {
     if (confirm('Tem certeza que deseja limpar toda a planilha?')) {
       setData(prevData => 
         prevData.map(row => 
-                    row.map(cell => ({ 
+          row.map(cell => ({ 
             ...cell, 
             value: '', 
             formula: null,
@@ -910,7 +1295,7 @@ export const CadastrarPlanilha: React.FC = () => {
   const exportToCSV = useCallback(() => {
     const csvContent = data.map(row => 
       row.map(cell => {
-       let value = cell.computed_value || cell.value;
+        let value = cell.computed_value || cell.value;
         
         // Se há mídia, incluir informação no CSV
         if (cell.media) {
@@ -936,7 +1321,7 @@ export const CadastrarPlanilha: React.FC = () => {
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-        addToHistory('Salvar Template', `Template "${spreadsheetName}" salvo como JSON`);
+    addToHistory('Salvar Template', `Template "${spreadsheetName}" salvo como JSON`);
   }, [data, spreadsheetName, addToHistory]);
 
   // Funções de formatação
@@ -997,6 +1382,20 @@ export const CadastrarPlanilha: React.FC = () => {
     updateSelectedCellsStyle({ textTransform: transform });
   }, [selectedCells, updateSelectedCellsStyle]);
 
+  // Função corrigida para alterar tamanho da fonte
+  const setFontSize = useCallback((fontSize: string) => {
+    if (selectedCells.length === 0) return;
+    setCurrentFontSize(fontSize);
+    updateSelectedCellsStyle({ fontSize: fontSize });
+  }, [selectedCells, updateSelectedCellsStyle]);
+
+  // Função corrigida para alterar família da fonte
+  const setFontFamily = useCallback((fontFamily: string) => {
+    if (selectedCells.length === 0) return;
+    setCurrentFontFamily(fontFamily);
+    updateSelectedCellsStyle({ fontFamily: fontFamily });
+  }, [selectedCells, updateSelectedCellsStyle]);
+
   // Funções de mídia
   const openMediaModal = useCallback((type: 'image' | 'video' | 'audio' | 'link' | 'table') => {
     if (selectedCells.length === 0) {
@@ -1045,15 +1444,74 @@ export const CadastrarPlanilha: React.FC = () => {
   const createTable = useCallback((tableData: string[][]) => {
     if (selectedCells.length === 0) return;
 
+    const template = tableTemplates[tableConfig.selectedTemplate];
+    const { rows: tableRows, cols: tableCols } = tableConfig;
+    
+    // Criar dados da tabela com o template selecionado
+    const styledTableData: string[][] = [];
+    
+    for (let row = 0; row < tableRows; row++) {
+      const rowData: string[] = [];
+      for (let col = 0; col < tableCols; col++) {
+        if (row === 0) {
+          // Primeira linha (cabeçalho)
+          rowData.push(`Cabeçalho ${col + 1}`);
+        } else {
+          // Linhas de dados
+          rowData.push(`Linha ${row}, Col ${col + 1}`);
+        }
+      }
+      styledTableData.push(rowData);
+    }
+
     const media: CellMedia = {
       type: 'table',
-      tableData: tableData
+      tableData: styledTableData
     };
     
     const firstCell = selectedCells[0];
     updateCellMedia(firstCell.row, firstCell.col, media);
+    
+    // Aplicar estilos às células da tabela na planilha
+    const startRow = firstCell.row;
+    const startCol = firstCell.col;
+    
+    for (let row = 0; row < tableRows && startRow + row < data.length; row++) {
+      for (let col = 0; col < tableCols && startCol + col < data[0].length; col++) {
+        const targetRow = startRow + row;
+        const targetCol = startCol + col;
+        
+        let cellStyle: CellStyle;
+        
+        if (row === 0) {
+          // Estilo do cabeçalho
+          cellStyle = template.headerStyle;
+        } else if (row % 2 === 0) {
+          // Linhas pares
+          cellStyle = template.cellStyle;
+        } else {
+          // Linhas ímpares
+          cellStyle = template.alternateRowStyle;
+        }
+        
+        // Atualizar a célula com o valor e estilo
+        setData(prevData => {
+          const newData = prevData.map(r => [...r]);
+          if (newData[targetRow] && newData[targetRow][targetCol]) {
+            newData[targetRow][targetCol] = {
+              ...newData[targetRow][targetCol],
+   
+              style: { ...newData[targetRow][targetCol].style, ...cellStyle }
+            };
+          }
+          return newData;
+        });
+      }
+    }
+    
     setShowMediaModal(false);
-  }, [selectedCells, updateCellMedia]);
+    addToHistory('Tabela Criada', `Tabela ${tableRows}x${tableCols} criada com template ${template.name}`);
+  }, [selectedCells, updateCellMedia, tableConfig, tableTemplates, data, addToHistory]);
 
   // Funções de redimensionamento
   const handleMouseDown = useCallback((e: React.MouseEvent, type: 'col' | 'row', index: number) => {
@@ -1066,16 +1524,15 @@ export const CadastrarPlanilha: React.FC = () => {
     };
   }, [columnWidths, rowHeights]);
 
-  useEffect(() => {
+useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      const { type, index } = isResizing;
-      const { x, y, initialSize } = resizeStartRef.current;
-      
-      if (type === 'col') {
-        const deltaX = e.clientX - x;
-        const newWidth = Math.max(50, initialSize + deltaX);
+      if (isResizing) 
+        {
+          const { type, index } = isResizing;
+          const { x, y, initialSize } = resizeStartRef.current;
+          if (type === 'col') {
+            const deltaX = e.clientX - x;
+              const newWidth = Math.max(50, initialSize + deltaX);
         setColumnWidths(prev => {
           const newWidths = [...prev];
           newWidths[index] = newWidth;
@@ -1088,6 +1545,27 @@ export const CadastrarPlanilha: React.FC = () => {
           const newHeights = [...prev];
           newHeights[index] = newHeight;
           return newHeights;
+        });
+      }
+      }
+            if (isResizingImage) {
+        const { row, col, startX, startY, startWidth, startHeight } = isResizingImage;
+        const deltaX = e.clientX - startX;
+        const deltaY = e.clientY - startY;
+        
+        const newWidth = Math.max(20, startWidth + deltaX);
+        const newHeight = Math.max(20, startHeight + deltaY);
+        
+        setData(prevData => {
+          const newData = prevData.map(row => [...row]);
+          if (newData[row][col].media) {
+            newData[row][col].media = {
+              ...newData[row][col].media!,
+              width: newWidth,
+              height: newHeight,
+            };
+          }
+          return newData;
         });
       }
     };
@@ -1103,12 +1581,17 @@ export const CadastrarPlanilha: React.FC = () => {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
+        if (isResizingImage) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, addToHistory]);
+  }, [isResizing, isResizingImage,  addToHistory]);
+
 
   const formatTimestamp = (timestamp: Date): string => {
     return timestamp.toLocaleString('pt-BR');
@@ -1118,16 +1601,29 @@ export const CadastrarPlanilha: React.FC = () => {
     const cell = data[rowIndex]?.[colIndex];
     if (!cell) return {};
 
-    if (cell.merged && cell.masterCell) {
-      const masterCell = data[cell.masterCell.row][cell.masterCell.col];
-      if (masterCell && masterCell.merged) {
-        // This cell is part of a merged range, and not the master cell
-        return { display: 'none' };
-      }
+    const { colspan, rowspan, shouldRender } = CellMergeUtils.getCellSpan(data, rowIndex, colIndex);
+
+    if (!shouldRender) {
+      return { display: 'none' };
     }
 
     const cellStyle = cell.style || {};
-    return {
+    let additionalStyles: React.CSSProperties = {};
+
+    // Adicionar estilos para área de impressão
+    if (printArea && isCellInPrintArea(rowIndex, colIndex)) {
+      additionalStyles.boxShadow = '0 0 0 2px #10b981';
+      additionalStyles.backgroundColor = additionalStyles.backgroundColor || '#ecfdf5';
+    }
+
+    // Adicionar estilos para área de impressão sendo selecionada
+    if (isPrintAreaMode && isCellInPrintAreaRange(rowIndex, colIndex)) {
+      additionalStyles.boxShadow = '0 0 0 2px #3b82f6';
+      additionalStyles.backgroundColor = '#dbeafe';
+    }
+
+    // Estilos base da célula
+    const baseStyles: React.CSSProperties = {
       fontWeight: cellStyle.fontWeight || 'normal',
       fontStyle: cellStyle.fontStyle || 'normal',
       textDecoration: cellStyle.textDecoration || 'none',
@@ -1144,10 +1640,6 @@ export const CadastrarPlanilha: React.FC = () => {
       borderRadius: cellStyle.borderRadius || undefined,
       padding: cellStyle.padding || undefined,
       margin: cellStyle.margin || undefined,
-      width: columnWidths[colIndex] || 100,
-      height: rowHeights[rowIndex] || 32,
-      minWidth: columnWidths[colIndex] || 100,
-      minHeight: rowHeights[rowIndex] || 32,
       verticalAlign: cellStyle.verticalAlign || 'middle',
       textTransform: cellStyle.textTransform || 'none',
       letterSpacing: cellStyle.letterSpacing || 'normal',
@@ -1155,11 +1647,37 @@ export const CadastrarPlanilha: React.FC = () => {
       textShadow: cellStyle.textShadow || 'none',
       boxShadow: cellStyle.boxShadow || 'none',
       opacity: cellStyle.opacity || 1,
-      ...(cell.merged && cell.masterCell && cell.masterCell.row === rowIndex && cell.masterCell.col === colIndex ? {
-        gridColumnEnd: `span ${selectionRange ? Math.abs(selectionRange.endCol - selectionRange.startCol) + 1 : 1}`,
-        gridRowEnd: `span ${selectionRange ? Math.abs(selectionRange.endRow - selectionRange.startRow) + 1 : 1}`,
-      } : {})
+      ...additionalStyles,
     };
+
+    // Para células mescladas, aplicar colspan e rowspan
+    if (cell.merged && colspan > 1 || rowspan > 1) {
+      baseStyles.gridColumn = `span ${colspan}`;
+      baseStyles.gridRow = `span ${rowspan}`;
+      baseStyles.zIndex = cell.masterCell && (cell.masterCell.row === rowIndex && cell.masterCell.col === colIndex) ? 4 : 3;
+      
+      // Garantir que a célula mestre ocupe o espaço total
+      if (cell.masterCell && (cell.masterCell.row === rowIndex && cell.masterCell.col === colIndex)) {
+        // Calcular largura e altura total baseada no colspan e rowspan
+        const totalWidth = Array.from({ length: colspan }, (_, i) => columnWidths[colIndex + i] || 100).reduce((sum, width) => sum + width, 0);
+        const totalHeight = Array.from({ length: rowspan }, (_, i) => rowHeights[rowIndex + i] || 32).reduce((sum, height) => sum + height, 0);
+        
+        baseStyles.width = totalWidth;
+        baseStyles.height = totalHeight;
+        baseStyles.minWidth = totalWidth;
+        baseStyles.minHeight = totalHeight;
+        baseStyles.maxWidth = totalWidth;
+        baseStyles.maxHeight = totalHeight;
+      }
+    } else {
+      // Para células normais
+      baseStyles.width = columnWidths[colIndex] || 100;
+      baseStyles.height = rowHeights[rowIndex] || 32;
+      baseStyles.minWidth = columnWidths[colIndex] || 100;
+      baseStyles.minHeight = rowHeights[rowIndex] || 32;
+    }
+
+    return baseStyles;
   };
 
   const renderCellContent = (rowIndex: number, colIndex: number) => {
@@ -1170,29 +1688,120 @@ export const CadastrarPlanilha: React.FC = () => {
       switch (cell.media.type) {
         case 'image':
           return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+            <div
+              className={styles["image-container"]}
+              draggable
+              onDragStart={(e) => {
+                if (cell.media) {
+                  setDraggedImage({ media: cell.media, fromCell: { row: rowIndex, col: colIndex } });
+                  e.dataTransfer.setData("text/plain", cell.id);
+                  e.dataTransfer.effectAllowed = "move";
+                  
+                  // Criar uma imagem de preview para o drag
+                  const dragImage = new Image();
+                  dragImage.src = cell.media.data || cell.media.url || '';
+                  dragImage.style.width = '50px';
+                  dragImage.style.height = '50px';
+                  dragImage.style.opacity = '0.7';
+                  e.dataTransfer.setDragImage(dragImage, 25, 25);
+                }
+              }}
+              onDragEnd={() => {
+                setDraggedImage(null);
+              }}
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'move',
+                transition: 'opacity 0.2s ease',
+                opacity: draggedImage && draggedImage.fromCell.row === rowIndex && draggedImage.fromCell.col === colIndex ? 0.5 : 1,
+              }}
+              title="Arraste para mover a imagem para outra célula"
+            >
               {cell.media.data && (
-                <img 
-                  src={cell.media.data} 
-                  alt={cell.media.alt || 'Imagem'} 
-                  style={{ maxWidth: '80px', maxHeight: '60px', objectFit: 'cover' }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <img 
+                    ref={imageRef}
+                    src={cell.media.data} 
+                    alt={cell.media.alt || 'Imagem'} 
+                    style={{
+                      maxWidth: cell.media.width ? `${cell.media.width}px` : '80px',
+                      maxHeight: cell.media.height ? `${cell.media.height}px` : '60px',
+                      objectFit: 'contain',
+                      position: 'absolute',
+                      left: cell.media.x !== undefined ? `${cell.media.x}px` : '50%',
+                      top: cell.media.y !== undefined ? `${cell.media.y}px` : '50%',
+                      transform: cell.media.x !== undefined && cell.media.y !== undefined ? 'none' : 'translate(-50%, -50%)',
+                      pointerEvents: 'none', // Evita interferência com o drag
+                    }}
+                  />
+                  <div
+                    className={styles["resize-handle"]}
+                    onMouseDown={(e) => handleImageResizeStart(e, rowIndex, colIndex)}
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      width: '10px',
+                      height: '10px',
+                      backgroundColor: '#16a34a',
+                      cursor: 'se-resize',
+                      borderRadius: '2px',
+                      zIndex: 10,
+                    }}
+                    title="Arraste para redimensionar"
+                  />
+                </div>
               )}
               {cell.media.url && !cell.media.data && (
-                <img 
-                  src={cell.media.url} 
-                  alt={cell.media.alt || 'Imagem'} 
-                  style={{ maxWidth: '80px', maxHeight: '60px', objectFit: 'cover' }}
-                />
+                <div style={{ position: 'relative' }}>
+                  <img 
+                    ref={imageRef}
+                    src={cell.media.url} 
+                    alt={cell.media.alt || 'Imagem'} 
+                    style={{
+                      maxWidth: cell.media.width ? `${cell.media.width}px` : '80px',
+                      maxHeight: cell.media.height ? `${cell.media.height}px` : '60px',
+                      objectFit: 'contain',
+                      position: 'absolute',
+                      left: cell.media.x !== undefined ? `${cell.media.x}px` : '50%',
+                      top: cell.media.y !== undefined ? `${cell.media.y}px` : '50%',
+                      transform: cell.media.x !== undefined && cell.media.y !== undefined ? 'none' : 'translate(-50%, -50%)',
+                      pointerEvents: 'none', // Evita interferência com o drag
+                    }}
+                  />
+                  <div
+                    className={styles["resize-handle"]}
+                    onMouseDown={(e) => handleImageResizeStart(e, rowIndex, colIndex)}
+                    style={{
+                      position: 'absolute',
+                      bottom: '0',
+                      right: '0',
+                      width: '10px',
+                      height: '10px',
+                      backgroundColor: '#16a34a',
+                      cursor: 'se-resize',
+                      borderRadius: '2px',
+                      zIndex: 10,
+                    }}
+                    title="Arraste para redimensionar"
+                  />
+                </div>
               )}
-                         <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value}</span>
+              <span style={{ fontSize: '0.7rem', position: 'relative', zIndex: 1, pointerEvents: 'none' }}>
+                {cell.computed_value || cell.value}
+              </span>
             </div>
           );
         case 'video':
           return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <Video size={24} color="#16a34a" />
-             
               <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Vídeo'}</span>
             </div>
           );
@@ -1200,21 +1809,20 @@ export const CadastrarPlanilha: React.FC = () => {
           return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <Music size={24} color="#16a34a" />
-                            <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Áudio'}</span>
+              <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Áudio'}</span>
             </div>
           );
         case 'link':
           return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
               <Link size={24} color="#16a34a" />
-                  <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Link'}</span>
+              <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Link'}</span>
             </div>
           );
         case 'table':
           return (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-              <Table size={24} color="#16a34a" />
-                           <span style={{ fontSize: '0.7rem' }}>{cell.computed_value || cell.value || 'Tabela'}</span>
+         
             </div>
           );
       }
@@ -1237,7 +1845,7 @@ export const CadastrarPlanilha: React.FC = () => {
     // Mostrar ícone de fórmula se for uma fórmula
     const displayValue = cell.computed_value || cell.value;
     return (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
         {cell.is_formula && (
           <Info size={12} color="#16a34a" style={{ flexShrink: 0 }} />
         )}
@@ -1247,6 +1855,7 @@ export const CadastrarPlanilha: React.FC = () => {
           value={displayValue || ''}
           onChange={(e) => updateCell(rowIndex, colIndex, e.target.value)}
           onKeyDown={(e) => handleCellKeyDown(e, rowIndex, colIndex)}
+          data-cell={`${rowIndex}-${colIndex}`}
           style={{
             fontWeight: cell.style?.fontWeight || 'normal',
             fontStyle: cell.style?.fontStyle || 'normal',
@@ -1254,16 +1863,19 @@ export const CadastrarPlanilha: React.FC = () => {
             textAlign: cell.style?.textAlign || 'left',
             color: cell.style?.color || '#374151',
             fontSize: cell.style?.fontSize || '0.875rem',
+            fontFamily: cell.style?.fontFamily || 'inherit',
             textTransform: cell.style?.textTransform || 'none',
             letterSpacing: cell.style?.letterSpacing || 'normal',
             lineHeight: cell.style?.lineHeight || 'normal'
           }}
           placeholder=""
+          disabled={isPrintAreaMode} // Desabilitar edição no modo de seleção de área
         />
       </div>
     );
   };
-    const getFilteredFormulas = (): FormulaFunction[] => {
+
+  const getFilteredFormulas = (): FormulaFunction[] => {
     if (selectedCategory === 'Todas') {
       return allFormulas;
     }
@@ -1271,6 +1883,18 @@ export const CadastrarPlanilha: React.FC = () => {
   };
 
   const getSelectionInfo = (): string => {
+    if (isPrintAreaMode) {
+      if (printAreaRange) {
+        const { startRow, startCol, endRow, endCol } = printAreaRange;
+        const minRow = Math.min(startRow, endRow);
+        const maxRow = Math.max(startRow, endRow);
+        const minCol = Math.min(startCol, endCol);
+        const maxCol = Math.max(startCol, endCol);
+        return `Selecionando: ${getColumnLabel(minCol)}${minRow + 1}:${getColumnLabel(maxCol)}${maxRow + 1}`;
+      }
+      return 'Modo: Selecionar área de impressão';
+    }
+    
     if (selectedCells.length === 0) return '';
     if (selectedCells.length === 1) {
       const cell = selectedCells[0];
@@ -1280,66 +1904,60 @@ export const CadastrarPlanilha: React.FC = () => {
   };
 
   const mergeCells = useCallback(() => {
-    if (!selectionRange || selectedCells.length < 2) {
+    if (selectedCells.length < 2) {
       alert('Selecione pelo menos duas células para mesclar.');
       return;
     }
 
-    const { startRow, startCol, endRow, endCol } = selectionRange;
-    const minRow = Math.min(startRow, endRow);
-    const maxRow = Math.max(startRow, endRow);
-    const minCol = Math.min(startCol, endCol);
-    const maxCol = Math.max(startCol, endCol);
+    const rows = selectedCells.map(c => c.row);
+    const cols = selectedCells.map(c => c.col);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    const minCol = Math.min(...cols);
+    const maxCol = Math.max(...cols);
 
     setData(prevData => {
       const newData = prevData.map(row => [...row]);
-      const masterCell = newData[minRow][minCol];
+      const result = CellMergeUtils.mergeCells(newData, minRow, minCol, maxRow, maxCol);
 
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minCol; c <= maxCol; c++) {
-          if (r === minRow && c === minCol) {
-            newData[r][c] = { ...masterCell, merged: true, masterCell: { row: minRow, col: minCol } };
-          } else {
-            newData[r][c] = { ...newData[r][c], merged: true, masterCell: { row: minRow, col: minCol } };
-          }
-        }
+      if (result.success) {
+        const rangeStr = `${CellReferenceUtils.getCellReference(minRow, minCol)}:${CellReferenceUtils.getCellReference(maxRow, maxCol)}`;
+        addToHistory('Mesclar Células', `Células mescladas no intervalo ${rangeStr}`);
+        setSelectedCells([{ row: minRow, col: minCol }]);
+        return newData;
+      } else {
+        alert(`Erro ao mesclar células: ${result.error}`);
+        return prevData;
       }
-      return newData;
     });
-    addToHistory('Mesclar Células', `Células de ${getColumnLabel(minCol)}${minRow + 1} a ${getColumnLabel(maxCol)}${maxRow + 1} mescladas.`);
-  }, [selectionRange, selectedCells, addToHistory]);
+  }, [selectedCells, addToHistory]);
 
   const unmergeCells = useCallback(() => {
-    if (selectedCells.length === 0) {
-      alert('Selecione uma célula mesclada para desmesclar.');
+    if (selectedCells.length === 0) return;
+
+    const { row, col } = selectedCells[0];
+    const cell = data[row]?.[col];
+
+    if (!cell || !cell.merged) {
+      alert('A célula selecionada não está mesclada.');
       return;
     }
-
-    const firstCell = data[selectedCells[0].row][selectedCells[0].col];
-    if (!firstCell.merged || !firstCell.masterCell) {
-      alert('A célula selecionada não faz parte de uma célula mesclada.');
-      return;
-    }
-
-    const { row: masterRow, col: masterCol } = firstCell.masterCell;
 
     setData(prevData => {
-      const newData = prevData.map(row => [...row]);
-      
-      // Desmesclar todas as células que fazem parte do grupo mesclado
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const cell = newData[r][c];
-          if (cell.merged && cell.masterCell && cell.masterCell.row === masterRow && cell.masterCell.col === masterCol) {
-            newData[r][c] = { ...cell, merged: false, masterCell: undefined };
-          }
-        }
-      }
+      const newData = prevData.map(r => [...r]);
+      const result = CellMergeUtils.unmergeCells(newData, row, col);
 
-      return newData;
+      if (result.success) {
+        const rangeStr = `${CellReferenceUtils.getCellReference(result.mergeRange.startRow, result.mergeRange.startCol)}:${CellReferenceUtils.getCellReference(result.mergeRange.endRow, result.mergeRange.endCol)}`;
+        addToHistory('Desmesclar Células', `Células desmescladas no intervalo ${rangeStr}`);
+        setSelectedCells([{ row: result.masterCell.row, col: result.masterCell.col }]);
+        return newData;
+      } else {
+        alert(`Erro ao desmesclar células: ${result.error}`);
+        return prevData;
+      }
     });
-    addToHistory('Desmesclar Células', `Células desmescladas a partir de ${getColumnLabel(masterCol)}${masterRow + 1}.`);
-  }, [selectedCells, data, addToHistory, rows, cols]);
+  }, [selectedCells, data, addToHistory]);
 
   const printSpreadsheet = useCallback(() => {
     setShowPrintModal(true);
@@ -1347,81 +1965,197 @@ export const CadastrarPlanilha: React.FC = () => {
   }, [spreadsheetName, addToHistory]);
 
   const handlePrint = useCallback(() => {
-    window.print();
-    setShowPrintModal(false);
-    addToHistory('Imprimir Planilha', `Planilha "${spreadsheetName}" enviada para impressão`);
-  }, [spreadsheetName, addToHistory]);
+    if (printContentRef.current) {
+      // Criar estilos de impressão
+      const printStyles = `
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          
+          .print-content, .print-content * {
+            visibility: visible;
+          }
+          
+          .print-content {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          
+          @page {
+            size: A4 landscape;
+            margin: 1cm;
+          }
+          
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+          }
+          
+          .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+          }
+          
+          .print-header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: #333;
+          }
+          
+          .print-header p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 12px;
+          }
+          
+          .print-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+          }
+          
+          .print-table th,
+          .print-table td {
+            border: 1px solid #ccc;
+            padding: 4px 6px;
+            text-align: left;
+            vertical-align: top;
+            word-wrap: break-word;
+            max-width: 120px;
+          }
+          
+          .print-table th {
+            background-color: #f5f5f5;
+            font-weight: bold;
+            text-align: center;
+          }
+          
+          .print-table .row-header {
+            background-color: #f9f9f9;
+            font-weight: bold;
+            text-align: center;
+            width: 40px;
+          }
+          
+          .formula-cell {
+            background-color: #e8f5e8;
+          }
+          
+          .error-cell {
+            background-color: #ffe6e6;
+            color: #d32f2f;
+          }
+          
+          .media-cell {
+            background-color: #f0f8ff;
+            font-style: italic;
+          }
+          
+          .print-table {
+            font-size: 8px;
+          }
+          
+          .print-table th,
+          .print-table td {
+            padding: 2px 4px;
+            max-width: 80px;
+          }
+        }
+        
+        @media screen {
+          .print-content {
+            display: none;
+          }
+        }
+      `;
 
+      // Criar container temporário para impressão
+      const printContainer = document.createElement('div');
+      printContainer.className = 'print-content';
+      printContainer.innerHTML = printContentRef.current.innerHTML;
+      
+      // Criar elemento de estilo
+      const styleElement = document.createElement('style');
+      styleElement.id = 'tauri-print-styles';
+      styleElement.innerHTML = printStyles;
+      
+      // Adicionar elementos ao DOM
+      document.head.appendChild(styleElement);
+      document.body.appendChild(printContainer);
+      
+      // Executar impressão
+      setTimeout(() => {
+        window.print();
+        
+        // Limpar após impressão (dar tempo para o diálogo de impressão aparecer)
+        setTimeout(() => {
+          const existingStyle = document.getElementById('tauri-print-styles');
+          const existingContainer = document.querySelector('.print-content');
+          
+          if (existingStyle) {
+            document.head.removeChild(existingStyle);
+          }
+          if (existingContainer) {
+            document.body.removeChild(existingContainer);
+          }
+        }, 500);
+      }, 100);
+      
+      setShowPrintModal(false);
+      const areaInfo = printArea ? ` (Área: ${getPrintAreaInfo()})` : ' (Planilha completa)';
+      addToHistory("Imprimir Planilha", `Planilha "${spreadsheetName}" enviada para impressão${areaInfo}`);
+    }
+  }, [spreadsheetName, addToHistory, printArea, getPrintAreaInfo]);
+
+  // Função modificada para gerar conteúdo de impressão com área selecionada
   const generatePrintContent = useCallback(() => {
+    // Determinar área a ser impressa
+    let startRow = 0, endRow = rows - 1, startCol = 0, endCol = cols - 1;
+    
+    if (printArea) {
+      startRow = printArea.startRow;
+      endRow = printArea.endRow;
+      startCol = printArea.startCol;
+      endCol = printArea.endCol;
+    }
+
+    const printRows = endRow - startRow + 1;
+    const printCols = endCol - startCol + 1;
+
     return (
-      <div style={{ 
+      <div className="print-content" style={{ 
         fontFamily: 'Arial, sans-serif',
         fontSize: '12px',
         color: '#000',
         backgroundColor: '#fff',
         padding: '20px'
       }}>
-        <div style={{
-          textAlign: 'center',
-          marginBottom: '20px',
-          borderBottom: '2px solid #333',
-          paddingBottom: '10px'
-        }}>
-          <h1 style={{ margin: 0, fontSize: '18px', color: '#333' }}>{spreadsheetName}</h1>
-          <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '12px' }}>
-            Impresso em: {new Date().toLocaleString('pt-BR')}
-          </p>
-          <p style={{ margin: '5px 0 0 0', color: '#666', fontSize: '12px' }}>
-            Dimensões: {rows} linhas × {cols} colunas
-          </p>
-        </div>
-        
-        <table style={{
+      
+        <table className="print-table" style={{
           width: '100%',
           borderCollapse: 'collapse',
           marginTop: '10px'
         }}>
-          <thead>
-            <tr>
-              <th style={{
-                border: '1px solid #ccc',
-                padding: '4px 6px',
-                backgroundColor: '#f5f5f5',
-                fontWeight: 'bold',
-                textAlign: 'center',
-                width: '40px'
-              }}>#</th>
-              {Array(cols).fill(null).map((_, colIndex) => (
-                <th key={colIndex} style={{
-                  border: '1px solid #ccc',
-                  padding: '4px 6px',
-                  backgroundColor: '#f5f5f5',
-                  fontWeight: 'bold',
-                  textAlign: 'center'
-                }}>
-                  {getColumnLabel(colIndex)}
-                </th>
-              ))}
-            </tr>
-          </thead>
+         
           <tbody>
-            {Array(rows).fill(null).map((_, rowIndex) => (
+            {Array(printRows).fill(null).map((_, rowIndex) => (
               <tr key={rowIndex}>
-                <td style={{
-                  border: '1px solid #ccc',
-                  padding: '4px 6px',
-                  backgroundColor: '#f9f9f9',
-                  fontWeight: 'bold',
-                  textAlign: 'center',
-                  width: '40px'
-                }}>
-                  {rowIndex + 1}
-                </td>
-                {Array(cols).fill(null).map((_, colIndex) => {
-                  const cell = data[rowIndex]?.[colIndex];
+                
+                {Array(printCols).fill(null).map((_, colIndex) => {
+                  const actualRowIndex = startRow + rowIndex;
+                  const actualColIndex = startCol + colIndex;
+                  const cell = data[actualRowIndex]?.[actualColIndex];
                   if (!cell) return <td key={colIndex} style={{ border: '1px solid #ccc', padding: '4px 6px' }}></td>;
                   
                   let cellContent = cell.computed_value || cell.value || '';
+                  let cellClass = '';
                   let cellStyle: React.CSSProperties = {
                     border: '1px solid #ccc',
                     padding: '4px 6px',
@@ -1432,12 +2166,15 @@ export const CadastrarPlanilha: React.FC = () => {
                   };
                   
                   if (cell.error) {
+                    cellClass = 'error-cell';
                     cellStyle.backgroundColor = '#ffe6e6';
                     cellStyle.color = '#d32f2f';
                     cellContent = cell.error;
                   } else if (cell.is_formula) {
+                    cellClass = 'formula-cell';
                     cellStyle.backgroundColor = '#e8f5e8';
                   } else if (cell.media) {
+                    cellClass = 'media-cell';
                     cellStyle.backgroundColor = '#f0f8ff';
                     cellStyle.fontStyle = 'italic';
                     cellContent = `[${cell.media.type.toUpperCase()}] ${cellContent}`;
@@ -1458,7 +2195,7 @@ export const CadastrarPlanilha: React.FC = () => {
                   }
                   
                   return (
-                    <td key={colIndex} style={cellStyle}>
+                    <td key={colIndex} className={cellClass} style={cellStyle}>
                       {cellContent}
                     </td>
                   );
@@ -1469,7 +2206,34 @@ export const CadastrarPlanilha: React.FC = () => {
         </table>
       </div>
     );
-  }, [spreadsheetName, rows, cols, data, getColumnLabel]);
+  }, [spreadsheetName, rows, cols, data, getColumnLabel, printArea, getPrintAreaInfo]);
+
+  // Event listener global para prevenir scroll com setas do teclado na planilha
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Verificar se o foco está em uma célula da planilha
+      const activeElement = document.activeElement as HTMLElement;
+      if (activeElement && activeElement.hasAttribute('data-cell')) {
+        // Se for uma tecla de seta, prevenir o comportamento padrão
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+          event.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseUp]);
 
   return (
     <div className={`${styles["container"]} ${styles["maximized"]}`}>
@@ -1511,6 +2275,22 @@ export const CadastrarPlanilha: React.FC = () => {
             Remover Coluna
           </button>
           
+          {/* Controles de Zoom */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 16px', borderLeft: '1px solid #e5e7eb', borderRight: '1px solid #e5e7eb' }}>
+            <button className={styles["button"]} onClick={zoomOut} title="Diminuir zoom">
+              <ZoomOut size={16} />
+            </button>
+            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#374151', minWidth: '50px', textAlign: 'center' }}>
+              {Math.round(zoomLevel * 100)}%
+            </span>
+            <button className={styles["button"]} onClick={zoomIn} title="Aumentar zoom">
+              <ZoomIn size={16} />
+            </button>
+            <button className={`${styles["button"]} ${styles["secondary"]}`} onClick={resetZoom} title="Resetar zoom">
+              <RotateCw size={16} />
+            </button>
+          </div>
+          
           <button className={styles["button"]} onClick={saveAsTemplate}>
             <Save size={16} />
             Salvar Template
@@ -1541,9 +2321,55 @@ export const CadastrarPlanilha: React.FC = () => {
             Exportar CSV
           </button>
           
+          {/* Botões para área de impressão */}
+          {!isPrintAreaMode ? (
+            <>
+              <button 
+                className={`${styles["button"]} ${printArea ? styles["success"] : ''}`} 
+                onClick={activatePrintAreaMode}
+                title="Selecionar área específica para impressão"
+              >
+                <Target size={16} />
+                {printArea ? 'Alterar Área' : 'Selecionar Área'}
+              </button>
+              
+              {printArea && (
+                <button 
+                  className={`${styles["button"]} ${styles["secondary"]}`} 
+                  onClick={clearPrintArea}
+                  title="Remover área de impressão - imprimir planilha completa"
+                >
+                  <X size={16} />
+                  Limpar Área
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <button 
+                className={`${styles["button"]} ${styles["success"]}`} 
+                onClick={confirmPrintArea}
+                disabled={!printAreaRange}
+                title="Confirmar área selecionada"
+              >
+                <CheckCircle size={16} />
+                Confirmar Área
+              </button>
+              
+              <button 
+                className={`${styles["button"]} ${styles["secondary"]}`} 
+                onClick={deactivatePrintAreaMode}
+                title="Cancelar seleção de área"
+              >
+                <X size={16} />
+                Cancelar
+              </button>
+            </>
+          )}
+          
           <button className={styles["button"]} onClick={printSpreadsheet}>
             <Printer size={16} />
-            Imprimir Planilha
+            {printArea ? 'Imprimir Área' : 'Imprimir Planilha'}
           </button>
           
           <button className={`${styles["button"]} ${styles["danger"]}`} onClick={clearSpreadsheet}>
@@ -1560,8 +2386,23 @@ export const CadastrarPlanilha: React.FC = () => {
             <Calculator size={16} />
             Fórmulas
           </button>
-
         </div>
+
+        {/* Indicador de área de impressão */}
+        {printArea && (
+          <div style={{
+            padding: '8px 16px',
+            backgroundColor: '#ecfdf5',
+            border: '1px solid #10b981',
+            borderRadius: '6px',
+            margin: '8px 0',
+            fontSize: '14px',
+            color: '#065f46'
+          }}>
+            <strong>Área de impressão definida:</strong> {getPrintAreaInfo()}
+          </div>
+        )}
+
         {/* Barra de Fórmulas */}
         <div className={styles["formula-bar"]}>
           <div className={styles["formula-bar-input-container"]}>
@@ -1582,6 +2423,7 @@ export const CadastrarPlanilha: React.FC = () => {
                 }
               }}
               placeholder="Digite um valor ou fórmula (comece com =)"
+              disabled={isPrintAreaMode}
             />
             {formulaValidation && (
               <div className={styles["formula-validation"]}>
@@ -1614,7 +2456,8 @@ export const CadastrarPlanilha: React.FC = () => {
               ))}
             </div>
           )}
-          </div>
+        </div>
+
         {/* Barra de ferramentas de formatação */}
         <div className={styles["formatting-toolbar"]}>
           <div className={styles["format-group"]}>
@@ -1623,212 +2466,255 @@ export const CadastrarPlanilha: React.FC = () => {
             </span>
           </div>
 
-          <div className={styles["format-group"]}>
-            <button 
-              className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.fontWeight === 'bold' ? styles["active"] : ''}`}
-              onClick={toggleBold}
-              disabled={selectedCells.length === 0}
-              title="Negrito"
-            >
-              <Bold size={16} />
-            </button>
-            <button 
-              className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.fontStyle === 'italic' ? styles["active"] : ''}`}
-              onClick={toggleItalic}
-              disabled={selectedCells.length === 0}
-              title="Itálico"
-            >
-              <Italic size={16} />
-            </button>
-            <button 
-              className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.textDecoration === 'underline' ? styles["active"] : ''}`}
-              onClick={toggleUnderline}
-              disabled={selectedCells.length === 0}
-              title="Sublinhado"
-            >
-              <Underline size={16} />
-            </button>
-            <button 
-              className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.textDecoration === 'line-through' ? styles["active"] : ''}`}
-              onClick={toggleStrikethrough}
-              disabled={selectedCells.length === 0}
-              title="Tachado"
-            >
-              <GalleryHorizontal size={16} />
-            </button>
-          </div>
+          {!isPrintAreaMode && (
+            <>
+              <div className={styles["format-group"]}>
+                <button 
+                  className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.fontWeight === 'bold' ? styles["active"] : ''}`}
+                  onClick={toggleBold}
+                  disabled={selectedCells.length === 0}
+                  title="Negrito"
+                >
+                  <Bold size={16} />
+                </button>
+                <button 
+                  className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.fontStyle === 'italic' ? styles["active"] : ''}`}
+                  onClick={toggleItalic}
+                  disabled={selectedCells.length === 0}
+                  title="Itálico"
+                >
+                  <Italic size={16} />
+                </button>
+                <button 
+                  className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.textDecoration === 'underline' ? styles["active"] : ''}`}
+                  onClick={toggleUnderline}
+                  disabled={selectedCells.length === 0}
+                  title="Sublinhado"
+                >
+                  <Underline size={16} />
+                </button>
+                <button 
+                  className={`${styles["format-button"]} ${selectedCells.length > 0 && data[selectedCells[0].row][selectedCells[0].col].style?.textDecoration === 'line-through' ? styles["active"] : ''}`}
+                  onClick={toggleStrikethrough}
+                  disabled={selectedCells.length === 0}
+                  title="Tachado"
+                >
+                  <GalleryHorizontal size={16} />
+                </button>
+              </div>
 
-          <div className={styles["format-group"]}>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => setAlignment('left')}
-              disabled={selectedCells.length === 0}
-              title="Alinhar à esquerda"
-            >
-              <AlignLeft size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => setAlignment('center')}
-              disabled={selectedCells.length === 0}
-              title="Centralizar"
-            >
-              <AlignCenter size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => setAlignment('right')}
-              disabled={selectedCells.length === 0}
-              title="Alinhar à direita"
-            >
-              <AlignRight size={16} />
-            </button>
-          </div>
+              <div className={styles["format-group"]}>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => setAlignment('left')}
+                  disabled={selectedCells.length === 0}
+                  title="Alinhar à esquerda"
+                >
+                  <AlignLeft size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => setAlignment('center')}
+                  disabled={selectedCells.length === 0}
+                  title="Centralizar"
+                >
+                  <AlignCenter size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => setAlignment('right')}
+                  disabled={selectedCells.length === 0}
+                  title="Alinhar à direita"
+                >
+                  <AlignRight size={16} />
+                </button>
+              </div>
 
-          <div className={styles["format-group"]}>
-            <input
-              type="color"
-              onChange={(e) => setBackgroundColor(e.target.value)}
-              disabled={selectedCells.length === 0}
-              title="Cor de fundo"
-              style={{ width: '32px', height: '32px', border: 'none', borderRadius: '4px' }}
-            />
-            <input
-              type="color"
-              onChange={(e) => setTextColor(e.target.value)}
-              disabled={selectedCells.length === 0}
-              title="Cor do texto"
-              style={{ width: '32px', height: '32px', border: 'none', borderRadius: '4px' }}
-            />
-          </div>
+              <div className={styles["format-group"]}>
+                <input
+                  type="color"
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  disabled={selectedCells.length === 0}
+                  title="Cor de fundo"
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '4px' }}
+                />
+                <input
+                  type="color"
+                  onChange={(e) => setTextColor(e.target.value)}
+                  disabled={selectedCells.length === 0}
+                  title="Cor do texto"
+                  style={{ width: '32px', height: '32px', border: 'none', borderRadius: '4px' }}
+                />
+              </div>
 
-          <div className={styles["format-group"]}>
-            <select 
-              className={styles["format-select"]}
-              onChange={(e) => selectedCells.length > 0 && updateSelectedCellsStyle({ fontSize: e.target.value })}
-              disabled={selectedCells.length === 0}
-              title="Tamanho da fonte"
-            >
-              <option value="0.75rem">10px</option>
-              <option value="0.875rem">12px</option>
-              <option value="1rem">14px</option>
-              <option value="1.125rem">16px</option>
-              <option value="1.25rem">18px</option>
-              <option value="1.5rem">20px</option>
-              <option value="1.75rem">24px</option>
-              <option value="2rem">28px</option>
-            </select>
-            
-            <select 
-              className={styles["format-select"]}
-              onChange={(e) => selectedCells.length > 0 && updateSelectedCellsStyle({ fontFamily: e.target.value })}
-              disabled={selectedCells.length === 0}
-              title="Fonte"
-            >
-              <option value="inherit">Padrão</option>
-              <option value="Arial, sans-serif">Arial</option>
-              <option value="'Times New Roman', serif">Times New Roman</option>
-              <option value="'Courier New', monospace">Courier New</option>
-              <option value="Georgia, serif">Georgia</option>
-              <option value="Verdana, sans-serif">Verdana</option>
-            </select>
-          </div>
+              <div className={styles["format-group"]}>
+                <select 
+                  className={styles["format-select"]}
+                  value={currentFontSize}
+                  onChange={(e) => setFontSize(e.target.value)}
+                  disabled={selectedCells.length === 0}
+                  title="Tamanho da fonte"
+                >
+                  <option value="0.5rem">8px</option>
+                  <option value="0.625rem">9px</option>
+                  <option value="0.75rem">10px</option>
+                  <option value="0.8125rem">11px</option>
+                  <option value="0.875rem">12px</option>
+                  <option value="0.9375rem">13px</option>
+                  <option value="1rem">14px</option>
+                  <option value="1.0625rem">15px</option>
+                  <option value="1.125rem">16px</option>
+                  <option value="1.1875rem">17px</option>
+                  <option value="1.25rem">18px</option>
+                  <option value="1.375rem">19px</option>
+                  <option value="1.5rem">20px</option>
+                  <option value="1.625rem">22px</option>
+                  <option value="1.75rem">24px</option>
+                  <option value="1.875rem">26px</option>
+                  <option value="2rem">28px</option>
+                  <option value="2.25rem">30px</option>
+                  <option value="2.5rem">32px</option>
+                  <option value="2.75rem">36px</option>
+                  <option value="3rem">40px</option>
+                  <option value="3.5rem">48px</option>
+                  <option value="4rem">56px</option>
+                  <option value="4.5rem">64px</option>
+                  <option value="5rem">72px</option>
+                  <option value="6rem">96px</option>
+                </select>
+                
+                <select 
+                  className={styles["format-select"]}
+                  value={currentFontFamily}
+                  onChange={(e) => setFontFamily(e.target.value)}
+                  disabled={selectedCells.length === 0}
+                  title="Fonte"
+                >
+                      <option value="inherit">Padrão</option>
+                  <option value="Arial, sans-serif">Arial</option>
+                  <option value="'Times New Roman', serif">Times New Roman</option>
+                  <option value="'Courier New', monospace">Courier New</option>
+                  <option value="Georgia, serif">Georgia</option>
+                  <option value="Verdana, sans-serif">Verdana</option>
+                  <option value="'Comic Sans MS', cursive">Comic Sans MS</option>
+                  <option value="Helvetica, sans-serif">Helvetica</option>
+                  <option value="'Trebuchet MS', sans-serif">Trebuchet MS</option>
+                  <option value="'Arial Black', sans-serif">Arial Black</option>
+                  <option value="Impact, sans-serif">Impact</option>
+                  <option value="'Lucida Console', monospace">Lucida Console</option>
+                  <option value="'Palatino Linotype', serif">Palatino Linotype</option>
+                  <option value="Tahoma, sans-serif">Tahoma</option>
+                  <option value="'Century Gothic', sans-serif">Century Gothic</option>
+                  <option value="'Book Antiqua', serif">Book Antiqua</option>
+                  <option value="'Arial Narrow', sans-serif">Arial Narrow</option>
+                  <option value="'Brush Script MT', cursive">Brush Script MT</option>
+                  <option value="Garamond, serif">Garamond</option>
+                  <option value="'MS Sans Serif', sans-serif">MS Sans Serif</option>
+                  <option value="'Lucida Sans Unicode', sans-serif">Lucida Sans Unicode</option>
+                  <option value="Monaco, monospace">Monaco</option>
+                  <option value="'Segoe UI', sans-serif">Segoe UI</option>
+                  <option value="Calibri, sans-serif">Calibri</option>
+                  <option value="Cambria, serif">Cambria</option>
+                </select>
+              </div>
 
-          <div className={styles["format-group"]}>
-            <select 
-              className={styles["format-select"]}
-              onChange={(e) => selectedCells.length > 0 && setTextTransform(e.target.value as any)}
-              disabled={selectedCells.length === 0}
-              title="Transformação de texto"
-            >
-              <option value="none">Normal</option>
-              <option value="uppercase">MAIÚSCULA</option>
-              <option value="lowercase">minúscula</option>
-              <option value="capitalize">Primeira Maiúscula</option>
-            </select>
-          </div>
+              <div className={styles["format-group"]}>
+                <select 
+                  className={styles["format-select"]}
+                  onChange={(e) => selectedCells.length > 0 && setTextTransform(e.target.value as any)}
+                  disabled={selectedCells.length === 0}
+                  title="Transformação de texto"
+                >
+                  <option value="none">Normal</option>
+                  <option value="uppercase">MAIÚSCULA</option>
+                  <option value="lowercase">minúscula</option>
+                  <option value="capitalize">Primeira Maiúscula</option>
+                </select>
+              </div>
 
-          <div className={styles["format-group"]}>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => setBorder('1px solid #000')}
-              disabled={selectedCells.length === 0}
-              title="Adicionar borda"
-            >
-              <Square size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => setBorder('none')}
-              disabled={selectedCells.length === 0}
-              title="Remover borda"
-            >
-              <Minimize2 size={16} />
-            </button>
-          </div>
+              <div className={styles["format-group"]}>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => setBorder('1px solid #000')}
+                  disabled={selectedCells.length === 0}
+                  title="Adicionar borda"
+                >
+                  <Square size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => setBorder('none')}
+                  disabled={selectedCells.length === 0}
+                  title="Remover borda"
+                >
+                  <Minimize2 size={16} />
+                </button>
+              </div>
 
-          <div className={styles["format-group"]}>
-            <button 
-              className={styles["format-button"]}
-              onClick={mergeCells}
-              disabled={selectedCells.length < 2}
-              title="Mesclar Células"
-            >
-              <Merge size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={unmergeCells}
-              disabled={selectedCells.length === 0 || !data[selectedCells[0].row][selectedCells[0].col].merged}
-              title="Desmesclar Células"
-            >
-              <X size={16} />
-            </button>
-          </div>
+              <div className={styles["format-group"]}>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={mergeCells}
+                  disabled={selectedCells.length < 2}
+                  title="Mesclar Células"
+                >
+                  <Merge size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={unmergeCells}
+                  disabled={selectedCells.length === 0 || !data[selectedCells[0].row][selectedCells[0].col].merged}
+                  title="Desmesclar Células"
+                >
+                  <X size={16} />
+                </button>
+              </div>
 
-          {/* Grupo de mídia */}
-          <div className={styles["format-group"]}>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => openMediaModal('image')}
-              disabled={selectedCells.length === 0}
-              title="Adicionar Imagem"
-            >
-              <Image size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => openMediaModal('video')}
-              disabled={selectedCells.length === 0}
-              title="Adicionar Vídeo"
-            >
-              <Video size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => openMediaModal('audio')}
-              disabled={selectedCells.length === 0}
-              title="Adicionar Áudio"
-            >
-              <Music size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => openMediaModal('link')}
-              disabled={selectedCells.length === 0}
-              title="Adicionar Link"
-            >
-              <Link size={16} />
-            </button>
-            <button 
-              className={styles["format-button"]}
-              onClick={() => openMediaModal('table')}
-              disabled={selectedCells.length === 0}
-              title="Criar Tabela"
-            >
-              <Table size={16} />
-            </button>
-          </div>
+              {/* Grupo de mídia */}
+              <div className={styles["format-group"]}>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => openMediaModal('image')}
+                  disabled={selectedCells.length === 0}
+                  title="Adicionar Imagem"
+                >
+                  <ImageIcon size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => openMediaModal('video')}
+                  disabled={selectedCells.length === 0}
+                  title="Adicionar Vídeo"
+                >
+                  <Video size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => openMediaModal('audio')}
+                  disabled={selectedCells.length === 0}
+                  title="Adicionar Áudio"
+                >
+                  <Music size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => openMediaModal('link')}
+                  disabled={selectedCells.length === 0}
+                  title="Adicionar Link"
+                >
+                  <Link size={16} />
+                </button>
+                <button 
+                  className={styles["format-button"]}
+                  onClick={() => openMediaModal('table')}
+                  disabled={selectedCells.length === 0}
+                  title="Criar Tabela"
+                >
+                  <Table size={16} />
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         <input
@@ -1847,7 +2733,6 @@ export const CadastrarPlanilha: React.FC = () => {
           style={{ display: 'none' }}
         />
 
-        {/* Novo input para arquivos XLSX */}
         <input
           ref={xlsxInputRef}
           type="file"
@@ -1867,19 +2752,24 @@ export const CadastrarPlanilha: React.FC = () => {
         <div ref={spreadsheetRef} className={styles["spreadsheet-container"]}>
           <div 
             className={styles["spreadsheet-scroll-area"]}
-            onMouseLeave={handleMouseUp} // Stop selecting if mouse leaves the grid
+            onMouseLeave={handleMouseUp}
+           
           >
             <div 
               className={styles["spreadsheet-grid"]}
               style={{
-                gridTemplateColumns: `60px ${columnWidths.map(w => `${w}px`).join(' ')}`,
-                gridTemplateRows: `32px ${rowHeights.map(h => `${h}px`).join(' ')}`
+                               gridTemplateColumns: `${rowHeaderWidth}px ${columnWidths.map(w => `${w}px`).join(' ')}`,
+                gridTemplateRows: `${columnHeaderHeight}px ${rowHeights.map(h => `${h}px`).join(' ')}`
               }}
             >
               {/* Célula do canto superior esquerdo */}
               <div className={`${styles["cell"]} ${styles["header"]} ${styles["corner"]}`}>
                 <div className={styles["position-indicator"]}>
-                  {getSelectionInfo()}
+                  {isPrintAreaMode ? (
+                    <MousePointer size={16} color="#3b82f6" />
+                  ) : (
+                    getSelectionInfo()
+                  )}
                 </div>
               </div>
               
@@ -1887,8 +2777,15 @@ export const CadastrarPlanilha: React.FC = () => {
               {Array(cols).fill(null).map((_, colIndex) => (
                 <div 
                   key={`col-header-${colIndex}`} 
-                  className={`${styles["cell"]} ${styles["header"]} ${styles["column-header"]}`}
-                  style={{ width: columnWidths[colIndex], minWidth: columnWidths[colIndex] }}
+                  className={`${styles["cell"]} ${styles["header"]} ${styles["column-header"]} ${
+                    printArea && colIndex >= printArea.startCol && colIndex <= printArea.endCol ? styles["print-area-header"] : ''
+                  }`}
+                                    style={{ 
+                    width: columnWidths[colIndex], 
+                    minWidth: columnWidths[colIndex],
+                    height: columnHeaderHeight,
+                    minHeight: columnHeaderHeight
+                  }}
                 >
                   {getColumnLabel(colIndex)}
                   <div
@@ -1903,8 +2800,10 @@ export const CadastrarPlanilha: React.FC = () => {
                 <React.Fragment key={`row-${rowIndex}`}>
                   {/* Header da linha */}
                   <div 
-                    className={`${styles["cell"]} ${styles["header"]} ${styles["row-header"]}`}
-                    style={{ height: rowHeights[rowIndex], minHeight: rowHeights[rowIndex] }}
+                    className={`${styles["cell"]} ${styles["header"]} ${styles["row-header"]} ${
+                      printArea && rowIndex >= printArea.startRow && rowIndex <= printArea.endRow ? styles["print-area-header"] : ''
+                    }`}
+                         style={{ height: rowHeights[rowIndex], minHeight: rowHeights[rowIndex], width: rowHeaderWidth, minWidth: rowHeaderWidth }}
                   >
                     {rowIndex + 1}
                     <div
@@ -1914,23 +2813,65 @@ export const CadastrarPlanilha: React.FC = () => {
                   </div>
                   
                   {/* Células da linha */}
-                  {Array(cols).fill(null).map((_, colIndex) => (
-                    <div 
-                      key={`cell-${rowIndex}-${colIndex}`} 
-                      className={`${styles["cell"]} ${
-                        isCellSelected(rowIndex, colIndex) ? styles["selected"] : ''
-                      } ${
-                        isCellInRange(rowIndex, colIndex) ? styles["in-range"] : ''
-                      }${
-                        data[rowIndex]?.[colIndex]?.is_formula ? styles["formula-cell"] : ''
-                      }`}
-                      style={getCellStyle(rowIndex, colIndex)}
-                      onMouseDown={(e) => handleCellMouseDown(rowIndex, colIndex, e)}
-                      onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
-                    >
-                      {renderCellContent(rowIndex, colIndex)}
-                    </div>
-                  ))}
+                  {Array(cols).fill(null).map((_, colIndex) => {
+                    const cell = data[rowIndex]?.[colIndex];
+                    const { shouldRender } = CellMergeUtils.getCellSpan(data, rowIndex, colIndex);
+                    
+                    if (!shouldRender) {
+                      return null;
+                    }
+
+                    const isMasterCell = cell?.merged && cell?.masterCell && 
+                                       cell.masterCell.row === rowIndex && 
+                                       cell.masterCell.col === colIndex;
+
+                    return (
+                      <div 
+                        key={`cell-${rowIndex}-${colIndex}`} 
+                        className={`${styles["cell"]} ${
+                          isCellSelected(rowIndex, colIndex) ? styles["selected"] : ''
+                        } ${
+                          isCellInRange(rowIndex, colIndex) ? styles["in-range"] : ''
+                        } ${
+                          data[rowIndex]?.[colIndex]?.is_formula ? styles["formula-cell"] : ''
+                        } ${
+                          isCellInPrintArea(rowIndex, colIndex) ? styles["print-area-cell"] : ''
+                        } ${
+                          isCellInPrintAreaRange(rowIndex, colIndex) ? styles["print-area-selecting"] : ''
+                        } ${
+                          draggedImage ? styles["drop-target"] : ''
+                        }  ${
+                          isMasterCell ? styles["master"] : ''
+                        }`}
+                        style={getCellStyle(rowIndex, colIndex)}
+                        onMouseDown={(e) => handleCellMouseDown(rowIndex, colIndex, e)}
+                        onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (draggedImage) {
+                            e.currentTarget.style.backgroundColor = '#e0f2fe';
+                            e.currentTarget.style.border = '2px dashed #0284c7';
+                          }
+                        }}
+                        onDragLeave={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (draggedImage) {
+                            e.currentTarget.style.backgroundColor = '';
+                            e.currentTarget.style.border = '';
+                          }
+                        }}
+                        onDrop={(e) => {
+                          handleCellDrop(rowIndex, colIndex, e);
+                          e.currentTarget.style.backgroundColor = '';
+                          e.currentTarget.style.border = '';
+                        }}
+                      >
+                        {renderCellContent(rowIndex, colIndex)}
+                      </div>
+                    );
+                  })}
                 </React.Fragment>
               ))}
             </div>
@@ -1984,8 +2925,104 @@ export const CadastrarPlanilha: React.FC = () => {
               )}
               
               {mediaType === 'table' && (
-                <div className={styles["input-group"]}>
-                  <p>Funcionalidade de tabela será implementada em breve.</p>
+                <div className={styles["table-config-container"]}>
+                  <div className={styles["table-size-section"]}>
+                    <h4>Tamanho da Tabela</h4>
+                    <div className={styles["size-inputs"]}>
+                      <div className={styles["input-group"]}>
+                        <label>Linhas:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={tableConfig.rows}
+                          onChange={(e) => setTableConfig(prev => ({ ...prev, rows: parseInt(e.target.value) || 1 }))}
+                          className={styles["size-input"]}
+                        />
+                      </div>
+                      <div className={styles["input-group"]}>
+                        <label>Colunas:</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={tableConfig.cols}
+                          onChange={(e) => setTableConfig(prev => ({ ...prev, cols: parseInt(e.target.value) || 1 }))}
+                          className={styles["size-input"]}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={styles["table-templates-section"]}>
+                    <h4>Templates de Estilo</h4>
+                    <div className={styles["templates-grid"]}>
+                      {tableTemplates.map((template, index) => (
+                        <div
+                          key={index}
+                          className={`${styles["template-preview"]} ${tableConfig.selectedTemplate === index ? styles["selected"] : ''}`}
+                          onClick={() => setTableConfig(prev => ({ ...prev, selectedTemplate: index }))}
+                        >
+                          <div className={styles["template-name"]}>{template.name}</div>
+                          <div className={styles["preview-table"]}>
+                            <div className={styles["preview-header"]} style={template.headerStyle}>
+                              Cabeçalho
+                            </div>
+                            <div className={styles["preview-row"]} style={template.cellStyle}>
+                              Dados
+                            </div>
+                            <div className={styles["preview-row"]} style={template.alternateRowStyle}>
+                              Dados
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className={styles["table-preview-section"]}>
+                    <h4>Prévia da Tabela</h4>
+                    <div className={styles["table-preview"]}>
+                      <table className={styles["preview-full-table"]}>
+                        <tbody>
+                          {Array(Math.min(tableConfig.rows, 5)).fill(null).map((_, rowIndex) => (
+                            <tr key={rowIndex}>
+                              {Array(Math.min(tableConfig.cols, 5)).fill(null).map((_, colIndex) => {
+                                const template = tableTemplates[tableConfig.selectedTemplate];
+                                let cellStyle;
+                                
+                                if (rowIndex === 0) {
+                                  cellStyle = template.headerStyle;
+                                } else if (rowIndex % 2 === 0) {
+                                  cellStyle = template.cellStyle;
+                                } else {
+                                  cellStyle = template.alternateRowStyle;
+                                }
+                                
+                                return (
+                                  <td key={colIndex} style={cellStyle}>
+                                    {rowIndex === 0 ? `Col ${colIndex + 1}` : `R${rowIndex}C${colIndex + 1}`}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      {(tableConfig.rows > 5 || tableConfig.cols > 5) && (
+                        <p className={styles["preview-note"]}>
+                          Mostrando apenas {Math.min(tableConfig.rows, 5)}x{Math.min(tableConfig.cols, 5)} células da tabela {tableConfig.rows}x{tableConfig.cols}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <button 
+                    className={styles["button"]}
+                    onClick={() => createTable([])}
+                  >
+                    Criar Tabela
+                  </button>
                 </div>
               )}
               
@@ -2000,6 +3037,7 @@ export const CadastrarPlanilha: React.FC = () => {
             </div>
           </div>
         )}
+
         {/* Modal de Fórmulas */}
         {showFormulaModal && (
           <div className={styles["modal-overlay"]}>
@@ -2066,6 +3104,7 @@ export const CadastrarPlanilha: React.FC = () => {
             </div>
           </div>
         )}
+
         {/* Modal de Histórico */}
         {showHistoryModal && (
           <div className={styles["modal-overlay"]}>
@@ -2122,19 +3161,25 @@ export const CadastrarPlanilha: React.FC = () => {
                   Prévia da Impressão
                 </p>
                 <p style={{ margin: '0', fontSize: '14px', color: '#6c757d' }}>
-                  Esta é uma prévia de como sua planilha será impressa. 
-                  Clique em "Imprimir" para abrir o diálogo de impressão do navegador.
+                  {printArea 
+                    ? `Será impressa apenas a área selecionada: ${getPrintAreaInfo()}`
+                    : 'Será impressa a planilha completa.'
+                  }
+                  {' '}Clique em "Imprimir" para abrir o diálogo de impressão do navegador.
                 </p>
               </div>
 
-              <div style={{
-                border: '1px solid #dee2e6',
-                borderRadius: '8px',
-                padding: '20px',
-                backgroundColor: '#fff',
-                maxHeight: '60vh',
-                overflow: 'auto'
-              }}>
+              <div 
+                ref={printContentRef}
+                style={{
+                  border: '1px solid #dee2e6',
+                  borderRadius: '8px',
+                  padding: '20px',
+                  backgroundColor: '#fff',
+                  maxHeight: '60vh',
+                  overflow: 'auto'
+                }}
+              >
                 {generatePrintContent()}
               </div>
               

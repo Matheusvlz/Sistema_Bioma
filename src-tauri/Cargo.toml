@@ -64,3 +64,5 @@ tauri-plugin-dialog = "2.3.1"
 tauri-plugin-fs = "2.4.0"
 
 calamine = "0.29.0"
+
+
