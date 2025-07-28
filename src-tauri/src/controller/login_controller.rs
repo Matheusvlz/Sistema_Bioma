@@ -79,3 +79,34 @@ pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
         Err(_) => LoginStatus { success: false },
     }
 }
+
+
+#[command]
+pub async fn validate_user_credentials(usuario: String, senha: String) -> LoginStatus {
+    let client = Client::new();
+    let login_data = LoginRequest { usuario, senha };
+    let res = match client
+    
+        .post("http://192.168.15.26:8082/login")
+        .json(&login_data)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(_) => return LoginStatus { success: false },
+    };
+
+    if !res.status().is_success() {
+        return LoginStatus { success: false };
+    }
+
+    let parsed = res.json::<UsuarioResponse>().await;
+
+    match parsed {
+        Ok(usuario_resp) => {
+
+            LoginStatus { success: true }
+        }
+        Err(_) => LoginStatus { success: false },
+    }
+}
