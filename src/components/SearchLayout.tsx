@@ -183,6 +183,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     setFilters({});
     setMainSearchQuery('');
     setShowDropdown(false);
+    setSearchResults([]);
     if (onClear) {
       onClear();
     }

@@ -1,10 +1,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { FaUser, FaUsers, FaBuilding, FaShieldAlt, FaPlus, FaCheck, FaTimes, FaTrash } from 'react-icons/fa';
+import { FaUser, FaUsers, FaBuilding, FaShieldAlt, FaPlus, FaCheck, FaTimes, FaTrash, FaUserCheck, FaPlay,
+        FaFileAlt, FaEnvelope, FaToggleOn, FaToggleOff, FaFilePdf, FaHistory, FaBan  } from 'react-icons/fa';
 import styles from './css/UsuarioPortal.module.css';
 import { SearchLayout } from '../../components/SearchLayout';
 import { core } from "@tauri-apps/api";
 import { WindowManager } from '../../hooks/WindowManager';
 import { listen } from '@tauri-apps/api/event';
+import { Modal } from '../../components/Modal';
+import { useModal } from "../../hooks/useModal";
 
 interface Usuario {
     id: number;
@@ -18,7 +21,7 @@ interface UsuarioCliente {
     usuario: string;
     ultimoacesso: string;
     ativo: boolean;
-    relatorios_email: boolean;
+    relatorio_email: boolean;
     notif_cadastrada: boolean;
     notif_iniciada: boolean;
     notif_relatorio: boolean;
@@ -79,6 +82,7 @@ interface InvokeResponse {
 }
 
 export const UsuarioPortal: React.FC = () => {
+    const { modal, showSuccess, showError, showWarning, showConfirm, closeModal } = useModal();
     const [guiaAtiva, setGuiaAtiva] = useState<'primeira' | 'segunda'>('primeira');
 
     // Estados para a primeira guia
@@ -99,19 +103,28 @@ export const UsuarioPortal: React.FC = () => {
     const [modalSetoresAberto, setModalSetoresAberto] = useState(false);
     const [setoresCliente, setSetoresCliente] = useState<SetorCliente[]>([]);
     const [loadingModal, setLoadingModal] = useState(false);
-    
+
     useEffect(() => {
         const setupSetorListener = async () => {
             try {
-                if (!clienteSelecionado) return;
+                // Verifica se há cliente selecionado em qualquer uma das guias
+                const clienteAtivo = guiaAtiva === 'primeira' ? clienteSelecionadoPrimeira : clienteSelecionado;
+                if (!clienteAtivo) return;
+
                 const unlisten = await listen('setor-updated', async () => {
                     console.log('Evento setor-updated recebido, recarregando setores...');
                     try {
+                        const clienteId = guiaAtiva === 'primeira' ? clienteSelecionadoPrimeira?.id : clienteSelecionado?.id;
+
+                        if (!clienteId) return;
+
                         const setorResponse: SetorClienteResponse = await core.invoke('buscar_todos_setores_cliente', {
-                            clienteId: clienteSelecionado.id,
+                            clienteId: clienteId,
                         });
+
                         if (setorResponse.success && setorResponse.data) {
                             setSetoresCliente(setorResponse.data);
+                            console.log(`Setores atualizados para cliente ${clienteId} na guia ${guiaAtiva}`);
                         }
                     } catch (error) {
                         console.error('Erro ao recarregar setores:', error);
@@ -134,8 +147,8 @@ export const UsuarioPortal: React.FC = () => {
                 setorUnlisten();
             }
         };
-    }, [clienteSelecionado]);
-
+    }, [clienteSelecionado, clienteSelecionadoPrimeira, guiaAtiva]);
+    
     async function buscarUsuariosDropdown(query: string): Promise<Usuario[]> {
         try {
             const response: UsuarioResponse = await core.invoke('buscar_usuarios_dropdown', {
@@ -205,7 +218,7 @@ export const UsuarioPortal: React.FC = () => {
     };
 
     const handleToggleSetorModal = async (setorId: number) => {
-        if (!usuarioSelecionado || !clienteSelecionado) return;
+        if ((!usuarioSelecionado || !clienteSelecionado) || (!usuarioSelecionadoPrimeira || !clienteSelecionadoPrimeira)) return;
 
         const setor = setoresCliente.find(s => s.id === setorId);
         const novoStatus = !setor?.do_cliente;
@@ -213,7 +226,7 @@ export const UsuarioPortal: React.FC = () => {
         try {
             const response: InvokeResponse = await core.invoke('alterar_setor_cliente', {
                 request: {
-                    clienteId: guiaAtiva === 'primeira' ? clienteSelecionadoPrimeira?.id : clienteSelecionado.id,
+                    clienteId: guiaAtiva === 'primeira' ? clienteSelecionadoPrimeira.id : clienteSelecionado.id,
                     setorId: setorId,
                     permitido: novoStatus
                 }
@@ -228,7 +241,7 @@ export const UsuarioPortal: React.FC = () => {
                     )
                 );
 
-                handleSelecionarCliente(clienteSelecionado);
+                guiaAtiva === 'primeira' ? handleSelecionarUsuario(usuarioSelecionadoPrimeira) : handleSelecionarCliente(clienteSelecionado);
             }
         } catch (error) {
             console.error('Erro ao alterar setor do cliente:', error);
@@ -251,7 +264,7 @@ export const UsuarioPortal: React.FC = () => {
                 <div className={styles["modal-content"]} onClick={(e) => e.stopPropagation()}>
                     <div className={styles["modal-header"]}>
                         <h3>
-                            {clienteSelecionado?.fantasia || clienteSelecionado?.razao}
+                            {guiaAtiva === 'primeira' ? clienteSelecionadoPrimeira?.fantasia || clienteSelecionadoPrimeira?.razao : clienteSelecionado?.fantasia || clienteSelecionado?.razao}
                         </h3>
                         <div className={styles["setores-actions"]}>
                             <button
@@ -320,7 +333,6 @@ export const UsuarioPortal: React.FC = () => {
 
             if (usuariosResponse.success && usuariosResponse.data) {
                 setUsuariosCliente(usuariosResponse.data);
-                alert('Resposta stringify: ' + JSON.stringify(usuariosResponse));
             } else {
                 setUsuariosCliente([]);
             }
@@ -331,15 +343,17 @@ export const UsuarioPortal: React.FC = () => {
             setLoadingPrimeira(false);
         }
     };
-    
+
     const handleSelecionarUsuario = async (usuario: UsuarioCliente) => {
+        if (!clienteSelecionadoPrimeira) return;
+
         setUsuarioSelecionadoPrimeira(usuario);
         setLoadingPrimeira(true);
 
         try {
             const response: SetorResponse = await core.invoke('buscar_setores_portal', {
                 usuarioId: usuario.id,
-                clienteId: clienteSelecionadoPrimeira?.id
+                clienteId: clienteSelecionadoPrimeira.id
             });
 
             if (response.success && response.data) {
@@ -402,6 +416,237 @@ export const UsuarioPortal: React.FC = () => {
         }
     };
 
+    const handleNotificacaoCadastrada = async (usuarioId: number) => { 
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+
+        const novoStatus = !usuario.notif_cadastrada;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('configurar_usuarios', {
+                    request: {
+                        usuarioId: usuarioId,
+                        status: novoStatus,
+                        tipo: 'notif_cadastrada'
+                    }
+                });
+                
+                if (response.success) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário ${usuario.notif_cadastrada ? 'não receberá' : 'receberá'} notificação cadastrada.`);
+                }
+            } catch (error) {
+                showError(`Erro`, `Erro ao modificar usuário\n` + String(error));
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme modificação`, `Tem certeza que deseja modificar notificação cadastrada deste usuário?`, executar);
+    };
+
+    const handleNotificacaoIniciada = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+        
+        const novoStatus = !usuario.notif_iniciada;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('configurar_usuarios', {
+                    request: {
+                        usuarioId: usuarioId,
+                        status: novoStatus,
+                        tipo: 'notif_iniciada'
+                    }
+                });
+                
+                if (response.success) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário ${usuario.notif_iniciada ? 'não receberá' : 'receberá'} notificação iniciada.`);
+                }        
+            } catch (error) {
+                showError(`Erro`, `Erro ao modificar usuário\n` + String(error));
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme modificação`, `Tem certeza que deseja modificar notificação iniciada deste usuário?`, executar);
+    };
+
+    const handleNotificacaoRelatorio = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+
+        const novoStatus = !usuario.notif_relatorio;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('configurar_usuarios', {
+                    request: {
+                        usuarioId: usuarioId,
+                        status: novoStatus,
+                        tipo: 'notif_relatorio'
+                    }
+                });
+                
+                if (response.success) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário ${usuario.notif_relatorio ? 'não receberá' : 'receberá'} notificação relatório.`);
+                }   
+            } catch (error) {
+                showError(`Erro`, `Erro ao modificar usuário\n` + String(error));
+            }
+            //closeModal()
+        };
+
+        showConfirm(`Confirme modificação`, `Tem certeza que deseja modificar notificação relatório deste usuário?`, executar);
+    };
+
+    const handleReenviarEmail = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+
+        if(!usuario.ativo) { showWarning(`Aviso`, 'Este usuário está desativado.'); return; }
+        if(usuario.ultimoacesso) { showWarning(`Aviso`, 'Este já acesssou o portal.\nSolicite o acesso ao \"Esqueci minha senha\"'); return; }
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('reenviar_email_usuario', {
+                    request: {
+                        usuarioId: usuarioId,
+                        email: usuario.usuario,
+                        nome: usuario.nome
+                    }
+                });
+                
+                if (response.success) {
+                    showSuccess(`Sucesso`, `Email enviado com sucesso ao usuário.`);
+                } 
+            } catch (error) {
+                showError(`Erro`, `Erro ao enviar email ao usuário\n` + String(error));
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme modificação`, `Deseja reenviar email com os dados de acesso ao usuário?`, executar);
+    };
+
+    const handleRemoverCadastro = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('remover_cadastro_usuario', {
+                    usuarioId: usuarioId,
+                    clienteId: clienteSelecionadoPrimeira.id
+                });
+
+                if (response.success && clienteSelecionadoPrimeira) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário removido com sucesso.`);
+                }
+            } catch (error) {
+                showError(`Erro`, `Erro ao remover usuário\n` + String(error));
+            }
+            //closeModal()
+        };
+
+        showConfirm(`Confirme modificação`, `Tem certeza que deseja remover o usuário?`, executar);
+    };
+
+    const handleToggleAtivarDesativar = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+
+        const novoStatus = !usuario.ativo;
+        
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('configurar_usuarios', {
+                    request: {
+                        usuarioId: usuarioId,
+                        status: novoStatus,
+                        tipo: 'ativar'
+                    }
+                });
+
+                if (response.success && clienteSelecionadoPrimeira) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário ${usuario.ativo ? 'desativado' : 'ativado'} com sucesso.`);
+
+                }
+            } catch (error) {
+                showError(`Erro`, `Erro ao ${usuario.ativo ? 'desativar' : 'ativar'} usuário\n` + String(error));
+            }
+            //closeModal()
+        };
+
+        showConfirm(`Confirme ${usuario.ativo ? 'desativação' : 'ativação'}`, `Tem certeza que deseja ${usuario.ativo ? 'desativar' : 'ativar'} o usuário?`, executar);
+    };
+
+    const handleRelatorioEmail = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+        const usuario = usuariosCliente.find(u => u.id === usuarioId);
+        if (!usuario) return;
+
+        const novoStatus = !usuario.relatorio_email;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('configurar_usuarios', {
+                    request: {
+                        usuarioId: usuarioId,
+                        status: novoStatus,
+                        tipo: 'relatorioEmail'
+                    }
+                });
+
+                if (response.success && clienteSelecionadoPrimeira) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário ${usuario.relatorio_email ? 'não receberá' : 'receberá'} relatórios por email.`);
+                }
+            } catch (error) {
+                showError(`Erro`, `Erro ao modificar usuário\n` + String(error));
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme modificação`, `Tem certeza que deseja modificar relatório por email?`, executar);
+    };
+
+    const handleExcluirUsuario = async (usuarioId: number) => {
+        if (!clienteSelecionadoPrimeira) return;
+
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('excluir_usuario_cliente', {
+                    usuarioId: usuarioId,
+                });
+
+                if (response.success) {
+                    handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                    showSuccess(`Sucesso`, `Usuário excluído com sucesso.`);
+                }
+            } catch (error) {
+                showError(`Erro`, `Erro ao excluir usuário\n` + String(error));
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme exclusão`, `Tem certeza que deseja excluir este usuário?`, executar);
+    };
+
+
+    /*FALTA ESSES:
+        1. Criar telas do abrir amostras no portal
+        2. Criar tela do histórico
+    */
     const handleAbrirAmostras = async () => {
         if (!clienteSelecionadoPrimeira) return;
 
@@ -410,107 +655,6 @@ export const UsuarioPortal: React.FC = () => {
             console.log('Abrir amostras para cliente:', clienteSelecionadoPrimeira.id);
         } catch (error) {
             console.error('Erro ao abrir amostras:', error);
-        }
-    };
-
-    const handleExcluirUsuario = async (usuarioId: number) => {
-        if (!clienteSelecionadoPrimeira) return;
-
-        try {
-            const response: InvokeResponse = await core.invoke('excluir_usuario_cliente', {
-                usuarioId: usuarioId,
-                clienteId: clienteSelecionadoPrimeira.id
-            });
-
-            if (response.success) {
-                handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
-            }
-        } catch (error) {
-            console.error('Erro ao excluir usuário:', error);
-        }
-    };
-
-    const handleNotificacaoCadastrada = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('enviar_notificacao_cadastrada', {
-                usuarioId: usuarioId
-            });
-            console.log('Notificação cadastrada enviada:', response);
-        } catch (error) {
-            console.error('Erro ao enviar notificação cadastrada:', error);
-        }
-    };
-
-    const handleNotificacaoIniciada = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('enviar_notificacao_iniciada', {
-                usuarioId: usuarioId
-            });
-            console.log('Notificação iniciada enviada:', response);
-        } catch (error) {
-            console.error('Erro ao enviar notificação iniciada:', error);
-        }
-    };
-
-    const handleNotificacaoRelatorio = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('enviar_notificacao_relatorio', {
-                usuarioId: usuarioId
-            });
-            console.log('Notificação relatório enviada:', response);
-        } catch (error) {
-            console.error('Erro ao enviar notificação relatório:', error);
-        }
-    };
-
-    const handleReenviarEmail = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('reenviar_email_usuario', {
-                usuarioId: usuarioId
-            });
-            console.log('Email reenviado:', response);
-        } catch (error) {
-            console.error('Erro ao reenviar email:', error);
-        }
-    };
-
-    const handleRemoverCadastro = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('remover_cadastro_usuario', {
-                usuarioId: usuarioId
-            });
-
-            if (response.success && clienteSelecionadoPrimeira) {
-                handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
-            }
-        } catch (error) {
-            console.error('Erro ao remover cadastro:', error);
-        }
-    };
-
-    const handleToggleAtivarDesativar = async (usuarioId: number, ativar: boolean) => {
-        try {
-            const response: InvokeResponse = await core.invoke('toggle_ativar_usuario', {
-                usuarioId: usuarioId,
-                ativar: ativar
-            });
-
-            if (response.success && clienteSelecionadoPrimeira) {
-                handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
-            }
-        } catch (error) {
-            console.error('Erro ao ativar/desativar usuário:', error);
-        }
-    };
-
-    const handleRelatorioEmail = async (usuarioId: number) => {
-        try {
-            const response: InvokeResponse = await core.invoke('enviar_relatorio_email', {
-                usuarioId: usuarioId
-            });
-            console.log('Relatório por email enviado:', response);
-        } catch (error) {
-            console.error('Erro ao enviar relatório por email:', error);
         }
     };
 
@@ -535,7 +679,7 @@ export const UsuarioPortal: React.FC = () => {
                             onClick={handleAbrirAmostras}
                             title="Abrir amostras"
                         >
-                            <FaPlus /> Amostras
+                            <FaPlus /> Amostras no Portal
                         </button>
                     )}
                 </div>
@@ -543,7 +687,7 @@ export const UsuarioPortal: React.FC = () => {
                 <SearchLayout
                     fields={[]}
                     onSearch={() => { }}
-                    onClear={() => { }}
+                    onClear={() => { setClienteSelecionadoPrimeira(null); setUsuariosCliente([]); setUsuarioSelecionadoPrimeira(null); setSetoresPortalPrimeira([]);}}
                     dropdownSearch={dropdownClientesPrimeiraConfig}
                 />
 
@@ -608,81 +752,81 @@ export const UsuarioPortal: React.FC = () => {
 
                                                 <div className={styles["usuario-cliente-detalhes"]}>
                                                     <div className={styles["detalhe-item"]}>
-                                                        <span>Relatórios por email: <strong>{usuario.relatorios_email ? 'Sim' : 'Não'}</strong></span>
+                                                        <span>Relatórios por email: <strong>{usuario.relatorio_email ? 'Sim' : 'Não'}</strong></span>
                                                     </div>
                                                     <div className={styles["detalhe-item"]}>
-                                                        <span>Cadastrada: <strong>{usuario.notif_cadastrada ? 'Receebr' : 'Não Receber'}</strong></span>
+                                                        <span>Cadastrada: <strong>{usuario.notif_cadastrada ? 'Receber' : 'Não Receber'}</strong></span>
                                                     </div>
                                                     <div className={styles["detalhe-item"]}>
                                                         <span>Iniciada: <strong>{usuario.notif_iniciada ? 'Receber' : 'Não Receber'}</strong></span>
                                                     </div>
                                                     <div className={styles["detalhe-item"]}>
-                                                        <span>Relatórios: <strong>{usuario.notif_relatorio ? 'Receber' : 'Não Receber' }</strong></span>
+                                                        <span>Relatórios: <strong>{usuario.notif_relatorio ? 'Receber' : 'Não Receber'}</strong></span>
                                                     </div>
                                                 </div>
                                             </div>
 
                                             <div className={styles["usuario-acoes"]}>
                                                 <button
-                                                    className={styles["btn-acao"]}
-                                                    onClick={() => handleNotificacaoCadastrada(usuario.id)}
-                                                    title="Notificação cadastrada"
+                                                    className={`${styles["btn-acao"]} ${usuario.notif_cadastrada ? styles["btn-ativar"] : styles["btn-desativar"]}`}
+                                                    onClick={(e) => {e.stopPropagation(); handleNotificacaoCadastrada(usuario.id);}}
+                                                    title="Notificação Cadastrada"
                                                 >
-                                                    <FaUser />
+                                                    <FaUserCheck />
+                                                </button>
+                                                <button
+                                                    className={`${styles["btn-acao"]} ${usuario.notif_iniciada ? styles["btn-ativar"] : styles["btn-desativar"]}`}
+                                                    onClick={(e) => {e.stopPropagation(); handleNotificacaoIniciada(usuario.id);}}
+                                                    title="Notificação Iniciada"
+                                                >
+                                                    <FaPlay />
+                                                </button>
+                                                <button
+                                                    className={`${styles["btn-acao"]} ${usuario.notif_relatorio ? styles["btn-ativar"] : styles["btn-desativar"]}`}
+                                                    onClick={(e) => {e.stopPropagation(); handleNotificacaoRelatorio(usuario.id);}}
+                                                    title="Notificação Relatório"
+                                                >
+                                                    <FaFileAlt />
                                                 </button>
                                                 <button
                                                     className={styles["btn-acao"]}
-                                                    onClick={() => handleNotificacaoIniciada(usuario.id)}
-                                                    title="Notificação iniciada"
+                                                    onClick={(e) => {e.stopPropagation(); handleReenviarEmail(usuario.id);}}
+                                                    title="Reenviar Email"
                                                 >
-                                                    <FaPlus />
+                                                    <FaEnvelope />
                                                 </button>
                                                 <button
                                                     className={styles["btn-acao"]}
-                                                    onClick={() => handleNotificacaoRelatorio(usuario.id)}
-                                                    title="Notificação relatório"
+                                                    onClick={(e) => {e.stopPropagation(); handleRemoverCadastro(usuario.id);}}
+                                                    title="Remover Cadastro"
                                                 >
-                                                    <FaShieldAlt />
-                                                </button>
-                                                <button
-                                                    className={styles["btn-acao"]}
-                                                    onClick={() => handleReenviarEmail(usuario.id)}
-                                                    title="Reenviar email"
-                                                >
-                                                    <FaUser />
-                                                </button>
-                                                <button
-                                                    className={styles["btn-acao"]}
-                                                    onClick={() => handleRemoverCadastro(usuario.id)}
-                                                    title="Remover cadastro"
-                                                >
-                                                    <FaTimes />
+                                                    <FaBan />
                                                 </button>
                                                 <button
                                                     className={`${styles["btn-acao"]} ${usuario.ativo ? styles["btn-desativar"] : styles["btn-ativar"]}`}
-                                                    onClick={() => handleToggleAtivarDesativar(usuario.id, !usuario.ativo)}
+                                                    onClick={(e) => {e.stopPropagation(); handleToggleAtivarDesativar(usuario.id);}}
                                                     title={usuario.ativo ? 'Desativar' : 'Ativar'}
                                                 >
-                                                    {usuario.ativo ? <FaTimes /> : <FaCheck />}
+                                                    {usuario.ativo ? <FaToggleOff /> : <FaToggleOn />}
                                                 </button>
                                                 <button
-                                                    className={styles["btn-acao"]}
-                                                    onClick={() => handleRelatorioEmail(usuario.id)}
-                                                    title="Relatório por email"
+                                                    className={`${styles["btn-acao"]} ${usuario.relatorio_email ? styles["btn-ativar"] : styles["btn-desativar"]}`}
+                                                    onClick={(e) => {e.stopPropagation(); handleRelatorioEmail(usuario.id);}}
+                                                    title="Relatório por Email"
                                                 >
-                                                    <FaUser />
+                                                    <FaFilePdf />
                                                 </button>
                                                 <button
                                                     className={styles["btn-acao"]}
-                                                    onClick={() => handleAbrirHistorico(usuario.id)}
+                                                    onClick={(e) => {e.stopPropagation(); handleAbrirHistorico(usuario.id);}}
                                                     title="Histórico"
                                                 >
-                                                    <FaShieldAlt />
+                                                    <FaHistory />
                                                 </button>
                                                 <button
                                                     className={styles["btn-excluir-usuario"]}
-                                                    onClick={() => handleExcluirUsuario(usuario.id)}
-                                                    title="Excluir usuário"
+                                                    onClick={(e) => {e.stopPropagation(); handleExcluirUsuario(usuario.id);}}
+                                                    title="Excluir Usuário"
                                                 >
                                                     <FaTrash />
                                                 </button>
@@ -860,23 +1004,30 @@ export const UsuarioPortal: React.FC = () => {
     const handleRemoverCliente = async (cliente: Cliente) => {
         if (!usuarioSelecionado) return;
 
-        try {
-            const response: InvokeResponse = await core.invoke('remover_cliente_usuario', {
-                usuarioId: usuarioSelecionado.id,
-                clienteId: cliente.id
-            });
+        const executar = async () => {
+            try {
+                const response: InvokeResponse = await core.invoke('remover_cliente_usuario', {
+                    usuarioId: usuarioSelecionado.id,
+                    clienteId: cliente.id
+                });
 
-            if (response.success) {
-                handleUsuarioSelect(usuarioSelecionado);
+                if (response.success) {
+                    handleUsuarioSelect(usuarioSelecionado);
 
-                if (clienteSelecionado?.id === cliente.id) {
-                    setClienteSelecionado(null);
-                    setSetoresPortal([]);
+                    if (clienteSelecionado?.id === cliente.id) {
+                        setClienteSelecionado(null);
+                        setSetoresPortal([]);
+                    }
+
+                    showSuccess(`Sucesso`, `Cliente removido com sucesso.`);
                 }
+            } catch (error) {
+                showError(`Erro`, `Erro ao remover cliente\n` + String(error));
             }
-        } catch (error) {
-            console.error('Erro ao remover cliente:', error);
-        }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme remoção`, `Tem certeza que deseja remover este cliente?`, executar);
     };
 
     const handleAbrirModalSetores = async () => {
@@ -911,7 +1062,7 @@ export const UsuarioPortal: React.FC = () => {
                 <SearchLayout
                     fields={[]}
                     onSearch={() => { }}
-                    onClear={() => { }}
+                    onClear={() => { setUsuarioSelecionado(null); setClientesUsuario([]); setClienteSelecionado(null); setSetoresPortal([]); }}
                     dropdownSearch={dropdownUsuariosConfig}
                 />
 
@@ -1103,7 +1254,7 @@ export const UsuarioPortal: React.FC = () => {
                     {guiaAtiva === 'segunda' && renderSegundaGuia()}
                 </div>
             </div>
+            <Modal {...modal} onClose={closeModal} onConfirm={modal.onConfirm} />
         </div>
     );
 };
-

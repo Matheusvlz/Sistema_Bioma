@@ -358,7 +358,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  backdrop-filter: blur(4px);
+
 }
 
 .modal {
@@ -369,7 +369,6 @@
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   animation: modalSlideIn 0.3s ease-out;
 }
 

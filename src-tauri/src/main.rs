@@ -23,7 +23,7 @@ use controller::geral::categoria_controller::{
     buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
 };
 use controller::geral::usuarioportal_controller::{
-    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente
+    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario
 };
 use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
@@ -133,6 +133,10 @@ fn main() {
             editar_setor,
             excluir_setor,
             buscar_usuarios_cliente,
+            configurar_usuarios,
+            remover_cadastro_usuario,
+            excluir_usuario_cliente,
+            reenviar_email_usuario,
 
             fazer_login,
             usuario_logado,

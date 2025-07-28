@@ -112,6 +112,29 @@ pub struct AlterarPermissaoRequest {
     permitido: bool,
 }
 
+#[derive(Deserialize)]
+pub struct ConfigurarNotificacoes {
+    #[serde(rename = "usuarioId")]
+    usuario_id: u32,
+    status: bool,
+    tipo: String,
+}
+
+#[derive(Serialize)]
+pub struct Ativado {
+    #[serde(rename = "usuarioId")]
+    usuario_id: u32,
+    ativar: bool,
+}
+
+#[derive(Deserialize)]
+pub struct EnviarEmail {
+    #[serde(rename = "usuarioId")]
+    usuario_id: u32,
+    email: String,
+    nome: String,
+}
+
 //FUNÇÕES PRIMEIRA GUIA ***********************************************************
 
 #[command]
@@ -445,6 +468,192 @@ pub async fn buscar_usuarios_cliente(cliente_id: u32) -> UsuarioResponse {
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
             UsuarioResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn configurar_usuarios(request: ConfigurarNotificacoes) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/configurar-notificacoes", url);
+    let payload = serde_json::json!({
+        "usuario_id": request.usuario_id,
+        "status": request.status,
+        "tipo": request.tipo
+    });
+
+    let res = match client.post(&full_url).json(&payload).send().await {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn remover_cadastro_usuario(usuario_id: u32, cliente_id: u32) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/cadastro", url);
+    let request_body = ClienteCase {
+        usuario_id: Some(usuario_id),
+        cliente_id,
+    };
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return InvokeResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn excluir_usuario_cliente(usuario_id: u32) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/excluir", url);
+    let request_body = BuscarClientesRequest {
+        usuario_id: usuario_id
+    };
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return InvokeResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn reenviar_email_usuario(request: EnviarEmail) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/email", url);
+    let payload = serde_json::json!({
+        "usuario_id": request.usuario_id,
+        "email": request.email,
+        "nome": request.nome
+    });
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&payload)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return InvokeResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),
