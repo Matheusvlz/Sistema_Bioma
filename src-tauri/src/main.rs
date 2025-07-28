@@ -14,6 +14,7 @@ use controller::geral_controller::{
 use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
+use model::usuario::get_usuario_nome;
 
 use controller::components::search_controller::{
     buscar_clientes_dropdown, buscar_clientes_filtros,
@@ -37,10 +38,10 @@ use controller::download_controller::{download_file_to_downloads, download_file_
 
 use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
 
-use controller::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
+use controller::qualidade::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
 
 // Importar os comandos de fórmulas melhorados
-use controller::formula_controller::{
+use controller::qualidade::formula_controller::{
     evaluate_formula,
     update_spreadsheet_cell,
     validate_formula,
@@ -54,7 +55,7 @@ use controller::formula_controller::{
     get_functions_by_category,
 };
 
-use controller::tauri_print_commands_controller::{
+use controller::qualidade::tauri_print_commands_controller::{
         generate_pdf_from_html,
             print_html,
             save_print_html,
@@ -62,6 +63,7 @@ use controller::tauri_print_commands_controller::{
             validate_printer,
             get_default_print_settings
 };
+use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 
 fn main() {
     dotenvy::dotenv().ok();
@@ -148,7 +150,14 @@ fn main() {
             save_print_html,
             get_available_printers,
             validate_printer,
-            get_default_print_settings
+            get_default_print_settings,
+            save_template,
+            list_templates,
+            delete_template,
+            decode_base64_to_json,
+            update_template,
+            get_template_by_id,
+            get_usuario_nome
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

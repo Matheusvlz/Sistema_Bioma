@@ -203,14 +203,15 @@ export class WindowManager {
     });
   }
 
-      static async openCadastrarPlanilha(): Promise<WebviewWindow> {
+      static async openCadastrarPlanilha(planilhaData?: any): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'cadastrar-planilha',
       title: 'Cadastrar Planilha',
       url: '/#/cadastrar-planilha',
       width: 1200,
       height: 600,
-      allowMultiple: true
+      allowMultiple: true,
+      data: planilhaData
     });
   }
 
