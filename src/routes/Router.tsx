@@ -20,9 +20,6 @@ import {
 } from 'react-icons/fa';
 import { authenticatedRoutes, AuthenticatedRoute } from './route'; // Import authenticatedRoutes and AuthenticatedRoute
 
-// The Route type should now align with the keys of authenticatedRoutes
-type Route = AuthenticatedRoute;
-
 interface RouterContextType {
   currentRoute: AuthenticatedRoute;
   navigate: (route: AuthenticatedRoute) => void;

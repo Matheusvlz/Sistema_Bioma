@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Plus, Menu, Check, CheckCheck, X, File, Image, Download, Upload, AlertCircle, ZoomIn, ZoomOut, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Menu, Check, CheckCheck, X, File, Download, Upload, AlertCircle, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import './style/ChatContainer.css';
@@ -88,11 +88,6 @@ interface FileUpload {
     error?: string;
 }
 
-// Interface para mensagens WebSocket
-interface WebSocketMessage {
-    type: string;
-    data: any;
-}
 
 // Interface para notificação de mensagem de chat
 interface ChatMessageNotification {
@@ -148,7 +143,6 @@ export const ChatContainer: React.FC = () => {
     const [showFilePreview, setShowFilePreview] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
-    const [isConnectedToWebSocket, setIsConnectedToWebSocket] = useState(false);
     const [onlineUsers, setOnlineUsers] = useState<Set<number>>(new Set());
 
     // Estados para visualizadores
@@ -297,7 +291,7 @@ export const ChatContainer: React.FC = () => {
         
         // Verificar se é uma mensagem de confirmação de conexão
         if (message.includes('Conectado como usuário') && message.includes('Bem-vindo ao sistema!')) {
-            setIsConnectedToWebSocket(true);
+   
             console.log('Conexão WebSocket confirmada!');
             
             // Mostrar notificação de conexão (opcional)
@@ -899,7 +893,7 @@ export const ChatContainer: React.FC = () => {
                 const uploadResults = await Promise.allSettled(uploadPromises);
 
                 const successfulUploads: Message[] = [];
-                uploadResults.forEach((result, index) => {
+                uploadResults.forEach((result) => {
                     if (result.status === 'fulfilled' && result.value) {
                         successfulUploads.push(result.value);
                     }

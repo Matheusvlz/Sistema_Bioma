@@ -38,7 +38,6 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Tag,
   Database,
   Edit3,
   Lock,
@@ -311,7 +310,6 @@ export const CadastrarPlanilha: React.FC = () => {
   ];
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
-  const [isMaximized, setIsMaximized] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1); // Estado para controle de zoom
   const [rowHeaderWidth, setRowHeaderWidth] = useState(60);
   const [columnHeaderHeight, setColumnHeaderHeight] = useState(32);
@@ -345,7 +343,6 @@ const [showBulkDateEdit, setShowBulkDateEdit] = useState(false);
 const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'details' | 'timestamp' | null>(null);
   const [editingHistoryValue, setEditingHistoryValue] = useState('');
   const [showFormulaModal, setShowFormulaModal] = useState(false);
-  const [autofillStartCell, setAutofillStartCell] = useState<CellSelection | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   
   // Estados para modal de mensagens
@@ -368,7 +365,6 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
   const spreadsheetRef = useRef<HTMLDivElement>(null);
   const printContentRef = useRef<HTMLDivElement>(null);
   const [formulaBarValue, setFormulaBarValue] = useState("");
-  const [isEditingFormula, setIsEditingFormula] = useState(false);
   const [formulaSuggestions, setFormulaSuggestions] = useState<FormulaSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [formulaValidation, setFormulaValidation] = useState<{isValid: boolean, error?: string} | null>(null);
@@ -1717,7 +1713,7 @@ const renderHistoryModal = () => {
     setFormulaBarValue(value);
     
     if (value.startsWith('=')) {
-      setIsEditingFormula(true);
+
       
       // Validar fórmula em tempo real
       try {
@@ -1750,7 +1746,7 @@ const renderHistoryModal = () => {
         setShowSuggestions(false);
       }
     } else {
-      setIsEditingFormula(false);
+
       setShowSuggestions(false);
       setFormulaValidation(null);
     }
@@ -1761,7 +1757,7 @@ const renderHistoryModal = () => {
       const { row, col } = selectedCells[0];
       const isFormula = formulaBarValue.startsWith('=');
       await updateCell(row, col, formulaBarValue, isFormula);
-      setIsEditingFormula(false);
+
       setShowSuggestions(false);
       setFormulaValidation(null);
     }
@@ -1782,23 +1778,6 @@ const renderHistoryModal = () => {
       formulaBarRef.current.setSelectionRange(newValue.length - 1, newValue.length - 1);
     }
   }, [formulaBarValue]);
-
-  const updateCellStyle = useCallback((rowIndex: number, colIndex: number, styleUpdate: Partial<CellStyle>) => {
-    setData(prevData => {
-      const newData = prevData.map(row => [...row]);
-      newData[rowIndex][colIndex].style = {
-        ...newData[rowIndex][colIndex].style,
-        ...styleUpdate
-      };
-      
-      addToHistory(
-        'Formatação de Célula',
-        `Célula ${getColumnLabel(colIndex)}${rowIndex + 1} formatada`
-      );
-      
-      return newData;
-    });
-  }, [addToHistory]);
 
   useEffect(() => {
     loadAvailableFormulas();
@@ -2474,7 +2453,7 @@ const renderHistoryModal = () => {
     setShowMediaModal(false);
   }, [selectedCells, mediaType, updateCellMedia]);
 
-  const createTable = useCallback((tableData: string[][]) => {
+  const createTable = useCallback(() => {
     if (selectedCells.length === 0) return;
 
     const template = tableTemplates[tableConfig.selectedTemplate];
@@ -2626,9 +2605,6 @@ useEffect(() => {
   }, [isResizing, isResizingImage, addToHistory, getColumnLabel]);
 
 
-  const formatTimestamp = (timestamp: Date): string => {
-    return timestamp.toLocaleString('pt-BR');
-  };
 
   const getCellStyle = (rowIndex: number, colIndex: number): React.CSSProperties => {
     const cell = data[rowIndex]?.[colIndex];
@@ -3490,7 +3466,7 @@ useEffect(() => {
                 if (e.key === 'Enter') {
                   handleFormulaBarSubmit();
                 } else if (e.key === 'Escape') {
-                  setIsEditingFormula(false);
+
                   setShowSuggestions(false);
                 }
               }}
@@ -4301,7 +4277,7 @@ useEffect(() => {
                   
                   <button 
                     className={styles["button"]}
-                    onClick={() => createTable([])}
+                    onClick={() => createTable()}
                   >
                     Criar Tabela
                   </button>

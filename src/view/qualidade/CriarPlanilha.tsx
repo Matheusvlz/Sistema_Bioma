@@ -2,17 +2,12 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
-  Settings, 
-  Download, 
-  Upload,
   Edit3,
   Copy,
   Trash2,
   FileSpreadsheet,
-  BarChart3,
   Folder,
   RefreshCw,
-  Zap,
   X,
   FileText,
   FolderPen,
@@ -349,17 +344,7 @@ export const CriarPlanilha: React.FC = () => {
     handleDuplicatePlanilha(template);
   };
 
-  const handleExportPlanilha = async (id: string) => {
-    try {
-      const planilha = planilhas.find(p => p.id === id);
-      if (planilha?.templateData?.id) {
-        alert(`Exportando planilha ${planilha.nome}...`);
-      }
-    } catch (err) {
-      console.error('Erro ao exportar planilha:', err);
-      alert('Erro ao exportar planilha');
-    }
-  };
+
 
   const handleEditPlanilha = async (planilha: Planilha) => {
   try {

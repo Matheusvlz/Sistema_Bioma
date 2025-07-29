@@ -5,7 +5,6 @@ import {
   Search,
   MessageSquare,
   BellRing,
-  FileText,
   CalendarClock,
   AlertTriangle,
   Info,
@@ -25,7 +24,7 @@ import {
   Plus,
 } from 'lucide-react';
 
-import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title as ChartTitle } from 'chart.js';
+import { ChartOptions, FontSpec ,Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, Title as ChartTitle } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement, ChartTitle);
@@ -187,15 +186,15 @@ const MOCK_BAR_DATA = {
   ],
 };
 
-const DOUGHNUT_OPTIONS = {
+const DOUGHNUT_OPTIONS: ChartOptions<'doughnut'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: 'right' as const,
+      position: 'right',
       labels: {
         color: '#334155',
-      }
+      },
     },
     title: {
       display: true,
@@ -204,7 +203,7 @@ const DOUGHNUT_OPTIONS = {
       font: {
         size: 16,
         weight: 'bold',
-      }
+      } as Partial<FontSpec>, // ✅ aqui
     },
   },
 };
@@ -217,7 +216,7 @@ const BAR_OPTIONS = {
       position: 'top' as const,
       labels: {
         color: '#334155',
-      }
+      },
     },
     title: {
       display: true,
@@ -226,7 +225,7 @@ const BAR_OPTIONS = {
       font: {
         size: 16,
         weight: 'bold',
-      }
+      } as Partial<FontSpec>,  // <-- cast aqui
     },
   },
   scales: {
@@ -1243,8 +1242,15 @@ const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>, target
                       ...modalUserItemStyle,
                       ...(selectedUserForActivity?.id === user.id ? modalUserItemActiveStyle : {}),
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = modalUserItemHoverStyle.backgroundColor)}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = modalUserItemStyle.backgroundColor)}
+                   onMouseEnter={(e) =>
+  (e.currentTarget.style.backgroundColor =
+    modalUserItemHoverStyle.backgroundColor ?? '')
+}
+onMouseLeave={(e) =>
+  (e.currentTarget.style.backgroundColor =
+    modalUserItemStyle.backgroundColor ?? '')
+}
+
                     onClick={() => setSelectedUserForActivity(user)}
                   >
                     <img
@@ -1472,17 +1478,18 @@ const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>, target
           borderColor="#14b8a6"
           textColor="#0f766e"
         />
-        {MOCK_DASHBOARD_RESULTS.map((card, index) => (
-          <StatCard
-            key={index}
-            icon={card.icon}
-            title={card.title}
-            value={card.value}
-            gradient={card.gradient}
-            borderColor={card.borderColor}
-            textColor={card.textColor}
-          />
-        ))}
+      {MOCK_DASHBOARD_RESULTS.map((card, index) => (
+  <StatCard
+    key={index}
+    icon={card.icon}
+    title={card.title}
+    value={typeof card.value === 'string' ? Number(card.value) : card.value}
+    gradient={card.gradient}
+    borderColor={card.borderColor}
+    textColor={card.textColor}
+  />
+))}
+
       </div>
 
       <h2 style={{ fontSize: '1.8rem', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

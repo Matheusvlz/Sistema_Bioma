@@ -494,11 +494,6 @@ export class CellMergeUtils {
     const { startRow, startCol, endRow, endCol } = mergeRange;
     const unmergedCells: CellPosition[] = [];
 
-    // Obter o valor da célula master para distribuir
-    const masterCellData = data[masterCell.row][masterCell.col];
-    const masterValue = masterCellData.computed_value || masterCellData.value || '';
-    const masterStyle = masterCellData.style || {};
-
     // Desmesclar todas as células no intervalo
     for (let r = startRow; r <= endRow; r++) {
       for (let c = startCol; c <= endCol; c++) {
