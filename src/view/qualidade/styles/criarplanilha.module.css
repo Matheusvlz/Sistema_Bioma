@@ -575,3 +575,68 @@
     padding: 0.4rem 0.6rem;
   }
 }
+
+/* Adicione estes estilos ao seu arquivo criarplanilha.module.css */
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.loading-state p {
+  margin-top: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.error-message {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.error-message p {
+  color: #dc2626;
+  margin: 0;
+  font-weight: 500;
+}
+
+.retry-button {
+  background-color: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retry-button:hover {
+  background-color: #b91c1c;
+}
+
+/* Animação de spin para ícones de loading */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}

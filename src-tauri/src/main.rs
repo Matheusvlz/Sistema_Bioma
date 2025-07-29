@@ -23,7 +23,7 @@ use controller::geral::categoria_controller::{
     buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
 };
 use controller::geral::usuarioportal_controller::{
-    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario
+    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario, verificar_email, cadastrar_usuario
 };
 use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
@@ -32,6 +32,7 @@ use controller::geral::setor_controller::{
 use controller::login_controller::fazer_login;
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
+use model::usuario::get_usuario_nome;
 
 
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
@@ -50,10 +51,10 @@ use controller::chat::chat_controller::{
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 
-use controller::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
+use controller::qualidade::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
 
 // Importar os comandos de fórmulas melhorados
-use controller::formula_controller::{
+use controller::qualidade::formula_controller::{
     evaluate_formula,
     update_spreadsheet_cell,
     validate_formula,
@@ -67,7 +68,7 @@ use controller::formula_controller::{
     get_functions_by_category,
 };
 
-use controller::tauri_print_commands_controller::{
+use controller::qualidade::tauri_print_commands_controller::{
         generate_pdf_from_html,
             print_html,
             save_print_html,
@@ -75,6 +76,7 @@ use controller::tauri_print_commands_controller::{
             validate_printer,
             get_default_print_settings
 };
+use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 
 fn main() {
     dotenvy::dotenv().ok();
@@ -137,6 +139,8 @@ fn main() {
             remover_cadastro_usuario,
             excluir_usuario_cliente,
             reenviar_email_usuario,
+            verificar_email,
+            cadastrar_usuario,
 
             fazer_login,
             usuario_logado,
@@ -183,7 +187,14 @@ fn main() {
             save_print_html,
             get_available_printers,
             validate_printer,
-            get_default_print_settings
+            get_default_print_settings,
+            save_template,
+            list_templates,
+            delete_template,
+            decode_base64_to_json,
+            update_template,
+            get_template_by_id,
+            get_usuario_nome
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

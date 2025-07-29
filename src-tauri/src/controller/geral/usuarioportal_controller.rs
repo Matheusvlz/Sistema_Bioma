@@ -44,6 +44,11 @@ pub struct PermissaoSetor {
     pub permitido: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct VerificarEmail {
+    pub id: u32,
+}
+
 //RESPONSE ***********************************************************
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -88,6 +93,13 @@ pub struct InvokeResponse {
     pub message: Option<String>,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VerificarEmailResponse {
+    pub success: bool,
+    pub data: Option<Vec<VerificarEmail>>,
+    pub message: Option<String>,
+}
+
 //JSON ***********************************************************
 
 #[derive(Serialize)]
@@ -128,11 +140,13 @@ pub struct Ativado {
 }
 
 #[derive(Deserialize)]
-pub struct EnviarEmail {
+pub struct UserCase {
     #[serde(rename = "usuarioId")]
-    usuario_id: u32,
+    usuario_id: Option<u32>,
+    #[serde(rename = "clienteId")]
+    cliente_id: Option<u32>,
     email: String,
-    nome: String,
+    nome: Option<String>,
 }
 
 //FUNÇÕES PRIMEIRA GUIA ***********************************************************
@@ -612,7 +626,7 @@ pub async fn excluir_usuario_cliente(usuario_id: u32) -> InvokeResponse {
 }
 
 #[command]
-pub async fn reenviar_email_usuario(request: EnviarEmail) -> InvokeResponse {
+pub async fn reenviar_email_usuario(request: UserCase) -> InvokeResponse {
     let client = Client::new();
     let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
     let full_url = format!("{}/usuarios/portal/email", url);
@@ -620,6 +634,107 @@ pub async fn reenviar_email_usuario(request: EnviarEmail) -> InvokeResponse {
         "usuario_id": request.usuario_id,
         "email": request.email,
         "nome": request.nome
+    });
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&payload)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return InvokeResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<InvokeResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn verificar_email(request: UserCase) -> VerificarEmailResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/verificar-email", url);
+    let payload = serde_json::json!({
+        "email": request.email,
+    });
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&payload)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return VerificarEmailResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return VerificarEmailResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<VerificarEmailResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            VerificarEmailResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn cadastrar_usuario(request: UserCase) -> InvokeResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/novo", url);
+    let payload = serde_json::json!({
+        "usuario_id": request.usuario_id,
+        "cliente_id": request.cliente_id,
+        "nome": request.nome,
+        "email": request.email
     });
 
     let res = match client

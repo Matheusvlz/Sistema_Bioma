@@ -1,4 +1,4 @@
-use crate::controller::formula_parser_controller::{FormulaParser, FormulaEvaluator, FormulaValue, parse_cell_reference, cell_reference_to_string};
+use crate::controller::qualidade::formula_parser_controller::{FormulaParser, FormulaEvaluator, FormulaValue, parse_cell_reference, cell_reference_to_string};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tauri::command;

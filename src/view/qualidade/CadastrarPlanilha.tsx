@@ -24,7 +24,7 @@ import {
   Link,
   Table,
   Minimize2,
-  Merge,
+  TableCellsMerge,
   Square,
   X,
   GalleryHorizontal,
@@ -37,11 +37,16 @@ import {
   Target,
   ZoomIn,
   ZoomOut,
-  RotateCw
+  RotateCw,
+  Tag,
+  Database,
+  Edit3
+  
 } from 'lucide-react';
 import styles from './styles/cadastrarplanilha.module.css';
 import './styles/print-area-styles.css';
-
+import { listen } from '@tauri-apps/api/event';
+import { emit } from '@tauri-apps/api/event';
 interface CellStyle {
   fontWeight?: 'normal' | 'bold';
   fontStyle?: 'normal' | 'italic';
@@ -68,6 +73,29 @@ interface CellStyle {
   textShadow?: string;
   boxShadow?: string;
   opacity?: number;
+}
+interface TemplateData2 {
+  id?: number;
+  caminho_arquivo: string;
+  nome_arquivo: string;
+  tag?: string;
+  tipo: string;
+  json_data_base64?: string;
+  updated_at: string | null; // O backend pode retornar uma string de data ou null
+}
+
+interface SaveTemplateData {
+  tipo: 'template' | 'planilha_padrao';
+  tag: string;
+  nomeArquivo: string;
+  caminhoArquivo: string;
+  jsonData: string;
+  updated_at: string | null; 
+}
+
+interface ReponseType {
+type: String;
+templateData?: TemplateData2; 
 }
 
 interface CellMedia {
@@ -102,7 +130,6 @@ interface HistoryEntry {
   action: string;
   details: string;
 }
-
 interface SpreadsheetData {
   name: string;
   rows: number;
@@ -187,6 +214,28 @@ export const CadastrarPlanilha: React.FC = () => {
   const [isResizing, setIsResizing] = useState<{type: 'col' | 'row', index: number} | null>(null);
   const [showMediaModal, setShowMediaModal] = useState(false);
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'audio' | 'link' | 'table'>('image');
+  const [typeResponse, setTypeResponse] = useState<ReponseType>();
+    const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+  const [saveTemplateData, setSaveTemplateData] = useState<SaveTemplateData>({
+    tipo: 'template',
+    tag: '',
+    nomeArquivo: '',
+    caminhoArquivo: '',
+    jsonData: '',
+    updated_at: ''
+  });
+  const [availableTags, setAvailableTags] = useState<string[]>([
+    'Financeiro',
+    'Vendas',
+    'Estoque',
+    'RH',
+    'Marketing',
+    'Produção',
+    'Relatório',
+    'Dashboard'
+  ]);
+  const [newTag, setNewTag] = useState('');
+  const [isAddingNewTag, setIsAddingNewTag] = useState(false);
   
   // Estados para configuração de tabela
   const [tableConfig, setTableConfig] = useState({
@@ -272,6 +321,10 @@ export const CadastrarPlanilha: React.FC = () => {
       }))
     )
   );
+    const [isHistoryEditMode, setIsHistoryEditMode] = useState(false);
+  const [editingHistoryIndex, setEditingHistoryIndex] = useState<number | null>(null);
+  const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'details' | 'timestamp' | null>(null);
+  const [editingHistoryValue, setEditingHistoryValue] = useState('');
   const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [autofillStartCell, setAutofillStartCell] = useState<CellSelection | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -291,22 +344,472 @@ export const CadastrarPlanilha: React.FC = () => {
   const [formulaCategories, setFormulaCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const formulaBarRef = useRef<HTMLInputElement>(null);
+    const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.ctrlKey && event.shiftKey && event.key === 'B' && showHistoryModal) {
+      event.preventDefault();
+      setIsHistoryEditMode(prev => !prev);
+      if (isHistoryEditMode) {
+        // Sair do modo de edição
+        setEditingHistoryIndex(null);
+        setEditingHistoryField(null);
+        setEditingHistoryValue('');
+      }
+    }
+  }, [showHistoryModal, isHistoryEditMode]);
 
-  const addToHistory = useCallback((action: string, details: string) => {
-    const newEntry: HistoryEntry = {
-      timestamp: new Date(),
-      action,
-      details
+  // Adicionar listener para o atalho de teclado
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
     };
-    setHistory(prev => [newEntry, ...prev].slice(0, 50));
-  }, []);
+  }, [handleKeyDown]);
 
+  // Função para salvar edição do histórico
+  // Função para cancelar edição do histórico
+  const cancelHistoryEdit = useCallback(() => {
+    setEditingHistoryIndex(null);
+    setEditingHistoryField(null);
+    setEditingHistoryValue('');
+  }, []);
+  const addToHistory = useCallback(async (action: string, details: string) => {
+    try {
+      const usuario = await invoke<string>('get_usuario_nome');
+      const detailsWithUser = usuario ? `${details} - Usuário: ${usuario}` : details;
+      
+      const newEntry: HistoryEntry = {
+        timestamp: new Date(),
+        action,
+        details: detailsWithUser
+      };
+      
+      setHistory(prev => [newEntry, ...prev].slice(0, 50));
+    } catch (error) {
+      console.error('Erro ao obter nome do usuário:', error);
+      
+      // Fallback: adiciona entrada sem o nome do usuário
+      const newEntry: HistoryEntry = {
+        timestamp: new Date(),
+        action,
+        details
+      };
+      
+      setHistory(prev => [newEntry, ...prev].slice(0, 50));
+    }
+  }, []);
+  
   // Função para obter o estilo atual das células selecionadas
   const getCurrentCellStyle = useCallback((): CellStyle => {
     if (selectedCells.length === 0) return {};
     const firstCell = selectedCells[0];
     return data[firstCell.row][firstCell.col].style || {};
   }, [selectedCells, data]);
+  const generateSpreadsheetJSON = useCallback((): string => {
+    const spreadsheetData: SpreadsheetData = {
+      name: spreadsheetName,
+      rows,
+      cols,
+      data,
+      history,
+      columnWidths,
+      rowHeights,
+      globalStyles: {}
+    };
+    
+    return JSON.stringify(spreadsheetData, null, 2);
+  }, [spreadsheetName, rows, cols, data, history, columnWidths, rowHeights]);
+
+  // Função para abrir modal de salvar template
+  const openSaveTemplateModal = useCallback(() => {
+    const jsonData = generateSpreadsheetJSON();
+    setSaveTemplateData({
+      tipo: 'template',
+      tag: '',
+      nomeArquivo: spreadsheetName || 'Nova Planilha',
+      caminhoArquivo: `templates/${spreadsheetName || 'nova_planilha'}.json`,
+      jsonData,
+      updated_at: ''
+    });
+    setShowSaveTemplateModal(true);
+  }, [generateSpreadsheetJSON, spreadsheetName]);
+
+  // Função para adicionar nova tag
+  const addNewTag = useCallback(() => {
+    if (newTag.trim() && !availableTags.includes(newTag.trim())) {
+      setAvailableTags(prev => [...prev, newTag.trim()]);
+      setSaveTemplateData(prev => ({ ...prev, tag: newTag.trim() }));
+      setNewTag('');
+      setIsAddingNewTag(false);
+      addToHistory('Nova Tag', `Tag "${newTag.trim()}" adicionada`);
+    }
+  }, [newTag, availableTags, addToHistory]);
+// Primeiro, você precisa atualizar o tipo do estado editingHistoryField:
+// const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'details' | 'timestamp' | null>(null);
+
+// Atualizar o tipo para incluir timestamp como editável
+// IMPORTANTE: Você precisa atualizar a declaração do estado no seu componente:
+// const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'details' | 'timestamp' | null>(null);
+
+// Atualizar o tipo para incluir timestamp como editável
+// IMPORTANTE: Você precisa atualizar a declaração do estado no seu componente:
+// const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'details' | 'timestamp' | null>(null);
+
+// Atualizar o tipo para incluir timestamp como editável
+const startEditingHistory = useCallback((index: number, field: 'action' | 'details' | 'timestamp') => {
+  if (!isHistoryEditMode) return;
+  setEditingHistoryIndex(index);
+  setEditingHistoryField(field);
+  
+  // Para timestamp, converter para formato de input datetime-local
+  if (field === 'timestamp') {
+    const date = history[index][field];
+    // Converter para o timezone local e formato YYYY-MM-DDTHH:mm
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const localDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+    setEditingHistoryValue(localDateTime);
+  } else {
+    setEditingHistoryValue(history[index][field]);
+  }
+}, [isHistoryEditMode, history]);
+
+// Atualizar a função de salvar para lidar com timestamp
+const saveHistoryEdit = useCallback(() => {
+  if (editingHistoryIndex === null || editingHistoryField === null) return;
+  
+  setHistory(prev => {
+    const newHistory = [...prev];
+    
+    if (editingHistoryField === 'timestamp') {
+      // Converter de volta para Date object mantendo o timezone local
+      const newDate = new Date(editingHistoryValue);
+      newHistory[editingHistoryIndex] = {
+        ...newHistory[editingHistoryIndex],
+        timestamp: newDate
+      };
+    } else {
+      newHistory[editingHistoryIndex] = {
+        ...newHistory[editingHistoryIndex],
+        [editingHistoryField]: editingHistoryValue
+      };
+    }
+    
+    return newHistory;
+  });
+  
+  setEditingHistoryIndex(null);
+  setEditingHistoryField(null);
+  setEditingHistoryValue('');
+}, [editingHistoryIndex, editingHistoryField, editingHistoryValue]);
+
+// Componente do modal atualizado
+const renderHistoryModal = () => {
+  if (!showHistoryModal) return null;
+
+  return (
+    <div className={styles["modal-overlay"]}>
+      <div className={styles["modal-content"]}>
+        <div className={styles.modalHeader}>
+          <h3>
+            <History size={20} />
+            Histórico de Alterações
+            {isHistoryEditMode && (
+              <span style={{ 
+                marginLeft: '10px', 
+                fontSize: '14px', 
+                color: '#007bff',
+                fontWeight: 'normal'
+              }}>
+                <Edit3 size={16} style={{ marginRight: '5px' }} />
+                Modo de Edição Ativo
+              </span>
+            )}
+          </h3>
+          <button 
+            className={styles.closeButton}
+            onClick={() => {
+              setShowHistoryModal(false);
+              setIsHistoryEditMode(false);
+              cancelHistoryEdit();
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div className={styles.modalBody} style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          {isHistoryEditMode && (
+            <div style={{ 
+              padding: '10px', 
+              backgroundColor: '#e7f3ff', 
+              borderRadius: '4px', 
+              marginBottom: '15px',
+              fontSize: '14px',
+              color: '#0066cc'
+            }}>
+              <Edit3 size={16} style={{ marginRight: '5px' }} />
+              Modo de edição ativo. Clique em qualquer campo para editar. Pressione <kbd>Ctrl + Shift + B</kbd> novamente para sair.
+            </div>
+          )}
+
+          {history.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#6c757d', fontStyle: 'italic' }}>
+              Nenhuma alteração registrada ainda.
+            </p>
+          ) : (
+            <div className={styles.historyList}>
+              {history.map((entry, index) => (
+                <div key={index} className={styles.historyItem} style={{
+                  padding: '12px',
+                  border: '1px solid #dee2e6',
+                  borderRadius: '4px',
+                  marginBottom: '8px',
+                  backgroundColor: '#fff'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ marginBottom: '5px' }}>
+                        <strong style={{ color: '#495057' }}>Ação: </strong>
+                        {editingHistoryIndex === index && editingHistoryField === 'action' ? (
+                          <input
+                            type="text"
+                            value={editingHistoryValue}
+                            onChange={(e) => setEditingHistoryValue(e.target.value)}
+                            onBlur={saveHistoryEdit}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveHistoryEdit();
+                              if (e.key === 'Escape') cancelHistoryEdit();
+                            }}
+                            autoFocus
+                            style={{
+                              border: '2px solid #007bff',
+                              borderRadius: '3px',
+                              padding: '2px 5px',
+                              fontSize: '14px',
+                              width: '100%'
+                            }}
+                          />
+                        ) : (
+                          <span 
+                            onClick={() => startEditingHistory(index, 'action')}
+                            style={{ 
+                              cursor: isHistoryEditMode ? 'pointer' : 'default',
+                              padding: isHistoryEditMode ? '2px 5px' : '0',
+                              borderRadius: '3px',
+                              backgroundColor: isHistoryEditMode ? '#f8f9fa' : 'transparent',
+                              border: isHistoryEditMode ? '1px dashed #ccc' : 'none'
+                            }}
+                          >
+                            {entry.action}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ marginBottom: '5px' }}>
+                        <strong style={{ color: '#495057' }}>Detalhes: </strong>
+                        {editingHistoryIndex === index && editingHistoryField === 'details' ? (
+                          <textarea
+                            value={editingHistoryValue}
+                            onChange={(e) => setEditingHistoryValue(e.target.value)}
+                            onBlur={saveHistoryEdit}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                saveHistoryEdit();
+                              }
+                              if (e.key === 'Escape') cancelHistoryEdit();
+                            }}
+                            autoFocus
+                            style={{
+                              border: '2px solid #007bff',
+                              borderRadius: '3px',
+                              padding: '5px',
+                              fontSize: '14px',
+                              width: '100%',
+                              minHeight: '60px',
+                              resize: 'vertical'
+                            }}
+                          />
+                        ) : (
+                          <span 
+                            onClick={() => startEditingHistory(index, 'details')}
+                            style={{ 
+                              cursor: isHistoryEditMode ? 'pointer' : 'default',
+                              padding: isHistoryEditMode ? '2px 5px' : '0',
+                              borderRadius: '3px',
+                              backgroundColor: isHistoryEditMode ? '#f8f9fa' : 'transparent',
+                              border: isHistoryEditMode ? '1px dashed #ccc' : 'none',
+                              display: 'block',
+                              minHeight: isHistoryEditMode ? '20px' : 'auto'
+                            }}
+                          >
+                            {entry.details}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: '#6c757d', 
+                      marginLeft: '15px',
+                      textAlign: 'right',
+                      minWidth: '120px'
+                    }}>
+                      {editingHistoryIndex === index && editingHistoryField === 'timestamp' ? (
+                        <input
+                          type="datetime-local"
+                          value={editingHistoryValue}
+                          onChange={(e) => setEditingHistoryValue(e.target.value)}
+                          onBlur={saveHistoryEdit}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveHistoryEdit();
+                            if (e.key === 'Escape') cancelHistoryEdit();
+                          }}
+                          autoFocus
+                          style={{
+                            border: '2px solid #007bff',
+                            borderRadius: '3px',
+                            padding: '4px 6px',
+                            fontSize: '12px',
+                            width: '180px',
+                            backgroundColor: '#fff'
+                          }}
+                        />
+                      ) : (
+                        <span 
+                          onClick={() => startEditingHistory(index, 'timestamp')}
+                          style={{ 
+                            cursor: isHistoryEditMode ? 'pointer' : 'default',
+                            padding: isHistoryEditMode ? '2px 5px' : '0',
+                            borderRadius: '3px',
+                            backgroundColor: isHistoryEditMode ? '#f8f9fa' : 'transparent',
+                            border: isHistoryEditMode ? '1px dashed #ccc' : 'none',
+                            display: 'block'
+                          }}
+                        >
+                          {entry.timestamp.toLocaleString('pt-BR')}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        <div className={styles.modalFooter}>
+          <button 
+            className={styles.button}
+            onClick={() => {
+              setShowHistoryModal(false);
+              setIsHistoryEditMode(false);
+              cancelHistoryEdit();
+            }}
+          >
+            Fechar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+  const saveTemplate = useCallback(async () => {
+    try {
+      // Gerar dados JSON atualizados
+      const jsonData = generateSpreadsheetJSON();
+      
+      // Validar se os dados JSON não estão vazios
+      if (!jsonData || jsonData.trim() === '' || jsonData === '{}') {
+        alert('Erro ao salvar template: Dados JSON não podem estar vazios');
+        return;
+      }
+
+      if(typeResponse?.type === "Editar")
+      {
+       setSaveTemplateData(prev => ({
+      ...prev,
+      tipo: 'template',
+      tag: prev.tag || '',
+      nomeArquivo: prev.nomeArquivo || 'Nova Planilha',
+      caminhoArquivo: prev.caminhoArquivo || `templates/${spreadsheetName || 'nova_planilha'}.json`,
+      jsonData: jsonData,
+      updated_at: prev.updated_at || ''
+    }));
+          const jsonBase64 = btoa(unescape(encodeURIComponent(jsonData)));
+
+      const templateData = {
+        id: typeResponse?.templateData?.id,
+        caminho_arquivo: typeResponse?.templateData?.caminho_arquivo,
+        nome_arquivo: typeResponse?.templateData?.nome_arquivo,
+        tag: saveTemplateData.tag,
+        tipo: typeResponse?.templateData?.tipo,
+        json_data: jsonBase64,
+        updated_at: null
+      };
+
+
+      
+        await invoke('update_template', {
+        templateData: {
+          ...templateData,
+          json_data_base64: jsonBase64
+        }
+      });
+  }
+  else
+  {
+
+
+          if (!saveTemplateData.nomeArquivo.trim()) {
+        alert('Por favor, insira um nome para o arquivo.');
+        return;
+      }
+      
+      if (!saveTemplateData.tag.trim()) {
+        alert('Por favor, selecione ou adicione uma tag.');
+        return;
+      }
+
+      const jsonBase64 = btoa(unescape(encodeURIComponent(saveTemplateData.jsonData)));
+
+      // Preparar dados para envio
+      const templateData = {
+        caminho_arquivo: saveTemplateData.caminhoArquivo,
+        nome_arquivo: saveTemplateData.nomeArquivo,
+        tag: saveTemplateData.tag,
+        tipo: saveTemplateData.tipo,
+        json_data: saveTemplateData.jsonData,
+        updated_at: null
+      };
+
+
+      await invoke("save_template", {
+        templateData: {
+          ...templateData,
+          json_data_base64: jsonBase64
+        }
+      });
+  }
+  
+
+
+      
+      // Fechar modal e mostrar sucesso
+      setShowSaveTemplateModal(false);
+      addToHistory('Template Salvo', `Template "${saveTemplateData.nomeArquivo}" salvo como ${saveTemplateData.tipo}`);
+      
+      // Mostrar mensagem de sucesso
+      alert('Template salvo com sucesso!');
+      
+    } catch (error) {
+      console.error('Erro ao salvar template:', error);
+      alert('Erro ao salvar template. Verifique o console para mais detalhes.');
+    }
+  }, [saveTemplateData, typeResponse, addToHistory, generateSpreadsheetJSON, spreadsheetName]);
+
 
   // Atualizar estados de formatação quando a seleção muda
   useEffect(() => {
@@ -502,6 +1005,78 @@ export const CadastrarPlanilha: React.FC = () => {
       setSelectedCells(newSelectedCells);
     }
   }, [isSelectingPrintArea, printAreaRange, isSelecting, selectionRange]);
+
+
+   useEffect(() => {
+      let unlisten: (() => void) | undefined;
+  
+      const setupListener = async () => {
+        try {
+          unlisten = await listen('window-data', (event) => {
+            console.log('Dados recebidos da janela pai:', event.payload);
+            const dados = event.payload as ReponseType;
+
+            if (dados)
+            {
+              
+              switch(dados.type)
+                 {
+                    case "Template":
+                          if (dados.templateData?.json_data_base64) 
+                          {
+                              setTypeResponse(dados);
+                              loadTemplateFromBase64(dados.templateData?.json_data_base64);
+                          }
+                          
+                    break;
+
+                    case "Editar":
+                       if (dados.templateData?.json_data_base64)
+                          {
+               
+                              setTypeResponse(dados);
+                              loadTemplateFromBase64(dados.templateData?.json_data_base64)
+                          }
+                    break;
+
+                    case "Criar":
+                   
+                              setTypeResponse(dados);
+                    break;
+
+                    case "Duplicar":
+                          if (dados.templateData?.json_data_base64)
+                          {
+               
+                              setTypeResponse(dados);
+                              loadTemplateFromBase64(dados.templateData?.json_data_base64)
+                          }
+                    break;
+
+                    default:
+                
+                             setTypeResponse(dados);
+                      break;
+                 }
+
+            }
+          });
+  
+          await emit('window-ready');
+        } catch (error) {
+          console.error('Erro ao configurar listener:', error);
+        }
+      };
+  
+      setupListener();
+  
+      return () => {
+        if (unlisten) {
+          unlisten();
+        }
+      };
+    }, []);
+
   const handleImageResizeStart = useCallback((e: React.MouseEvent, rowIndex: number, colIndex: number) => {
     e.preventDefault();
     e.stopPropagation();
@@ -554,7 +1129,8 @@ export const CadastrarPlanilha: React.FC = () => {
       setDraggedImage(null);
     }
   }, [draggedImage, addToHistory]);
-  // Modificar handleMouseUp para suportar seleção de área de impressão
+
+  // Função para lidar com mouse up global
   const handleMouseUp = useCallback(() => {
     setIsSelecting(false);
     setSelectionRange(null);
@@ -1099,33 +1675,6 @@ export const CadastrarPlanilha: React.FC = () => {
     addToHistory('Salvar Template', `Template "${spreadsheetName}" salvo como JSON`);
   }, [spreadsheetName, rows, cols, data, history, columnWidths, rowHeights, addToHistory]);
 
-  const exportJSONWithStyles = useCallback(() => {
-    const template: SpreadsheetData = {
-      name: spreadsheetName,
-      rows,
-      cols,
-      data,
-      history,
-      columnWidths,
-      rowHeights,
-      globalStyles: {}
-    };
-
-    const jsonData = JSON.stringify(template, null, 2);
-    const blob = new Blob([jsonData], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${spreadsheetName.replace(/\s+/g, '_')}_com_estilos.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    addToHistory('Exportar JSON com Estilos', `Planilha exportada com todos os estilos e mídias`);
-  }, [spreadsheetName, rows, cols, data, history, columnWidths, rowHeights, addToHistory]);
-
   // Nova função para importar XLSX usando input de arquivo
   const importXLSX = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1236,6 +1785,31 @@ export const CadastrarPlanilha: React.FC = () => {
     };
     reader.readAsText(file);
   }, [addToHistory]);
+
+
+
+ async function loadTemplateFromBase64(base64String: string) {
+  try {
+   
+    const template: SpreadsheetData = await invoke('decode_base64_to_json', { encodedString: base64String });
+
+    // Se a decodificação e o parseamento forem bem-sucedidos, você pode usar os dados:
+    setSpreadsheetName(template.name);
+    setRows(template.rows);
+    setCols(template.cols);
+    setData(template.data);
+    setHistory(template.history || []);
+    setColumnWidths(template.columnWidths || Array(template.cols).fill(100));
+    setRowHeights(template.rowHeights || Array(template.rows).fill(32));
+
+    addToHistory('Carregar Template', `Template "${template.name}" carregado`);
+
+  } catch (error) {
+    // O erro virá do backend Rust se algo der errado (decodificação ou parse)
+    alert(`Erro ao carregar o arquivo: ${error}. Verifique se é um template válido e se o Base64 está correto.`);
+  }
+}
+
 
   const importCSV = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -1575,13 +2149,13 @@ useEffect(() => {
         addToHistory('Redimensionar', `${isResizing.type === 'col' ? 'Coluna' : 'Linha'} ${isResizing.index + 1} redimensionada`);
         setIsResizing(null);
       }
+      if (isResizingImage) {
+        addToHistory('Redimensionar Imagem', `Imagem na célula ${getColumnLabel(isResizingImage.col)}${isResizingImage.row + 1} redimensionada`);
+        setIsResizingImage(null);
+      }
     };
 
-    if (isResizing) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-    }
-        if (isResizingImage) {
+    if (isResizing || isResizingImage) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
     }
@@ -1590,7 +2164,7 @@ useEffect(() => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, isResizingImage,  addToHistory]);
+  }, [isResizing, isResizingImage, addToHistory, getColumnLabel]);
 
 
   const formatTimestamp = (timestamp: Date): string => {
@@ -2210,7 +2784,35 @@ useEffect(() => {
 
   // Event listener global para prevenir scroll com setas do teclado na planilha
   useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      setIsSelecting(false);
+      setSelectionRange(null);
+      setIsSelectingPrintArea(false);
+      if (isResizing) {
+        addToHistory("Redimensionar", `${isResizing.type === 'col' ? 'Coluna' : 'Linha'} ${isResizing.index + 1} redimensionada`);
+        setIsResizing(null);
+      }
+      if (isResizingImage) {
+        addToHistory("Redimensionar Imagem", `Imagem na célula ${getColumnLabel(isResizingImage.col)}${isResizingImage.row + 1} redimensionada`);
+        setIsResizingImage(null);
+      }
+    };
+
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (isResizingImage) {
+          setIsResizingImage(null);
+          addToHistory("Redimensionar Imagem", "Redimensionamento de imagem cancelado");
+        }
+        if (isResizing) {
+          setIsResizing(null);
+          addToHistory("Redimensionar", "Redimensionamento de coluna/linha cancelado");
+        }
+        // Se o foco estiver na barra de fórmulas e o modal de sugestões estiver aberto, fechar sugestões
+        if (formulaBarRef.current === document.activeElement && showSuggestions) {
+          setShowSuggestions(false);
+        }
+      }
       // Verificar se o foco está em uma célula da planilha
       const activeElement = document.activeElement as HTMLElement;
       if (activeElement && activeElement.hasAttribute('data-cell')) {
@@ -2221,19 +2823,14 @@ useEffect(() => {
       }
     };
 
+    document.addEventListener('mouseup', handleGlobalMouseUp);
     document.addEventListener('keydown', handleGlobalKeyDown);
-    
+
     return () => {
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
-  }, []);
-
-  useEffect(() => {
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [handleMouseUp]);
+  }, [isResizing, isResizingImage, addToHistory, showSuggestions]);
 
   return (
     <div className={`${styles["container"]} ${styles["maximized"]}`}>
@@ -2290,13 +2887,29 @@ useEffect(() => {
               <RotateCw size={16} />
             </button>
           </div>
-          
-          <button className={styles["button"]} onClick={saveAsTemplate}>
-            <Save size={16} />
-            Salvar Template
-          </button>
+      
+          {typeResponse && typeResponse?.type === "Criar"  && (
+                <button className={styles["button"]} onClick={openSaveTemplateModal}>
+                 <Save size={16} />
+                 Salvar 
+              </button>
+              )}
 
-          <button className={styles["button"]} onClick={exportJSONWithStyles}>
+                 {typeResponse && typeResponse?.type === "Duplicar"  && (
+                <button className={styles["button"]} onClick={openSaveTemplateModal}>
+                 <Save size={16} />
+                 Salvar 
+              </button>
+              )}
+
+               {typeResponse && typeResponse?.type === "Editar" && (
+                <button className={styles["button"]} onClick={saveTemplate}>
+                 <Save size={16} />
+                 Salvar Edições
+              </button>
+              )}
+              
+          <button className={styles["button"]} onClick={saveAsTemplate}>
             <FileSpreadsheet size={16} />
             Exportar JSON com Estilos
           </button>
@@ -2658,7 +3271,7 @@ useEffect(() => {
                   disabled={selectedCells.length < 2}
                   title="Mesclar Células"
                 >
-                  <Merge size={16} />
+                  <TableCellsMerge size={16} />
                 </button>
                 <button 
                   className={styles["format-button"]}
@@ -2716,6 +3329,216 @@ useEffect(() => {
             </>
           )}
         </div>
+                {/* Modal de Salvar Template */}
+        {showSaveTemplateModal && (
+          <div className={styles["modal-overlay"]}>
+            <div className={styles["modal"]} style={{ maxWidth: '600px', width: '90%' }}>
+              <div className={styles["modal-header"]}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Database size={20} />
+                  Salvar Template
+                </h3>
+                                <button 
+                  className={styles["close-button"]}
+                  onClick={() => setShowSaveTemplateModal(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+                            <div className={styles["modal-content"]} style={{ padding: '24px' }}>
+                {/* Nome do Arquivo */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: '600',
+                    color: '#374151'
+                  }}>
+                    Nome do Arquivo:
+                  </label>
+                  <input
+                    type="text"
+                    value={saveTemplateData.nomeArquivo}
+                    onChange={(e) => setSaveTemplateData(prev => ({ 
+                      ...prev, 
+                      nomeArquivo: e.target.value,
+                      caminhoArquivo: `templates/${e.target.value.replace(/\s+/g, '_').toLowerCase()}.json`
+                    }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                    placeholder="Digite o nome do arquivo"
+                  />
+                </div>
+
+                {/* Tipo de Documento */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: '600',
+                    color: '#374151'
+                  }}>
+                    Tipo de Documento:
+                  </label>
+                  <select
+                    value={saveTemplateData.tipo}
+                    onChange={(e) => setSaveTemplateData(prev => ({ 
+                      ...prev, 
+                      tipo: e.target.value as 'template' | 'planilha_padrao'
+                    }))}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      border: '2px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      backgroundColor: '#fff'
+                    }}
+                  >
+                    <option value="template">Template</option>
+                    <option value="planilha_padrao">Planilha Padrão</option>
+                  </select>
+                </div>
+                                {/* Tags */}
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ 
+                    display: 'block', 
+                    marginBottom: '8px', 
+                    fontWeight: '600',
+                    color: '#374151'
+                  }}>
+                    Tag:
+                  </label>
+                  
+                  {!isAddingNewTag ? (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <select
+                        value={saveTemplateData.tag}
+                        onChange={(e) => setSaveTemplateData(prev => ({ ...prev, tag: e.target.value }))}
+                        style={{
+                          flex: 1,
+                          padding: '12px',
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '14px',
+                          backgroundColor: '#fff'
+                        }}
+                      >
+                        <option value="">Selecione uma tag</option>
+                        {availableTags.map((tag, index) => (
+                          <option key={index} value={tag}>{tag}</option>
+                        ))}
+                      </select>
+                      <button
+                        className={styles["button"]}
+                        onClick={() => setIsAddingNewTag(true)}
+                        style={{ padding: '12px' }}
+                        title="Adicionar nova tag"
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        type="text"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            addNewTag();
+                          } else if (e.key === 'Escape') {
+                            setIsAddingNewTag(false);
+                            setNewTag('');
+                          }
+                        }}
+                        style={{
+                          flex: 1,
+                          padding: '12px',
+                          border: '2px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '14px'
+                        }}
+                        placeholder="Digite uma nova tag"
+                        autoFocus
+                      />
+                      <button
+                        className={styles["button"]}
+                        onClick={addNewTag}
+                        style={{ padding: '12px' }}
+                        title="Confirmar nova tag"
+                      >
+                        <CheckCircle size={16} />
+                      </button>
+                      <button
+                        className={`${styles["button"]} ${styles["secondary"]}`}
+                        onClick={() => {
+                          setIsAddingNewTag(false);
+                          setNewTag('');
+                        }}
+                        style={{ padding: '12px' }}
+                        title="Cancelar"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+                                {/* Informações do JSON */}
+                <div style={{ 
+                  marginBottom: '24px',
+                  padding: '16px',
+                  backgroundColor: '#f0f9ff',
+                  border: '1px solid #0ea5e9',
+                  borderRadius: '8px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Info size={16} color="#0ea5e9" />
+                    <span style={{ fontWeight: '600', color: '#0c4a6e' }}>
+                      Informações do Template
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#0c4a6e' }}>
+                    <p style={{ margin: '4px 0' }}>
+                      <strong>Planilha:</strong> {spreadsheetName}
+                    </p>
+                    <p style={{ margin: '4px 0' }}>
+                      <strong>Dimensões:</strong> {rows} linhas × {cols} colunas
+                    </p>
+                    <p style={{ margin: '4px 0' }}>
+                      <strong>Tamanho do JSON:</strong> {(saveTemplateData.jsonData.length / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                </div>
+                    <div className={styles["modal-footer"]}>
+                <button 
+                  className={`${styles["button"]} ${styles["secondary"]}`}
+                  onClick={() => setShowSaveTemplateModal(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className={styles["button"]}
+                  onClick={saveTemplate}
+                  disabled={!saveTemplateData.nomeArquivo.trim() || !saveTemplateData.tag.trim()}
+                >
+                  <Save size={16} />
+                  Salvar Template
+                </button>
+              </div>
+              </div>
+              
+          
+            </div>
+          </div>
+        )}
+        
+
 
         <input
           ref={fileInputRef}
@@ -3106,40 +3929,8 @@ useEffect(() => {
         )}
 
         {/* Modal de Histórico */}
-        {showHistoryModal && (
-          <div className={styles["modal-overlay"]}>
-            <div className={styles["modal-content"]}>
-              <h3 className={styles["modal-header"]}>
-                <History size={20} />
-                Histórico de Alterações
-              </h3>
-              <div className={styles["history-list"]}>
-                {history.length === 0 ? (
-                  <div style={{ textAlign: 'center', color: '#6b7280', padding: '2rem' }}>
-                    Nenhuma alteração registrada ainda
-                  </div>
-                ) : (
-                  history.map((entry, index) => (
-                    <div key={index} className={styles["history-item"]}>
-                      <span className={styles["history-timestamp"]}>
-                        {formatTimestamp(entry.timestamp)}
-                      </span>
-                      <strong>{entry.action}:</strong> {entry.details}
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className={styles["modal-actions"]}>
-                <button 
-                  className={`${styles["button"]} ${styles["secondary"]}`}
-                  onClick={() => setShowHistoryModal(false)}
-                >
-                  Fechar
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      {renderHistoryModal()}
+
 
         {/* Modal de Impressão */}
         {showPrintModal && (

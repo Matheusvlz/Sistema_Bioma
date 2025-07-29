@@ -46,3 +46,9 @@ pub fn usuario_logado() -> Option<Usuario> {
 pub fn verificar_autenticacao() -> bool {
     obter_usuario().is_some()
 }
+
+#[command]
+pub fn get_usuario_nome() -> Option<String> {
+    obter_usuario().map(|usuario| usuario.nome)
+}
+

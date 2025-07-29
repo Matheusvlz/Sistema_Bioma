@@ -45,6 +45,10 @@ interface SetorCliente {
     do_cliente: boolean;
 }
 
+interface VerificarEmail {
+    id: number;
+}
+
 interface UsuarioResponse {
     success: boolean;
     data?: Usuario[];
@@ -75,6 +79,12 @@ interface SetorClienteResponse {
     message?: string;
 }
 
+interface VerificarEmailResponse {
+    success: boolean;
+    data?: VerificarEmail[];
+    message?: string;
+}
+
 interface InvokeResponse {
     success: boolean;
     data?: any;
@@ -91,6 +101,7 @@ export const UsuarioPortal: React.FC = () => {
     const [usuarioSelecionadoPrimeira, setUsuarioSelecionadoPrimeira] = useState<UsuarioCliente | null>(null);
     const [setoresPortalPrimeira, setSetoresPortalPrimeira] = useState<SetorPortal[]>([]);
     const [loadingPrimeira, setLoadingPrimeira] = useState(false);
+    const [emailVerificado, setEmailVerificado] = useState<VerificarEmail[]>([]);
 
     // Estados para a segunda guia
     const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
@@ -103,6 +114,10 @@ export const UsuarioPortal: React.FC = () => {
     const [modalSetoresAberto, setModalSetoresAberto] = useState(false);
     const [setoresCliente, setSetoresCliente] = useState<SetorCliente[]>([]);
     const [loadingModal, setLoadingModal] = useState(false);
+
+    // Estados para a nova seção de cadastro
+    const [nomeUsuario, setNomeUsuario] = useState('');
+    const [emailUsuario, setEmailUsuario] = useState('');
 
     useEffect(() => {
         const setupSetorListener = async () => {
@@ -642,6 +657,85 @@ export const UsuarioPortal: React.FC = () => {
         showConfirm(`Confirme exclusão`, `Tem certeza que deseja excluir este usuário?`, executar);
     };
 
+    const handleLimparCampos = () => {
+        setNomeUsuario('');
+        setEmailUsuario('');
+    };
+
+    const handleEnviarCadastro = async () => {
+        if (!nomeUsuario.trim() || !emailUsuario.trim()) {
+            showWarning('Campos obrigatórios', 'Por favor, preencha o nome e o e-mail.');
+            return;
+        }
+        const email = usuariosCliente.find(u => u.usuario === emailUsuario);
+        if (email) {
+            showWarning('Usuário existente', 'Esse email já está cadastrado para o cliente selecionado.');
+            return;
+        }
+
+        const executar = async () => {
+            try {
+                const emailResponse: VerificarEmailResponse = await core.invoke('verificar_email', {
+                    request: {
+                        email: emailUsuario
+                    }
+                });  
+                
+                if (emailResponse.success && emailResponse.data && emailResponse.data.length > 0) {
+                    setEmailVerificado(emailResponse.data)
+                    alert(JSON.stringify(emailResponse.data));
+                    const executar = async () => {
+                        try {
+                            const response: InvokeResponse = await core.invoke('cadastrar_usuario', {
+                                request: {
+                                    clienteId: clienteSelecionadoPrimeira?.id,
+                                    nome: nomeUsuario,
+                                    email: emailUsuario
+                                }
+                            });                
+                            
+                            if (response.success) {
+                                if(clienteSelecionadoPrimeira) handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                                handleLimparCampos();
+                                showSuccess('Sucesso', 'Usuário cadastrado com sucesso!');
+                            }
+                        } catch (error) {
+                            showError('Erro', 'Erro ao cadastrar usuário: ' + String(error));
+                        }
+                        //closeModal();
+                    };
+
+                    showConfirm(`Confirme usuário`, `Esse email já está cadastrado para outro cliente.\nDeseja adicionar ${emailUsuario} para o cliente selecionado?`, executar);
+                } else {
+                    try {
+                        const response: InvokeResponse = await core.invoke('cadastrar_usuario', {
+                            request: {
+                                usuarioId: emailVerificado,
+                                clienteId: clienteSelecionadoPrimeira?.id,
+                                nome: nomeUsuario,
+                                email: emailUsuario
+                            }
+                        });                
+                        
+                        if (response.success) {
+                            if(clienteSelecionadoPrimeira) handleClienteSelectPrimeira(clienteSelecionadoPrimeira);
+                            handleLimparCampos();
+                            showSuccess('Sucesso', 'Usuário cadastrado com sucesso!');
+                        }
+                    } catch (error) {
+                        showError('Erro', 'Erro ao cadastrar usuário: ' + String(error));
+                    }
+                }
+            } catch (error) {
+                showError('Erro', 'Erro ao verificar email: ' + String(error));
+                setUsuariosCliente([]);
+            }
+            //closeModal();
+        };
+
+        showConfirm(`Confirme cadastro`, `Deseja cadastrar o usuário?`, executar);
+    };
+
 
     /*FALTA ESSES:
         1. Criar telas do abrir amostras no portal
@@ -705,6 +799,53 @@ export const UsuarioPortal: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            {/* Nova Seção de Cadastro de Usuário */}
+            {clienteSelecionadoPrimeira && (
+                <div className={styles["secao"]}>
+                    <div className={styles["secao-header"]}>
+                        <h3><FaUser /> Cadastrar Novo Usuário</h3>
+                    </div>
+
+                    <div className={styles["cadastro-usuario-form"]}>
+                        <input
+                            type="text"
+                            placeholder="Nome do usuário"
+                            value={nomeUsuario}
+                            onChange={(e) => setNomeUsuario(e.target.value)}
+                            className={styles["campo-nome"]}
+                            autoComplete="off"
+                        />
+
+                        <input
+                            type="email"
+                            placeholder="E-mail do usuário"
+                            value={emailUsuario}
+                            onChange={(e) => setEmailUsuario(e.target.value)}
+                            className={styles["campo-email"]}
+                            autoComplete="off"
+                        />
+
+                        <button
+                            type="button"
+                            onClick={handleLimparCampos}
+                            className={styles["btn-limpar"]}
+                            title="Limpar campos"
+                        >
+                            <FaTimes />
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleEnviarCadastro}
+                            className={styles["btn-enviar"]}
+                            title="Enviar cadastro"
+                        >
+                            Enviar
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Seção de Usuários do Cliente */}
             {clienteSelecionadoPrimeira && (
