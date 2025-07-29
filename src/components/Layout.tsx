@@ -122,7 +122,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Data state
   const [newNotifications, setNewNotifications] = useState<WebSocketMessagePayload[]>([]);
   const [savedNotifications, setSavedNotifications] = useState<SavedNotification[]>([]);
-  const [kanbanCards, setKanbanCards] = useState<SavedKanbanCard[]>([]);
+
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Enhanced notification states
@@ -210,7 +210,7 @@ const fetchInicioData = useCallback(async () => {
       tags: card.tags,
       cardColor: card.card_color,
     }));
-    setKanbanCards(formattedKanbanCards);
+
 
     const initialTasks: Task[] = formattedKanbanCards.map(card => ({
       id: card.id,

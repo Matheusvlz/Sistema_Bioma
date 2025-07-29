@@ -2,7 +2,7 @@ import React from 'react';
 import './css/ChatNotificationModal.css';
 
 interface MessageNotificationPayload {
-    message_type: string;
+    message_type?: string; 
     sender_id: number;
     chat_id: number;
     sender_name: string;
@@ -21,7 +21,6 @@ interface ChatNotificationModalProps {
 export const ChatNotificationModal: React.FC<ChatNotificationModalProps> = ({ 
     notification, 
     onClose, 
-    onReply, 
     onOpenChat 
 }) => {
     const getAvatarUrl = () => {
@@ -57,12 +56,7 @@ export const ChatNotificationModal: React.FC<ChatNotificationModalProps> = ({
         onClose();
     };
 
-    const handleReply = () => {
-        if (onReply) {
-            onReply(notification.chat_id);
-        }
-        onClose();
-    };
+
 
     return (
         <div className="chat-modal-overlay" onClick={onClose}>

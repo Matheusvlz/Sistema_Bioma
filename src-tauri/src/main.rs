@@ -30,6 +30,8 @@ use controller::geral::setor_controller::{
 };
 
 use controller::login_controller::fazer_login;
+use controller::login_controller::validate_user_credentials;
+
 use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
 use model::usuario::get_usuario_nome;
@@ -194,7 +196,8 @@ fn main() {
             decode_base64_to_json,
             update_template,
             get_template_by_id,
-            get_usuario_nome
+            get_usuario_nome,
+            validate_user_credentials
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

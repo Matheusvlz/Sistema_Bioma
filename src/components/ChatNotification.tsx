@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './css/ChatNotification.css';
 
 interface MessageNotificationPayload {
-    message_type: string;
+    message_type?: string;
     sender_id: number;
     chat_id: number;
     sender_name: string;
