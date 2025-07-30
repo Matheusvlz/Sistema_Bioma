@@ -3,7 +3,6 @@
 mod controller;
 mod model;
 mod socket_listener;
-mod config;
 
 //COMPONENTES
 use controller::components::search_controller::{
@@ -81,15 +80,8 @@ use controller::qualidade::tauri_print_commands_controller::{
 };
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 
-use std::env;
-use crate::config::get_ws_url;
-
 fn main() {
-    if let Ok(exe_path) = env::current_exe() {
-        if let Some(exe_dir) = exe_path.parent() {
-            let _ = env::set_current_dir(exe_dir);
-        }
-    }
+    dotenvy::dotenv().ok();
 
     tauri::Builder::default()
         .setup(|app| {
@@ -98,8 +90,12 @@ fn main() {
             tauri::async_runtime::spawn({
                 let app_handle_clone = app_handle.clone();
                 async move {
-                    let ws_url = get_ws_url(&app_handle_clone);
-                    socket_listener::iniciar_socket(&ws_url, app_handle_clone).await;
+                    // Inicia a conexão WebSocket no backend Rust
+                    socket_listener::iniciar_socket(
+                        "ws://192.168.15.26:8082/ws/notificacoes",
+                        app_handle_clone,
+                    )
+                    .await;
                 }
             });
 

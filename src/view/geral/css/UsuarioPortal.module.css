@@ -1232,8 +1232,6 @@
 }
 
 /* Estilos específicos para a primeira guia */
-
-/* Botão de Amostras */
 .btn-amostras {
   display: flex;
   align-items: center;
@@ -1262,7 +1260,6 @@
   transform: translateY(0) scale(0.98);
 }
 
-/* Cliente selecionado na primeira guia */
 .cliente-selecionado-primeira {
   margin-top: 1rem;
 }
@@ -1278,7 +1275,6 @@
   border: 2px solid #10b981;
 }
 
-/* Contador de usuários */
 .contador-usuarios {
   background: #8b5cf6;
   color: white;
@@ -1288,7 +1284,6 @@
   font-weight: 600;
 }
 
-/* Lista de usuários */
 .usuarios-lista {
   display: flex;
   flex-direction: column;
@@ -1296,7 +1291,6 @@
   margin-top: 1.5rem;
 }
 
-/* Card de usuário do cliente */
 .usuario-cliente-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
@@ -1346,7 +1340,6 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Informações do usuário cliente */
 .usuario-cliente-info {
   display: flex;
   flex-direction: column;
@@ -1404,7 +1397,6 @@
   flex-shrink: 0;
 }
 
-/* Detalhes do usuário cliente */
 .usuario-cliente-detalhes {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1415,7 +1407,6 @@
   border: 1px solid #e5e7eb;
 }
 
-/* Ações do usuário */
 .usuario-acoes {
   display: flex;
   flex-wrap: wrap;
@@ -1496,7 +1487,6 @@
   box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
 }
 
-/* Responsividade para primeira guia */
 @media (max-width: 768px) {
   .usuario-cliente-principal {
     flex-direction: column;
@@ -1541,7 +1531,6 @@
   }
 }
 
-/* Animações específicas da primeira guia */
 .usuario-cliente-card {
   animation: fadeInUp 0.3s ease-out;
 }
@@ -1554,7 +1543,6 @@
   animation-delay: 0.2s;
 }
 
-/* Indicadores visuais para ações */
 .btn-acao.loading {
   pointer-events: none;
   opacity: 0.7;
@@ -1573,281 +1561,142 @@
 
 
 /* Estilos para a nova seção de cadastro de usuário */
-
 .cadastro-usuario-form {
-
   display: flex;
-
   align-items: center;
-
   gap: 1rem;
-
   background: white;
-
   padding: 1.5rem;
-
   border-radius: 12px;
-
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
   border: 2px solid #e2e8f0;
-
   transition: all 0.3s ease;
-
 }
-
-
 
 .cadastro-usuario-form:hover {
-
   border-color: #4F46E5;
-
   box-shadow: 0 4px 16px rgba(79, 70, 229, 0.15);
-
 }
-
-
 
 .campo-nome,
-
 .campo-email {
-
   flex: 1;
-
   padding: 0.875rem 1rem;
-
   border: 2px solid #e2e8f0;
-
   border-radius: 8px;
-
   font-size: 0.875rem;
-
   font-weight: 500;
-
   color: #374151;
-
   background: #f8fafc;
-
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
   outline: none;
-
 }
-
-
 
 .campo-nome:focus,
-
 .campo-email:focus {
-
   border-color: #4F46E5;
-
   background: white;
-
   box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-
   transform: translateY(-1px);
-
 }
-
-
 
 .campo-nome::placeholder,
-
 .campo-email::placeholder {
-
   color: #9ca3af;
-
   font-weight: 400;
-
 }
-
-
 
 .btn-limpar {
-
   width: 44px;
-
   height: 44px;
-
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-
   border: none;
-
   border-radius: 8px;
-
   color: white;
-
   cursor: pointer;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   font-size: 16px;
-
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-
   flex-shrink: 0;
-
 }
-
-
 
 .btn-limpar:hover {
-
   background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-
   transform: translateY(-2px) scale(1.05);
-
   box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
-
 }
-
-
 
 .btn-limpar:active {
-
   transform: translateY(0) scale(0.95);
-
 }
-
-
 
 .btn-enviar {
-
   padding: 0.875rem 2rem;
-
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-
   border: none;
-
   border-radius: 8px;
-
   color: white;
-
   font-size: 0.875rem;
-
   font-weight: 600;
-
   cursor: pointer;
-
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-
   text-transform: uppercase;
-
   letter-spacing: 0.5px;
-
   flex-shrink: 0;
-
   min-width: 100px;
-
 }
-
-
 
 .btn-enviar:hover {
-
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
-
   transform: translateY(-2px) scale(1.05);
-
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
-
 }
-
-
 
 .btn-enviar:active {
-
   transform: translateY(0) scale(0.95);
-
 }
-
-
 
 /* Responsividade para telas menores */
-
 @media (max-width: 768px) {
-
   .cadastro-usuario-form {
-
     flex-direction: column;
-
     gap: 1rem;
-
   }
-
-
 
   .campo-nome,
-
   .campo-email {
-
     width: 100%;
-
   }
-
-
 
   .btn-limpar,
-
   .btn-enviar {
-
     width: 100%;
-
     justify-content: center;
-
   }
-
-
 
   .btn-limpar {
-
     width: 44px;
-
     align-self: center;
-
   }
-
 }
 
-
-
 @media (max-width: 480px) {
-
   .cadastro-usuario-form {
-
     padding: 1rem;
-
   }
-
-
 
   .campo-nome,
-
   .campo-email {
-
     padding: 0.75rem;
-
     font-size: 0.8rem;
-
   }
-
-
 
   .btn-enviar {
-
     padding: 0.75rem 1.5rem;
-
     font-size: 0.8rem;
-
   }
-
 }

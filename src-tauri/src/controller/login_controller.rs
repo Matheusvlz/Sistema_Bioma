@@ -31,13 +31,16 @@ struct LoginRequest {
     senha: String,
 }
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
 
 #[command]
-pub async fn fazer_login(usuario: String, senha: String) -> LoginStatus {
+pub async fn fazer_login(app_handle: AppHandle, usuario: String, senha: String) -> LoginStatus {
     let client = Client::new();
     let login_data = LoginRequest { usuario, senha };
 
-    let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    //let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8080".to_string());
+    let api_url = get_api_url(&app_handle);
     let login_url = format!("{}/login", api_url);
 
     let res = match client

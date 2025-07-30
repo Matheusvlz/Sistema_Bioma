@@ -5,21 +5,15 @@ import {
   MessageSquare, 
   Plus, 
   Eye, 
-  FileCheck, 
-  BookOpen, 
   Users, 
   Package, 
-  DollarSign, 
   Search, 
-  Phone, 
   BarChart3, 
   AlertTriangle, 
   Boxes,
-  Award,
   Settings,
   TrendingUp,
   FlaskConical,
-  Truck,
   X,
   Filter,
   TestTube,
@@ -29,7 +23,6 @@ import {
   CheckCircle,
   Beaker,
   FileBarChart,
-  Send,
   Printer,
   Globe,
   ShoppingCart,
@@ -39,7 +32,6 @@ import {
 
 } from "lucide-react";
 import styles from './css/Laboratorio.module.css';
-import { WindowManager } from '../hooks/WindowManager';
 
 // Componente de Card otimizado com memo
 const StatusCard = memo(({ card }: { card: any }) => (
