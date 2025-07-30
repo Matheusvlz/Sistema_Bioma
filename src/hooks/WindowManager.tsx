@@ -215,6 +215,16 @@ export class WindowManager {
     });
   }
 
+  static async openPlanilha(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'planilha-laboratorio',
+      title: 'Planilha',
+      url: '/#/planilha-laboratorio',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  }
 
 
   

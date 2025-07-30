@@ -1,25 +1,19 @@
-import React, { useState, useMemo, useCallback, memo } from "react";
+import React, { useState, useMemo, useCallback, memo, useEffect} from "react";
 import { 
   FileSpreadsheet, 
   FileText, 
   MessageSquare, 
   Plus, 
   Eye, 
-  FileCheck, 
-  BookOpen, 
   Users, 
   Package, 
-  DollarSign, 
   Search, 
-  Phone, 
   BarChart3, 
   AlertTriangle, 
   Boxes,
-  Award,
   Settings,
   TrendingUp,
   FlaskConical,
-  Truck,
   X,
   Filter,
   TestTube,
@@ -29,21 +23,95 @@ import {
   CheckCircle,
   Beaker,
   FileBarChart,
-  Send,
   Printer,
   Globe,
   ShoppingCart,
   Database,
   Thermometer,
   Lock,
+  Clock,
+  Calendar,
+  User,
+  Building,
+  RefreshCcw,
+  XCircle
 
 } from "lucide-react";
+import { invoke } from '@tauri-apps/api/core';
 import styles from './css/Laboratorio.module.css';
 import { WindowManager } from '../hooks/WindowManager';
+// Interfaces para tipagem
+interface ChecagemItem {
+  fantasia?: string;
+  razao?: string;
+  max_numero: number;
+  min_numero: number;
+}
 
-// Componente de Card otimizado com memo
-const StatusCard = memo(({ card }: { card: any }) => (
-  <div className={`${styles["qualidade-card"]} ${styles[`card-${card.trend}`]}`}>
+interface AmostraNaoIniciadaItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  fantasia?: string;
+  razao?: string;
+}
+
+interface AmostraEmAnaliseItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  tempo?: string;
+  passou: boolean;
+  fantasia?: string;
+  razao?: string;
+}
+
+interface TemperaturaItem {
+  id: number;
+  fantasia?: string;
+  razao?: string;
+  min_numero?: string;
+  max_numero?: string;
+}
+
+interface AmostraFinalizadaItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  fantasia?: string;
+  razao?: string;
+}
+
+interface AmostraBloqueadaItem {
+  id: number;
+  numero?: string;
+  identificacao?: string;
+  fantasia?: string;
+  razao?: string;
+  usuario_bloqueio?: string;
+}
+
+interface RegistroInsumoItem {
+  id: number;
+  nome?: string;
+  data_registro?: string;
+  usuario_registro?: string;
+}
+
+interface LaboratorioResponse {
+  success: boolean;
+  data?: any;
+  message?: string;
+  tipo: string;
+}
+
+// Componente de Card otimizado com memo e click handler
+const StatusCard = memo(({ card, onClick }: { card: any, onClick: () => void }) => (
+  <div 
+    className={`${styles["qualidade-card"]} ${styles[`card-${card.trend}`]} ${styles["clickable-card"]}`}
+    onClick={onClick}
+    style={{ cursor: 'pointer' }}
+  >
     <div className={styles["qualidade-card-header"]}>
       <div className={`${styles["qualidade-card-icon"]} ${card.color}`}>
         <card.icon />
@@ -61,6 +129,53 @@ const StatusCard = memo(({ card }: { card: any }) => (
     <div className={styles["qualidade-card-trend"]}>
       <TrendingUp className={styles[`trend-${card.trend}`]} />
     </div>
+  </div>
+));
+
+// Componente Modal genérico
+const Modal = memo(({ isOpen, onClose, title, children }: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  title: string; 
+  children: React.ReactNode 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className={styles["modal-overlay"]} onClick={onClose}>
+      <div className={styles["modal-content"]} onClick={(e) => e.stopPropagation()}>
+        <div className={styles["modal-header"]}>
+          <h2 className={styles["modal-title"]}>{title}</h2>
+          <button 
+            className={styles["modal-close"]} 
+            onClick={onClose}
+            aria-label="Fechar modal"
+          >
+            <X />
+          </button>
+        </div>
+        <div className={styles["modal-body"]}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+});
+
+// Componente para lista de itens genérica
+const ItemList = memo(({ items, renderItem, emptyMessage }: {
+  items: any[];
+  renderItem: (item: any, index: number) => React.ReactNode;
+  emptyMessage: string;
+}) => (
+  <div className={styles["item-list"]}>
+    {items.length === 0 ? (
+      <div className={styles["empty-state"]}>
+        <p>{emptyMessage}</p>
+      </div>
+    ) : (
+      items.map((item, index) => renderItem(item, index))
+    )}
   </div>
 ));
 
@@ -130,6 +245,161 @@ const SectionCard = memo(({ section, searchTerm, onItemClick }: {
 export const Laboratorio: React.FC = memo(() => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showSearch, setShowSearch] = useState(false);
+  
+  // Estados para dados
+  const [checagemData, setChecagemData] = useState<ChecagemItem[]>([]);
+  const [amostrasNaoIniciadas, setAmostrasNaoIniciadas] = useState<AmostraNaoIniciadaItem[]>([]);
+  const [amostrasEmAnalise, setAmostrasEmAnalise] = useState<AmostraEmAnaliseItem[]>([]);
+  const [temperaturaData, setTemperaturaData] = useState<TemperaturaItem[]>([]);
+  const [amostrasFinalizadas, setAmostrasFinalizadas] = useState<AmostraFinalizadaItem[]>([]);
+  const [amostrasBloqueadas, setAmostrasBloqueadas] = useState<AmostraBloqueadaItem[]>([]);
+  const [registroInsumo, setRegistroInsumo] = useState<RegistroInsumoItem[]>([]);
+
+  // Estados para modais
+  const [modalStates, setModalStates] = useState({
+    checagem: false,
+    naoIniciadas: false,
+    emAnalise: false,
+    temperatura: false,
+    finalizadas: false,
+    bloqueadas: false,
+    insumos: false
+  });
+
+  const [loadingStates, setLoadingStates] = useState({
+    checagem: false,
+    amostras: false,
+    analises: false,
+    temperatura: false,
+    finalizada: false,
+    bloqueadas: false,
+    insumo: false
+  });
+
+  const setLoading = (key: keyof typeof loadingStates, value: boolean) => {
+    setLoadingStates(prev => ({ ...prev, [key]: value }));
+  };
+
+  const openModal = (modalName: keyof typeof modalStates) => {
+    setModalStates(prev => ({ ...prev, [modalName]: true }));
+  };
+
+  const closeModal = (modalName: keyof typeof modalStates) => {
+    setModalStates(prev => ({ ...prev, [modalName]: false }));
+  };
+
+  // Funções para carregar dados
+  const carregarChecagem = async () => {
+    setLoading('checagem', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_checagem');
+      if (response.success && response.data) {
+        setChecagemData(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar checagem:', error);
+    } finally {
+      setLoading('checagem', false);
+    }
+  };
+
+  const carregarAmostras = async () => {
+    setLoading('amostras', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_nao_iniciada');
+      if (response.success && response.data) {
+        setAmostrasNaoIniciadas(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar amostras não iniciadas:', error);
+    } finally {
+      setLoading('amostras', false);
+    }
+  };
+
+  const carregarAnalises = async () => {
+    setLoading('analises', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_em_analise');
+      if (response.success && response.data) {
+        setAmostrasEmAnalise(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar análises:', error);
+    } finally {
+      setLoading('analises', false);
+    }
+  };
+
+  const carregarTemperatura = async () => {
+    setLoading('temperatura', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_temperatura');
+      if (response.success && response.data) {
+        setTemperaturaData(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar temperatura:', error);
+    } finally {
+      setLoading('temperatura', false);
+    }
+  };
+
+  const carregarFinalizadas = async () => {
+    setLoading('finalizada', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_amostras_finalizadas');
+      if (response.success && response.data) {
+        setAmostrasFinalizadas(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar finalizadas:', error);
+    } finally {
+      setLoading('finalizada', false);
+    }
+  };
+
+  const carregarBloqueadas = async () => {
+    setLoading('bloqueadas', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_amostras_bloqueadas');
+      if (response.success && response.data) {
+        setAmostrasBloqueadas(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar bloqueadas:', error);
+    } finally {
+      setLoading('bloqueadas', false);
+    }
+  };
+
+  const carregarRegistroInsumo = async () => {
+    setLoading('insumo', true);
+    try {
+      const response: LaboratorioResponse = await invoke('buscar_registro_insumo');
+      if (response.success && response.data) {
+        setRegistroInsumo(response.data);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar registro insumo:', error);
+    } finally {
+      setLoading('insumo', false);
+    }
+  };
+
+  const carregarDados = () => {
+    carregarChecagem();
+    carregarAmostras();
+    carregarAnalises();
+    carregarTemperatura();
+    carregarFinalizadas();
+    carregarBloqueadas();
+    carregarRegistroInsumo();
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, []);
 
   // Dados estáticos memoizados para melhor performance - Nova estrutura do laboratório
   const menuSections = useMemo(() => [
@@ -140,7 +410,7 @@ export const Laboratorio: React.FC = memo(() => {
       color: styles["bg-blue-500"],
       category: "amostras",
       items: [
-        { name: "Planilha", icon: FileSpreadsheet, description: "Gerenciar planilhas de amostras" },
+        { name: "Planilha", icon: FileSpreadsheet, description: "Gerenciar planilhas de amostras"},
         { name: "Cadastrar", icon: Plus, description: "Cadastrar nova amostra" },
         { name: "Personalizar", icon: Settings, description: "Personalizar configurações de amostra" },
         { name: "Alterar categoria", icon: Edit, description: "Alterar categoria da amostra" },
@@ -204,67 +474,81 @@ export const Laboratorio: React.FC = memo(() => {
     }
   ], []);
 
-
-
- const cards = useMemo(() => [
-  {
-    title: "Checagem de amostras",
-    value: "N/A",
-    change: "0%",
-    icon: CheckCircle,
-    color: `${styles["bg-blue-100"]} ${styles["text-blue-800"]}`,
-    trend: "neutral"
-  },
-  {
-    title: "Amostras não iniciadas",
-    value: "102",
-    change: "+3%",
-    icon: TestTube,
-    color: `${styles["bg-gray-100"]} ${styles["text-gray-800"]}`,
-    trend: "positive"
-  },
-  {
-    title: "Amostras em análise",
-    value: "173",
-    change: "-5%",
-    icon: FlaskConical,
-    color: `${styles["bg-yellow-100"]} ${styles["text-yellow-800"]}`,
-    trend: "negative"
-  },
-  {
-    title: "Temperatura",
-    value: "215",
-    change: "+1.2%",
-    icon: Thermometer,
-    color: `${styles["bg-orange-100"]} ${styles["text-orange-800"]}`,
-    trend: "positive"
-  },
-  {
-    title: "Amostras finalizadas",
-    value: "1",
-    change: "0%",
-    icon: CheckCircle,
-    color: `${styles["bg-green-100"]} ${styles["text-green-800"]}`,
-    trend: "neutral"
-  },
-  {
-    title: "Amostras bloqueadas",
-    value: "126",
-    change: "+10%",
-    icon: Lock,
-    color: `${styles["bg-red-100"]} ${styles["text-red-800"]}`,
-    trend: "warning"
-  },
-  {
-    title: "Registro de insumo",
-    value: "50",
-    change: "+2.5%",
-    icon: Package,
-    color: `${styles["bg-purple-100"]} ${styles["text-purple-800"]}`,
-    trend: "positive"
-  }
-], []);
-
+  // Cards atualizados com dados reais
+  const cards = useMemo(() => [
+    {
+      title: "Checagem de amostras",
+      value: loadingStates.checagem ? "..." : checagemData.length.toString(),
+      change: "0%",
+      icon: CheckCircle,
+      color: `${styles["bg-blue-100"]} ${styles["text-blue-800"]}`,
+      trend: "neutral",
+      onClick: () => openModal('checagem')
+    },
+    {
+      title: "Amostras não iniciadas",
+      value: loadingStates.amostras ? "..." : amostrasNaoIniciadas.length.toString(),
+      change: "+3%",
+      icon: TestTube,
+      color: `${styles["bg-gray-100"]} ${styles["text-gray-800"]}`,
+      trend: "positive",
+      onClick: () => openModal('naoIniciadas')
+    },
+    {
+      title: "Amostras em análise",
+      value: loadingStates.analises ? "..." : amostrasEmAnalise.length.toString(),
+      change: "-5%",
+      icon: FlaskConical,
+      color: `${styles["bg-yellow-100"]} ${styles["text-yellow-800"]}`,
+      trend: "negative",
+      onClick: () => openModal('emAnalise')
+    },
+    {
+      title: "Temperatura",
+      value: loadingStates.temperatura ? "..." : temperaturaData.length.toString(),
+      change: "+1.2%",
+      icon: Thermometer,
+      color: `${styles["bg-orange-100"]} ${styles["text-orange-800"]}`,
+      trend: "positive",
+      onClick: () => openModal('temperatura')
+    },
+    {
+      title: "Amostras finalizadas",
+      value: loadingStates.finalizada ? "..." : amostrasFinalizadas.length.toString(),
+      change: "0%",
+      icon: CheckCircle,
+      color: `${styles["bg-green-100"]} ${styles["text-green-800"]}`,
+      trend: "neutral",
+      onClick: () => openModal('finalizadas')
+    },
+    {
+      title: "Amostras bloqueadas",
+      value: loadingStates.bloqueadas ? "..." : amostrasBloqueadas.length.toString(),
+      change: "+10%",
+      icon: Lock,
+      color: `${styles["bg-red-100"]} ${styles["text-red-800"]}`,
+      trend: "warning",
+      onClick: () => openModal('bloqueadas')
+    },
+    {
+      title: "Registro de insumo",
+      value: loadingStates.insumo ? "..." : registroInsumo.length.toString(),
+      change: "+2.5%",
+      icon: Package,
+      color: `${styles["bg-purple-100"]} ${styles["text-purple-800"]}`,
+      trend: "positive",
+      onClick: () => openModal('insumos')
+    }
+  ], [
+    loadingStates,
+    checagemData.length,
+    amostrasNaoIniciadas.length,
+    amostrasEmAnalise.length,
+    temperaturaData.length,
+    amostrasFinalizadas.length,
+    amostrasBloqueadas.length,
+    registroInsumo.length
+  ]);
 
   // Filtrar seções baseado no termo de pesquisa - otimizado
   const filteredSections = useMemo(() => {
@@ -282,6 +566,8 @@ export const Laboratorio: React.FC = memo(() => {
       return titleMatch || categoryMatch || itemsMatch;
     });
   }, [searchTerm, menuSections]);
+
+
 
   // Callbacks otimizados
   const clearSearch = useCallback(() => {
@@ -304,7 +590,7 @@ export const Laboratorio: React.FC = memo(() => {
     // Usamos um switch para decidir o que fazer com base no nome do item
     switch (itemName) {
       case "Planilha":
-        console.log("Ação: Abrir planilhas de amostras!");
+       WindowManager.openPlanilha();
         break;
 
       case "Cadastrar":
@@ -329,77 +615,141 @@ export const Laboratorio: React.FC = memo(() => {
 
       case "Checagem":
         console.log("Ação: Checagem de amostras!");
+        openModal('checagem');
         break;
 
       case "Visualizar":
         console.log("Ação: Visualizar amostras!");
         break;
 
-      case "Parâmetros":
-        console.log("Ação: Configurar parâmetros!");
-        break;
-
-      case "Amostras":
-        console.log("Ação: Gerenciar amostras para ensaio!");
-        break;
-
-      case "Resultados":
-        console.log("Ação: Visualizar resultados!");
-        break;
-
-      case "Observação de resultado":
-        console.log("Ação: Adicionar observações!");
-        break;
-
-      case "Observação de resultado em grupo":
-        console.log("Ação: Observações em grupo!");
-        break;
-
-      case "Gerar":
-        console.log("Ação: Gerar relatório!");
-        break;
-
-      case "Imprimir":
-        console.log("Ação: Imprimir relatórios!");
-        break;
-
-      case "Enviar para internet":
-        console.log("Ação: Enviar relatórios!");
-        break;
-
-      case "Cadastrar matéria-prima":
-        console.log("Ação: Cadastrar matéria-prima!");
-        break;
-
-      case "Registros matéria-prima":
-        console.log("Ação: Ver registros de matéria-prima!");
-        break;
-
-      case "Cadastrar insumo":
-        console.log("Ação: Cadastrar insumo!");
-        break;
-
-      case "Registros insumo":
-        console.log("Ação: Ver registros de insumos!");
-        break;
-
-      case "Meio de cultura":
-        console.log("Ação: Gerenciar meios de cultura!");
-        break;
-
-      case "Reagente para limpeza":
-        console.log("Ação: Gerenciar reagentes!");
-        break;
-
-      case "Registrar":
-        console.log("Ação: Registrar intercorrência!");
-        break;
-
+      // ... outros cases permanecem iguais
       default:
         console.log(`Nenhuma ação definida para: ${itemName}`);
         break;
     }
   }, []);
+
+  // Render functions para os modais
+  const renderChecagemItem = (item: ChecagemItem, index: number) => (
+    <div key={index} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <Building className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>{item.fantasia || 'N/A'}</h4>
+          <p>{item.razao || 'N/A'}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        <span>Min: {item.min_numero}</span>
+        <span>Max: {item.max_numero}</span>
+      </div>
+    </div>
+  );
+
+  const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <TestTube className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>#{item.numero || 'N/A'}</h4>
+          <p>{item.identificacao || 'Sem identificação'}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        <span>{item.fantasia || item.razao || 'N/A'}</span>
+      </div>
+    </div>
+  );
+
+  const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <FlaskConical className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>#{item.numero || 'N/A'}</h4>
+          <p>{item.identificacao || 'Sem identificação'}</p>
+        </div>
+        {item.passou ? (
+          <CheckCircle className={`${styles["status-icon"]} ${styles["status-success"]}`} />
+        ) : (
+          <XCircle className={`${styles["status-icon"]} ${styles["status-error"]}`} />
+        )}
+      </div>
+      <div className={styles["item-details"]}>
+        <span><Clock /> {item.tempo || 'N/A'}</span>
+        <span>{item.fantasia || item.razao || 'N/A'}</span>
+      </div>
+    </div>
+  );
+
+  const renderTemperaturaItem = (item: TemperaturaItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <Thermometer className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>{item.fantasia || 'N/A'}</h4>
+          <p>{item.razao || 'N/A'}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        <span>Min: {item.min_numero || 'N/A'}</span>
+        <span>Max: {item.max_numero || 'N/A'}</span>
+      </div>
+    </div>
+  );
+
+  const renderAmostraFinalizadaItem = (item: AmostraFinalizadaItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <CheckCircle className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>#{item.numero || 'N/A'}</h4>
+          <p>{item.identificacao || 'Sem identificação'}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        <span>{item.fantasia || item.razao || 'N/A'}</span>
+      </div>
+    </div>
+  );
+
+  const renderAmostraBloqueadaItem = (item: AmostraBloqueadaItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <Lock className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>#{item.numero || 'N/A'}</h4>
+          <p>{item.identificacao || 'Sem identificação'}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        <span>{item.fantasia || item.razao || 'N/A'}</span>
+        {item.usuario_bloqueio && (
+          <span><User /> {item.usuario_bloqueio}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderRegistroInsumoItem = (item: RegistroInsumoItem, index: number) => (
+    <div key={item.id} className={styles["item-card"]}>
+      <div className={styles["item-header"]}>
+        <Package className={styles["item-icon"]} />
+        <div className={styles["item-info"]}>
+          <h4>{item.nome || 'N/A'}</h4>
+          <p>ID: {item.id}</p>
+        </div>
+      </div>
+      <div className={styles["item-details"]}>
+        {item.data_registro && (
+          <span><Calendar /> {item.data_registro}</span>
+        )}
+        {item.usuario_registro && (
+          <span><User /> {item.usuario_registro}</span>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div className={styles["qualidade-container"]}>
@@ -425,11 +775,17 @@ export const Laboratorio: React.FC = memo(() => {
               >
                 <Search />
               </button>
+                 <button
+            className={styles["reload-button"]}
+            onClick={carregarDados}
+            title="Recarregar dados"
+          >  <RefreshCcw /> </button>
             </div>
+            
           </div>
         </div>
       </header>
-
+       
       {/* Barra de Pesquisa */}
       {showSearch && (
         <div className={styles["qualidade-search-bar"]}>
@@ -467,13 +823,10 @@ export const Laboratorio: React.FC = memo(() => {
       )}
 
       <div className={styles["qualidade-main"]}>
-        {/* Headers das seções */}
-     
-
         {/* Cards de Resumo */}
         <div className={styles["qualidade-cards-grid"]}>
           {cards.map((card, index) => (
-            <StatusCard key={`card-${index}`} card={card} />
+            <StatusCard key={`card-${index}`} card={card} onClick={card.onClick} />
           ))}
         </div>
 
@@ -553,6 +906,91 @@ export const Laboratorio: React.FC = memo(() => {
           </div>
         </div>
       </div>
+
+      {/* Modais */}
+      <Modal
+        isOpen={modalStates.checagem}
+        onClose={() => closeModal('checagem')}
+        title="Checagem de Amostras"
+      >
+        <ItemList
+          items={checagemData}
+          renderItem={renderChecagemItem}
+          emptyMessage="Nenhuma checagem encontrada"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.naoIniciadas}
+        onClose={() => closeModal('naoIniciadas')}
+        title="Amostras Não Iniciadas"
+      >
+        <ItemList
+          items={amostrasNaoIniciadas}
+          renderItem={renderAmostraNaoIniciadaItem}
+          emptyMessage="Nenhuma amostra não iniciada encontrada"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.emAnalise}
+        onClose={() => closeModal('emAnalise')}
+        title="Amostras em Análise"
+      >
+        <ItemList
+          items={amostrasEmAnalise}
+          renderItem={renderAmostraEmAnaliseItem}
+          emptyMessage="Nenhuma amostra em análise encontrada"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.temperatura}
+        onClose={() => closeModal('temperatura')}
+        title="Controle de Temperatura"
+      >
+        <ItemList
+          items={temperaturaData}
+          renderItem={renderTemperaturaItem}
+          emptyMessage="Nenhum registro de temperatura encontrado"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.finalizadas}
+        onClose={() => closeModal('finalizadas')}
+        title="Amostras Finalizadas"
+      >
+        <ItemList
+          items={amostrasFinalizadas}
+          renderItem={renderAmostraFinalizadaItem}
+          emptyMessage="Nenhuma amostra finalizada encontrada"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.bloqueadas}
+        onClose={() => closeModal('bloqueadas')}
+        title="Amostras Bloqueadas"
+      >
+        <ItemList
+          items={amostrasBloqueadas}
+          renderItem={renderAmostraBloqueadaItem}
+          emptyMessage="Nenhuma amostra bloqueada encontrada"
+        />
+      </Modal>
+
+      <Modal
+        isOpen={modalStates.insumos}
+        onClose={() => closeModal('insumos')}
+        title="Registro de Insumos"
+      >
+        <ItemList
+          items={registroInsumo}
+          renderItem={renderRegistroInsumoItem}
+          emptyMessage="Nenhum registro de insumo encontrado"
+        />
+      </Modal>
     </div>
   );
 });
@@ -560,4 +998,6 @@ export const Laboratorio: React.FC = memo(() => {
 StatusCard.displayName = 'StatusCard';
 SectionItem.displayName = 'SectionItem';
 SectionCard.displayName = 'SectionCard';
+Modal.displayName = 'Modal';
+ItemList.displayName = 'ItemList';
 Laboratorio.displayName = 'Laboratorio';

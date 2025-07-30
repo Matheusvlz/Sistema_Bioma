@@ -66,7 +66,7 @@ use controller::qualidade::tauri_print_commands_controller::{
             get_default_print_settings
 };
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
-
+use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 fn main() {
     dotenvy::dotenv().ok();
 
@@ -160,7 +160,14 @@ fn main() {
             update_template,
             get_template_by_id,
             get_usuario_nome,
-            validate_user_credentials
+            validate_user_credentials,
+             buscar_checagem, 
+             buscar_nao_iniciada, 
+             buscar_em_analise, 
+             buscar_temperatura,
+              buscar_amostras_finalizadas, 
+             buscar_amostras_bloqueadas, 
+             buscar_registro_insumo
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
