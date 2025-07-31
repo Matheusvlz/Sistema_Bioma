@@ -101,7 +101,7 @@ export const UsuarioPortal: React.FC = () => {
     const [usuarioSelecionadoPrimeira, setUsuarioSelecionadoPrimeira] = useState<UsuarioCliente | null>(null);
     const [setoresPortalPrimeira, setSetoresPortalPrimeira] = useState<SetorPortal[]>([]);
     const [loadingPrimeira, setLoadingPrimeira] = useState(false);
-    const [emailVerificado, setEmailVerificado] = useState<VerificarEmail[]>([]);
+    const [emailVerificado, setEmailVerificado] = useState<VerificarEmail | null>(null);
 
     // Estados para a segunda guia
     const [usuarioSelecionado, setUsuarioSelecionado] = useState<Usuario | null>(null);
@@ -682,13 +682,16 @@ export const UsuarioPortal: React.FC = () => {
                 });  
                 
                 if (emailResponse.success && emailResponse.data && emailResponse.data.length > 0) {
-                    setEmailVerificado(emailResponse.data)
+                    setEmailVerificado(emailResponse.data[0])
                     alert(JSON.stringify(emailResponse.data));
                     const executar = async () => {
+                        if (!emailVerificado || !clienteSelecionadoPrimeira) return;
+
                         try {
                             const response: InvokeResponse = await core.invoke('cadastrar_usuario', {
                                 request: {
-                                    clienteId: clienteSelecionadoPrimeira?.id,
+                                    usuarioId: emailVerificado.id,
+                                    clienteId: clienteSelecionadoPrimeira.id,
                                     nome: nomeUsuario,
                                     email: emailUsuario
                                 }
@@ -710,7 +713,6 @@ export const UsuarioPortal: React.FC = () => {
                     try {
                         const response: InvokeResponse = await core.invoke('cadastrar_usuario', {
                             request: {
-                                usuarioId: emailVerificado,
                                 clienteId: clienteSelecionadoPrimeira?.id,
                                 nome: nomeUsuario,
                                 email: emailUsuario
@@ -736,26 +738,9 @@ export const UsuarioPortal: React.FC = () => {
         showConfirm(`Confirme cadastro`, `Deseja cadastrar o usuário?`, executar);
     };
 
-
-    /*FALTA ESSES:
-        1. Criar telas do abrir amostras no portal
-        2. Criar tela do histórico
-    */
-    const handleAbrirAmostras = async () => {
-        if (!clienteSelecionadoPrimeira) return;
-
-        try {
-            // TODO: Implementar abertura de amostras
-            console.log('Abrir amostras para cliente:', clienteSelecionadoPrimeira.id);
-        } catch (error) {
-            console.error('Erro ao abrir amostras:', error);
-        }
-    };
-
     const handleAbrirHistorico = async (usuarioId: number) => {
         try {
-            // TODO: Implementar abertura do histórico
-            console.log('Abrir histórico para usuário:', usuarioId);
+            await WindowManager.openHistoricoUsuario(usuarioId);
         } catch (error) {
             console.error('Erro ao abrir histórico:', error);
         }
@@ -767,15 +752,6 @@ export const UsuarioPortal: React.FC = () => {
             <div className={styles["secao"]}>
                 <div className={styles["secao-header"]}>
                     <h3><FaBuilding /> Selecionar Cliente</h3>
-                    {clienteSelecionadoPrimeira && (
-                        <button
-                            className={styles["btn-amostras"]}
-                            onClick={handleAbrirAmostras}
-                            title="Abrir amostras"
-                        >
-                            <FaPlus /> Amostras no Portal
-                        </button>
-                    )}
                 </div>
 
                 <SearchLayout

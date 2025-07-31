@@ -523,7 +523,7 @@ export const Geral: React.FC = () => {
         origem: cliente.origem
       };
 
-      await WindowManager.openCadastroClientes(clienteData);
+      await WindowManager.openHistoricoUsuario(clienteData);
       closeClienteModal();
     } catch (error) {
       console.error('Erro ao abrir janela de cadastro:', error);

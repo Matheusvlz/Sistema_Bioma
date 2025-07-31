@@ -24,7 +24,7 @@ use controller::geral::categoria_controller::{
     buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
 };
 use controller::geral::usuarioportal_controller::{
-    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario, verificar_email, cadastrar_usuario
+    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario, verificar_email, cadastrar_usuario, historico_usuario
 };
 use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
@@ -80,6 +80,7 @@ use controller::qualidade::tauri_print_commands_controller::{
             get_default_print_settings
 };
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
+use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 
 use std::env;
 use crate::config::get_ws_url;
@@ -147,6 +148,7 @@ fn main() {
             reenviar_email_usuario,
             verificar_email,
             cadastrar_usuario,
+            historico_usuario,
 
             fazer_login,
             usuario_logado,
@@ -201,7 +203,14 @@ fn main() {
             update_template,
             get_template_by_id,
             get_usuario_nome,
-            validate_user_credentials
+            validate_user_credentials,
+             buscar_checagem, 
+             buscar_nao_iniciada, 
+             buscar_em_analise, 
+             buscar_temperatura,
+              buscar_amostras_finalizadas, 
+             buscar_amostras_bloqueadas, 
+             buscar_registro_insumo
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

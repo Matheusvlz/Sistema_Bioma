@@ -268,5 +268,28 @@ export class WindowManager {
       allowMultiple: true,
       data: planilhaData
     });
-  }  
+  }
+
+  static async openPlanilha(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'planilha-laboratorio',
+      title: 'Planilha',
+      url: '/#/planilha-laboratorio',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  } 
+
+  static async openHistoricoUsuario(usuarioId?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'historico-usuario',
+      title: 'Histórico do Usuário',
+      url: '/#/historico-usuario',
+      width: 900,
+      height: 700,
+      data: usuarioId,
+      allowMultiple: true
+    });
+  }
 }

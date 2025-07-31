@@ -49,6 +49,14 @@ pub struct VerificarEmail {
     pub id: u32,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Historico {
+    pub descricao: String,
+    pub login: Option<String>,
+    pub ip: String,
+    pub dt: String,
+}
+
 //RESPONSE ***********************************************************
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -97,6 +105,13 @@ pub struct InvokeResponse {
 pub struct VerificarEmailResponse {
     pub success: bool,
     pub data: Option<Vec<VerificarEmail>>,
+    pub message: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct HistoricoResponse {
+    pub success: bool,
+    pub data: Option<Vec<Historico>>,
     pub message: Option<String>,
 }
 
@@ -149,7 +164,7 @@ pub struct UserCase {
     nome: Option<String>,
 }
 
-//FUNÇÕES PRIMEIRA GUIA ***********************************************************
+//FUNÇÕES SEGUNDA GUIA ***********************************************************
 
 #[command]
 pub async fn buscar_clientes_usuario(usuario_id: u32) -> ClienteResponse {
@@ -439,7 +454,7 @@ pub async fn alterar_setor_cliente(request: AlterarPermissaoRequest) -> InvokeRe
     }
 }
 
-//FUNÇÕES SEGUNDA GUIA ***********************************************************
+//FUNÇÕES PRIMEIRA GUIA ***********************************************************
 
 #[command]
 pub async fn buscar_usuarios_cliente(cliente_id: u32) -> UsuarioResponse {
@@ -769,6 +784,55 @@ pub async fn cadastrar_usuario(request: UserCase) -> InvokeResponse {
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
             InvokeResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta".to_string()),
+            }
+        }
+    }
+}
+
+#[command]
+pub async fn historico_usuario(usuario_id: u32) -> HistoricoResponse {
+    let client = Client::new();
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let full_url = format!("{}/usuarios/portal/historico", url);
+    let request_body = BuscarClientesRequest {
+        usuario_id: usuario_id
+    };
+
+    let res = match client
+        .post(&full_url)
+        .header("Content-Type", "application/json")
+        .json(&request_body)
+        .send()
+        .await
+    {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return HistoricoResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    if !res.status().is_success() {
+        println!("Erro HTTP: {}", res.status());
+        return HistoricoResponse {
+            success: false,
+            data: None,
+            message: Some(format!("Erro HTTP: {}", res.status())),
+        };
+    }
+
+    match res.json::<HistoricoResponse>().await {
+        Ok(response) => response,
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            HistoricoResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),

@@ -17,6 +17,8 @@ import { UsuarioPortal } from '../view/geral/UsuarioPortal';
 import { CriarPlanilha } from '../view/qualidade/CriarPlanilha';
 import { CadastrarPlanilha } from  '../view/qualidade/CadastrarPlanilha';
 import { GerenciarSetores } from '../view/geral/GerenciarSetores';
+import { Planilha } from '../view/laboratorio/Planilha';
+import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -43,6 +45,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false },
   'cadastro-usuario-portal': { component: <UsuarioPortal />, hasLayout: false },
   'gerenciar-setor': { component: <GerenciarSetores />, hasLayout: false },
+  'historico-usuario': { component: <HistoricoUsuario />, hasLayout: false },
   'cadastrar-consultor': { component: <Inicio />, hasLayout: false },
   'cadastrar-laboratorio-terceirizado': { component: <Inicio />, hasLayout: false },
 
@@ -76,7 +79,10 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'chat': { component: <ChatContainer />, hasLayout: false }, 
   'criar-planilha': { component: <CriarPlanilha />, hasLayout: false }, 
-  'cadastrar-planilha': {component: <CadastrarPlanilha />, hasLayout: false}
+  'cadastrar-planilha': {component: <CadastrarPlanilha />, hasLayout: false},
+
+  // Planilha
+  'planilha-laboratorio': {component: <Planilha />, hasLayout: false}
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
