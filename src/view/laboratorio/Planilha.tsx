@@ -1,14 +1,23 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { Search, Download, Grid, List, FileSpreadsheet } from 'lucide-react';
+// Importar o invoke do Tauri para chamadas ao backend
+import { invoke } from '@tauri-apps/api/core';
 
 interface CellData {
   id: number;
   value: number;
   selected: boolean;
   highlighted: boolean;
+  specificHighlight: boolean; // Nova propriedade para destaque específico em verde
 }
 
-const CELL_SIZE = 45; // Tamanho fixo para cálculos otimizados
+interface NumberRange {
+  id: number;
+  inicial: number;
+  final: number;
+}
+
+const CELL_SIZE = 50; // Tamanho fixo para cálculos otimizados
 const OVERSCAN = 5; // Células extras renderizadas fora da tela
 
 export const Planilha: React.FC = () => {
@@ -19,8 +28,90 @@ export const Planilha: React.FC = () => {
   const [scrollTop, setScrollTop] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: 800, height: 600 });
   
+  // Estados para number ranges
+  const [numberRanges, setNumberRanges] = useState<NumberRange[]>([]);
+  const [selectedRangeId, setSelectedRangeId] = useState<number | null>(null);
+  const [specificNumbers, setSpecificNumbers] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // useEffect para carregar os number ranges ao montar o componente
+  useEffect(() => {
+    const loadNumberRanges = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Chamada real para o controller Rust via Tauri
+        const ranges = await invoke('consultar_intervalos_planilhas') as NumberRange[];
+        
+        setNumberRanges(ranges);
+        
+        // Selecionar o primeiro range por padrão se existir
+        if (ranges.length > 0) {
+          setSelectedRangeId(ranges[0].id);
+        }
+      } catch (error) {
+    
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNumberRanges();
+  }, []);
+
+  // useEffect para carregar números específicos quando um range é selecionado
+  useEffect(() => {
+    const loadSpecificNumbers = async () => {
+      if (!selectedRangeId) {
+        setSpecificNumbers(new Set());
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Chamada real para o controller Rust via Tauri
+        // Nota: O backend tem consultar_amostras_por_planilha que retorna números de amostras
+        // Assumindo que selectedRangeId corresponde ao planilha_id
+        const numbers = await invoke('consultar_amostras_por_planilha', { 
+          planilhaId: selectedRangeId 
+        }) as number[];
+        
+        setSpecificNumbers(new Set(numbers));
+      } catch (error) {
+        console.error('Erro ao carregar números específicos:', error);
+        setError('Erro ao carregar números específicos');
+        
+        // Fallback para mock data em caso de erro
+        const selectedRange = numberRanges.find(r => r.id === selectedRangeId);
+        if (selectedRange) {
+          // Gerar alguns números específicos dentro do range para demonstração
+          const rangeSize = selectedRange.final- selectedRange.inicial + 1;
+          const numSpecific = Math.min(5, Math.floor(rangeSize / 3)); // Até 5 números ou 1/3 do range
+          
+          let mockSpecificNumbers: number[] = [];
+          for (let i = 0; i < numSpecific; i++) {
+            const randomOffset = Math.floor(Math.random() * rangeSize);
+            mockSpecificNumbers.push(selectedRange.inicial + randomOffset);
+          }
+          
+          // Remover duplicatas e ordenar
+          mockSpecificNumbers = [...new Set(mockSpecificNumbers)].sort((a, b) => a - b);
+          setSpecificNumbers(new Set(mockSpecificNumbers));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadSpecificNumbers();
+  }, [selectedRangeId, numberRanges]);
 
   // Configurações do grid otimizadas
   const gridConfig = useMemo(() => {
@@ -33,17 +124,36 @@ export const Planilha: React.FC = () => {
     };
   }, [containerSize]);
 
-  // Dados filtrados (apenas IDs para economia de memória)
+  // Range selecionado
+  const selectedRange = useMemo(() => {
+    return numberRanges.find(range => range.id === selectedRangeId);
+  }, [numberRanges, selectedRangeId]);
+
+  // Dados filtrados baseados no range selecionado
   const filteredIds = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return Array.from({ length: 549 }, (_, i) => i + 1);
-    }
-    const searchNum = parseInt(searchTerm);
-    if (isNaN(searchNum)) return Array.from({ length: 549 }, (_, i) => i + 1);
+    let baseIds: number[] = [];
     
-    return Array.from({ length: 549 }, (_, i) => i + 1)
-      .filter(id => id.toString().includes(searchTerm));
-  }, [searchTerm]);
+    if (selectedRange) {
+      // Gerar números baseados no range selecionado (user range)
+      baseIds = Array.from(
+        { length: selectedRange.final - selectedRange.inicial + 1 }, 
+        (_, i) => selectedRange.inicial + i
+      );
+    } else {
+      // Fallback para o comportamento original se nenhum range estiver selecionado
+      baseIds = Array.from({ length: 549 }, (_, i) => i + 1);
+    }
+
+    // Aplicar filtro de busca se houver
+    if (!searchTerm.trim()) {
+      return baseIds;
+    }
+    
+    const searchNum = parseInt(searchTerm);
+    if (isNaN(searchNum)) return baseIds;
+    
+    return baseIds.filter(id => id.toString().includes(searchTerm));
+  }, [searchTerm, selectedRange]);
 
   // Calcular apenas células visíveis
   const visibleCells = useMemo(() => {
@@ -66,6 +176,7 @@ export const Planilha: React.FC = () => {
           highlighted: highlightedRange 
             ? cellId >= highlightedRange.start && cellId <= highlightedRange.end
             : false,
+          specificHighlight: specificNumbers.has(cellId), // Destaque verde para números específicos
           x: col * CELL_SIZE,
           y: row * CELL_SIZE
         });
@@ -73,7 +184,7 @@ export const Planilha: React.FC = () => {
     }
     
     return visible;
-  }, [filteredIds, gridConfig, scrollTop, selectedCells, highlightedRange]);
+  }, [filteredIds, gridConfig, scrollTop, selectedCells, highlightedRange, specificNumbers]);
 
   // Altura total para scroll
   const totalHeight = Math.ceil(filteredIds.length / gridConfig.cols) * CELL_SIZE;
@@ -117,9 +228,17 @@ export const Planilha: React.FC = () => {
   }, []);
 
   const handleCellDoubleClick = useCallback((cellId: number) => {
-    const start = Math.max(1, cellId - 5);
-    const end = Math.min(549, cellId + 5);
+    const start = Math.max(selectedRange?.inicial || 1, cellId - 5);
+    const end = Math.min(selectedRange?.final || 549, cellId + 5);
     setHighlightedRange({ start, end });
+  }, [selectedRange]);
+
+  const handleRangeChange = useCallback((rangeId: number) => {
+    setSelectedRangeId(rangeId);
+    // Limpar seleções quando trocar de range
+    setSelectedCells(new Set());
+    setHighlightedRange(null);
+    setError(null);
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -128,58 +247,116 @@ export const Planilha: React.FC = () => {
   }, []);
 
   const selectAll = useCallback(() => {
-    setSelectedCells(new Set(Array.from({ length: 549 }, (_, i) => i + 1)));
-  }, []);
+    setSelectedCells(new Set(filteredIds));
+  }, [filteredIds]);
 
   const exportData = useCallback(() => {
     const selectedData = Array.from(selectedCells).sort((a, b) => a - b);
+    const specificData = Array.from(specificNumbers).sort((a, b) => a - b);
+    
     console.log('Dados selecionados:', selectedData);
-    alert(`Exportando ${selectedData.length} células`);
-  }, [selectedCells]);
+    console.log('Números específicos (verde):', specificData);
+    
+    alert(`Exportando ${selectedData.length} células selecionadas e ${specificData.length} números específicos`);
+  }, [selectedCells, specificNumbers]);
 
-  // Componente de célula memoizado
-  const Cell = React.memo(({ cell }: { cell: CellData & { x: number; y: number } }) => (
-    <div
-      style={{
-        position: 'absolute',
-        left: cell.x,
-        top: cell.y,
-        width: CELL_SIZE - 2,
-        height: CELL_SIZE - 2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: cell.selected 
-          ? '#10b981'
-          : cell.highlighted
-          ? '#f59e0b'
-          : '#f8fafc',
-        color: cell.selected || cell.highlighted ? 'white' : '#374151',
-        cursor: 'pointer',
-        fontSize: '0.85rem',
-        fontWeight: cell.selected || cell.highlighted ? '600' : '400',
-        border: `1px solid ${cell.selected ? '#059669' : cell.highlighted ? '#d97706' : '#e2e8f0'}`,
-        borderRadius: '4px',
-        userSelect: 'none',
-        willChange: 'transform',
-        transition: 'background-color 0.1s ease'
-      }}
-      onClick={() => handleCellClick(cell.id)}
-      onDoubleClick={() => handleCellDoubleClick(cell.id)}
-      onMouseEnter={(e) => {
-        if (!cell.selected && !cell.highlighted) {
-          e.currentTarget.style.backgroundColor = '#e2e8f0';
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!cell.selected && !cell.highlighted) {
-          e.currentTarget.style.backgroundColor = '#f8fafc';
-        }
-      }}
-    >
-      {cell.value}
-    </div>
-  ));
+  // Nova função para gerar planilha
+  const gerarNovaPlanilha = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+
+      
+      // Chamada para o novo endpoint
+      const resultado = await invoke('gerar_nova_planilha') as { inicial: number; final: number };
+      
+      // Recarregar a lista de ranges para incluir o novo
+      const ranges = await invoke('consultar_intervalos_planilhas') as NumberRange[];
+      setNumberRanges(ranges);
+      
+      // Selecionar o novo range (assumindo que é o primeiro na lista ordenada)
+      if (ranges.length > 0) {
+        setSelectedRangeId(ranges[0].id);
+      }
+      
+      // Mostrar mensagem de sucesso
+      alert(`Nova planilha criada! Range: ${resultado.inicial} - ${resultado.final}`);
+      
+    } catch (error) {
+      console.error('Erro ao gerar nova planilha:', error);
+      setError('Erro ao gerar nova planilha');
+      alert('Erro ao gerar nova planilha. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Componente de célula memoizado com lógica de cores atualizada
+  const Cell = React.memo(({ cell }: { cell: CellData & { x: number; y: number } }) => {
+    let backgroundColor = '#f8fafc';
+    let color = '#374151';
+    let borderColor = '#e2e8f0';
+    let fontWeight = '400';
+
+    // Prioridade: selecionado > específico (verde) > destacado (amarelo)
+    if (cell.selected) {
+      backgroundColor = '#10b981';
+      color = 'white';
+      borderColor = '#059669';
+      fontWeight = '600';
+    } else if (cell.specificHighlight) {
+      // Destaque verde para números específicos retornados pelo controller
+      backgroundColor = '#22c55e';
+      color = 'white';
+      borderColor = '#16a34a';
+      fontWeight = '600';
+    } else if (cell.highlighted) {
+      backgroundColor = '#f59e0b';
+      color = 'white';
+      borderColor = '#d97706';
+      fontWeight = '600';
+    }
+
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          left: cell.x,
+          top: cell.y,
+          width: CELL_SIZE - 2,
+          height: CELL_SIZE - 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: backgroundColor,
+          color: color,
+          cursor: 'pointer',
+          fontSize: '0.85rem',
+          fontWeight: fontWeight,
+          border: `1px solid ${borderColor}`,
+          borderRadius: '4px',
+          userSelect: 'none',
+          willChange: 'transform',
+          transition: 'background-color 0.1s ease'
+        }}
+        onClick={() => handleCellClick(cell.id)}
+        onDoubleClick={() => handleCellDoubleClick(cell.id)}
+        onMouseEnter={(e) => {
+          if (!cell.selected && !cell.highlighted && !cell.specificHighlight) {
+            e.currentTarget.style.backgroundColor = '#e2e8f0';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!cell.selected && !cell.highlighted && !cell.specificHighlight) {
+            e.currentTarget.style.backgroundColor = '#f8fafc';
+          }
+        }}
+      >
+        {cell.value}
+      </div>
+    );
+  });
 
   return (
     <div style={{
@@ -218,12 +395,36 @@ export const Planilha: React.FC = () => {
                 Planilha Interativa
               </h1>
               <p style={{ margin: 0, fontSize: '0.9rem', opacity: 0.9 }}>
-                {filteredIds.length} células • {selectedCells.size} selecionadas
+                {filteredIds.length} células • {selectedCells.size} selecionadas • {specificNumbers.size} específicas
+                {selectedRange && ` • Range: ${selectedRange.inicial}-${selectedRange.final}`}
+                {loading && ' • Carregando...'}
+                {error && ` • ${error}`}
               </p>
             </div>
           </div>
           
           <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              onClick={gerarNovaPlanilha}
+              disabled={loading}
+              style={{
+                background: loading ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.9)',
+                border: 'none',
+                color: loading ? 'rgba(255,255,255,0.7)' : '#047857',
+                padding: '0.5rem 1rem',
+                borderRadius: '8px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.9rem',
+                fontWeight: '600'
+              }}
+            >
+              <FileSpreadsheet size={16} />
+              {loading ? 'Gerando...' : 'Gerar Planilha'}
+            </button>
+            
             <button
               onClick={() => setViewMode(viewMode === 'grid' ? 'table' : 'grid')}
               style={{
@@ -243,14 +444,14 @@ export const Planilha: React.FC = () => {
             
             <button
               onClick={exportData}
-              disabled={selectedCells.size === 0}
+              disabled={selectedCells.size === 0 && specificNumbers.size === 0}
               style={{
-                background: selectedCells.size > 0 ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)',
+                background: (selectedCells.size > 0 || specificNumbers.size > 0) ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)',
                 border: 'none',
-                color: selectedCells.size > 0 ? '#047857' : 'rgba(255,255,255,0.7)',
+                color: (selectedCells.size > 0 || specificNumbers.size > 0) ? '#047857' : 'rgba(255,255,255,0.7)',
                 padding: '0.5rem',
                 borderRadius: '8px',
-                cursor: selectedCells.size > 0 ? 'pointer' : 'not-allowed',
+                cursor: (selectedCells.size > 0 || specificNumbers.size > 0) ? 'pointer' : 'not-allowed',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
@@ -261,7 +462,7 @@ export const Planilha: React.FC = () => {
           </div>
         </div>
 
-        {/* Controls Compactos */}
+        {/* Controls Compactos com Combo Box */}
         <div style={{
           padding: '1rem 1.5rem',
           borderBottom: '1px solid #e5e7eb',
@@ -269,8 +470,42 @@ export const Planilha: React.FC = () => {
           display: 'flex',
           gap: '1rem',
           alignItems: 'center',
-          flexShrink: 0
+          flexShrink: 0,
+          flexWrap: 'wrap'
         }}>
+          {/* Combo Box para Number Ranges */}
+          <div style={{ minWidth: '200px' }}>
+            <label style={{ 
+              display: 'block', 
+              fontSize: '0.8rem', 
+              color: '#6b7280', 
+              marginBottom: '0.25rem' 
+            }}>
+              Range de Números:
+            </label>
+            <select
+              value={selectedRangeId || ''}
+              onChange={(e) => handleRangeChange(Number(e.target.value))}
+              disabled={loading}
+              style={{
+                width: '100%',
+                padding: '0.5rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                outline: 'none',
+                background: 'white'
+              }}
+            >
+              <option value="">Selecione um range...</option>
+              {numberRanges.map((range) => (
+                <option key={range.id} value={range.id}>
+                  NI: {range.inicial} - NF: {range.final}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ position: 'relative', flex: 1, maxWidth: '250px' }}>
             <Search size={16} style={{
               position: 'absolute',
@@ -297,97 +532,119 @@ export const Planilha: React.FC = () => {
 
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button
-              onClick={selectAll}
-              style={{
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
-              }}
-            >
-              Todos
-            </button>
-            
-            <button
               onClick={clearSelection}
+              disabled={selectedCells.size === 0 && !highlightedRange}
               style={{
-                background: '#ef4444',
-                color: 'white',
-                border: 'none',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '0.8rem'
+                padding: '0.5rem 1rem',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                background: 'white',
+                color: '#6b7280',
+                cursor: (selectedCells.size > 0 || highlightedRange) ? 'pointer' : 'not-allowed',
+                fontSize: '0.85rem'
               }}
             >
               Limpar
             </button>
+            
+            <button
+              onClick={selectAll}
+              style={{
+                padding: '0.5rem 1rem',
+                border: '1px solid #10b981',
+                borderRadius: '8px',
+                background: '#10b981',
+                color: 'white',
+                cursor: 'pointer',
+                fontSize: '0.85rem'
+              }}
+            >
+              Selecionar Tudo
+            </button>
           </div>
         </div>
 
-        {/* Grid Virtualizado */}
+        {/* Grid Container */}
         <div 
           ref={containerRef}
           style={{
             flex: 1,
-            padding: '1rem',
-            background: 'white',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            position: 'relative',
+            padding: '1rem'
           }}
         >
-          {filteredIds.length === 0 ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '3rem',
-              color: '#6b7280'
-            }}>
-              <Search size={32} style={{ opacity: 0.5 }} />
-              <p style={{ margin: '1rem 0 0 0' }}>Nenhum número encontrado</p>
-            </div>
-          ) : (
+          {viewMode === 'grid' ? (
             <div
               ref={scrollRef}
               onScroll={handleScroll}
               style={{
-                height: containerSize.height,
+                height: '100%',
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                position: 'relative',
-                scrollbarWidth: 'thin'
+                position: 'relative'
               }}
             >
-              <div style={{
-                height: totalHeight,
-                position: 'relative',
-                width: '100%'
-              }}>
+              <div style={{ height: totalHeight, position: 'relative' }}>
                 {visibleCells.map((cell) => (
                   <Cell key={cell.id} cell={cell} />
                 ))}
               </div>
             </div>
+          ) : (
+            <div style={{
+              height: '100%',
+              overflowY: 'auto',
+              background: 'white',
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                      Número
+                    </th>
+                    <th style={{ padding: '0.75rem', textAlign: 'left', borderBottom: '1px solid #e5e7eb' }}>
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredIds.map((id) => (
+                    <tr
+                      key={id}
+                      onClick={() => handleCellClick(id)}
+                      style={{
+                        cursor: 'pointer',
+                        background: selectedCells.has(id) 
+                          ? '#10b981' 
+                          : specificNumbers.has(id)
+                          ? '#22c55e'
+                          : 'white',
+                        color: (selectedCells.has(id) || specificNumbers.has(id)) ? 'white' : '#374151'
+                      }}
+                    >
+                      <td style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                        {id}
+                      </td>
+                      <td style={{ padding: '0.75rem', borderBottom: '1px solid #e5e7eb' }}>
+                        {selectedCells.has(id) 
+                          ? 'Selecionado' 
+                          : specificNumbers.has(id)
+                          ? 'Específico'
+                          : 'Normal'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
-        </div>
-
-        {/* Footer Compacto */}
-        <div style={{
-          padding: '0.75rem 1.5rem',
-          background: '#f8fafc',
-          borderTop: '1px solid #e5e7eb',
-          fontSize: '0.8rem',
-          color: '#6b7280',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexShrink: 0
-        }}>
-          <span>Clique: selecionar • Duplo clique: destacar</span>
-          <span>Renderizando: <strong>{visibleCells.length}</strong> de <strong>{filteredIds.length}</strong></span>
         </div>
       </div>
     </div>
   );
 };
+
+export default Planilha;

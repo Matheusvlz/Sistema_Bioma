@@ -595,6 +595,7 @@ export const Laboratorio: React.FC = memo(() => {
 
       case "Cadastrar":
         console.log("Ação: Cadastrar nova amostra!");
+        WindowManager.openCadastrarAmostra();
         break;
       
       case "Personalizar":

@@ -225,7 +225,16 @@ export class WindowManager {
       allowMultiple: true
     });
   }
-
+  static async openCadastrarAmostra(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-amostra',
+      title: 'Cadastrar Amostra',
+      url: '/#/cadastrar-amostra',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  }
 
   
 }

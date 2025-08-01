@@ -16,6 +16,7 @@ import { GerenciarCategoria } from '../view/geral/GerenciarCategoria';
 import { CriarPlanilha } from '../view/qualidade/CriarPlanilha';
 import { CadastrarPlanilha } from  '../view/qualidade/CadastrarPlanilha';
 import { Planilha } from '../view/laboratorio/Planilha';
+import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -78,7 +79,9 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'cadastrar-planilha': {component: <CadastrarPlanilha />, hasLayout: false},
 
   // Planilha
-  'planilha-laboratorio': {component: <Planilha />, hasLayout: false}
+  'planilha-laboratorio': {component: <Planilha />, hasLayout: false},
+  
+  'cadastrar-amostra': {component: <CadastrarAmostra />, hasLayout: false}
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

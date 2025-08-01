@@ -65,6 +65,7 @@ use controller::qualidade::tauri_print_commands_controller::{
             validate_printer,
             get_default_print_settings
 };
+use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 fn main() {
@@ -132,7 +133,6 @@ fn main() {
             import_xlsx_from_bytes,
             get_xlsx_sheet_names,
             get_xlsx_sheet_names_from_bytes,
-            
             // Comandos de fórmulas melhorados
             evaluate_formula,
             update_spreadsheet_cell,
@@ -145,7 +145,6 @@ fn main() {
             format_formula_result,
             get_formula_categories,
             get_functions_by_category,
-            
             //PDF Printer    
             generate_pdf_from_html,
             print_html,
@@ -161,13 +160,17 @@ fn main() {
             get_template_by_id,
             get_usuario_nome,
             validate_user_credentials,
-             buscar_checagem, 
-             buscar_nao_iniciada, 
-             buscar_em_analise, 
-             buscar_temperatura,
-              buscar_amostras_finalizadas, 
-             buscar_amostras_bloqueadas, 
-             buscar_registro_insumo
+            buscar_checagem, 
+            buscar_nao_iniciada, 
+            buscar_em_analise, 
+            buscar_temperatura,
+            buscar_amostras_finalizadas, 
+            buscar_amostras_bloqueadas, 
+            buscar_registro_insumo,
+            // planilha laboratorio
+            consultar_amostras_por_planilha,
+            consultar_intervalos_planilhas,
+            gerar_nova_planilha
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

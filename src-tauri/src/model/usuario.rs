@@ -52,3 +52,7 @@ pub fn get_usuario_nome() -> Option<String> {
     obter_usuario().map(|usuario| usuario.nome)
 }
 
+#[command]
+pub fn get_user_id() -> Option<u32> {
+    obter_usuario().map(|usuario| usuario.id)
+}
