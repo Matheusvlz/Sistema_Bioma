@@ -24,12 +24,7 @@ const XIcon = () => (
   </svg>
 );
 
-const TrashIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polyline points="3,6 5,6 21,6"></polyline>
-    <path d="m19,6v14a2,2 0 0,1-2,2H7a2,2 0 0,1-2-2V6m3,0V4a2,2 0 0,1,2-2h4a2,2 0 0,1,2,2v2"></path>
-  </svg>
-);
+
 
 // Interface para definir uma amostra
 interface Amostra {
@@ -64,25 +59,6 @@ interface ClienteResponse {
   total?: number;
 }
 
-interface DropdownSearchConfig {
-  enabled: boolean;
-  placeholder?: string;
-  onSearch?: (query: string) => Promise<Cliente[]>;
-  onSelect?: (cliente: Cliente) => void;
-}
-interface SearchField {
-  name: string;
-  label: string;
-  type: 'text' | 'select';
-  options?: { value: string; label: string }[];
-}
-interface SearchLayoutProps {
-  fields?: SearchField[];
-  onSearch?: (filters: Record<string, string>) => void;
-  onClear?: () => void;
-  dropdownSearch?: DropdownSearchConfig;
-}
-
 
 
 export const CadastrarAmostra: React.FC = () => {
@@ -107,8 +83,6 @@ export const CadastrarAmostra: React.FC = () => {
   const [solicitante, setSolicitante] = useState('');
   const [emailSolicitante, setEmailSolicitante] = useState('');
   const [methodologies, setMethodologies] = useState('');
-  const [legislation, setLegislation] = useState('Resíduo de hidróxido de alumínio');
-  const [clientes, setClientes] = useState<Cliente[]>([]);
   const [searchResults, setSearchResults] = useState<Cliente[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -526,12 +500,7 @@ export const CadastrarAmostra: React.FC = () => {
       color: '#6b7280'
     }
   };
-  const dropdownSearchConfig = {
-    enabled: true,
-    placeholder: "Buscar por fantasia, razão social ou documento...",
-    onSearch: buscarClientesDropdown,
-    onSelect: handleClienteSelect
-  };
+
 
     function handleClienteSelect(cliente: Cliente) {
     setSelectedClienteObj(cliente);

@@ -647,7 +647,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem, index: number) => (
+  const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <TestTube className={styles["item-icon"]} />
@@ -662,7 +662,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem, index: number) => (
+  const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <FlaskConical className={styles["item-icon"]} />
@@ -683,7 +683,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderTemperaturaItem = (item: TemperaturaItem, index: number) => (
+  const renderTemperaturaItem = (item: TemperaturaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <Thermometer className={styles["item-icon"]} />
@@ -699,7 +699,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderAmostraFinalizadaItem = (item: AmostraFinalizadaItem, index: number) => (
+  const renderAmostraFinalizadaItem = (item: AmostraFinalizadaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <CheckCircle className={styles["item-icon"]} />
@@ -714,7 +714,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderAmostraBloqueadaItem = (item: AmostraBloqueadaItem, index: number) => (
+  const renderAmostraBloqueadaItem = (item: AmostraBloqueadaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <Lock className={styles["item-icon"]} />
@@ -732,7 +732,7 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
-  const renderRegistroInsumoItem = (item: RegistroInsumoItem, index: number) => (
+  const renderRegistroInsumoItem = (item: RegistroInsumoItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <Package className={styles["item-icon"]} />
