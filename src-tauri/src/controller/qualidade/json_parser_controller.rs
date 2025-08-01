@@ -2,6 +2,9 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TemplateData {
     pub id: Option<u64>,
@@ -31,7 +34,7 @@ pub struct ApiResponse {
 }
 
 #[command]
-pub async fn save_template(template_data: TemplateData) -> Result<ApiResponse, String> {
+pub async fn save_template(app_handle: AppHandle, template_data: TemplateData) -> Result<ApiResponse, String> {
     println!("Recebendo dados do template: {:?}", template_data);
     
     // Validar dados recebidos
@@ -60,8 +63,7 @@ pub async fn save_template(template_data: TemplateData) -> Result<ApiResponse, S
     };
 
     // URL da sua API (substitua pela URL real)
-    let api_url = std::env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/templates/save", api_url);
 
     // Criar cliente HTTP
@@ -117,9 +119,8 @@ pub async fn save_template(template_data: TemplateData) -> Result<ApiResponse, S
 }
 
 #[command]
-pub async fn list_templates() -> Result<Vec<TemplateData>, String> {
-    let api_url = std::env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn list_templates(app_handle: AppHandle) -> Result<Vec<TemplateData>, String> {
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/templates/list", api_url);
     
     let client = reqwest::Client::new();
@@ -152,9 +153,8 @@ pub async fn list_templates() -> Result<Vec<TemplateData>, String> {
 }
 
 #[command]
-pub async fn get_template_by_id(id: u64) -> Result<TemplateData, String> {
-    let api_url = std::env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn get_template_by_id(app_handle: AppHandle, id: u64) -> Result<TemplateData, String> {
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/templates/{}", api_url, id);
     
     let client = reqwest::Client::new();
@@ -189,9 +189,8 @@ pub async fn get_template_by_id(id: u64) -> Result<TemplateData, String> {
     }
 }
 #[command]
-pub async fn delete_template(id: u64) -> Result<ApiResponse, String> {
-    let api_url = std::env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn delete_template(app_handle: AppHandle, id: u64) -> Result<ApiResponse, String> {
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/templates/{}", api_url, id);
     
     let client = reqwest::Client::new();
@@ -252,7 +251,7 @@ pub fn decode_base64_to_json(encoded_string: String) -> Result<serde_json::Value
     }
 }
 #[command]
-pub async fn update_template(template_data: TemplateData) -> Result<ApiResponse, String> {
+pub async fn update_template(app_handle: AppHandle, template_data: TemplateData) -> Result<ApiResponse, String> {
     // Validar dados recebidos
     if template_data.nome_arquivo.trim().is_empty() {
         return Err("Nome do arquivo não pode estar vazio".to_string());
@@ -279,8 +278,7 @@ pub async fn update_template(template_data: TemplateData) -> Result<ApiResponse,
     };
 
     // URL da sua API
-    let api_url = std::env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/templates/update/{}", api_url, id_value);
 
     // Criar cliente HTTP

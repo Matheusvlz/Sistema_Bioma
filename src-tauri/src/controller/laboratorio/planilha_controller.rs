@@ -2,6 +2,8 @@ use serde::{Deserialize, Serialize}; // <- Adicione aqui também
 use reqwest::Client;
 use tauri::command;
 use crate::model::usuario::get_user_id;
+
+
 #[derive(Deserialize, Debug)]
 pub struct Amostra {
     pub numero: i32,
@@ -32,7 +34,7 @@ pub struct NumerosEspecificosResponse {
 }
 
 #[command]
-pub async fn consultar_amostras_por_planilha(planilha_id: u32) -> Result<Vec<i32>, String> {
+pub async fn consultar_amostras_por_planilha( planilha_id: u32) -> Result<Vec<i32>, String> {
     let url = format!("http://192.168.15.26:8082/planilha/{}/amostras", planilha_id);
 
     let client = Client::new();

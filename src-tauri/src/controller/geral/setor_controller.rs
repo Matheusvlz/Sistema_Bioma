@@ -6,29 +6,29 @@ use crate::config::get_api_url;
 use tauri::AppHandle;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Categoria {
+pub struct Setor {
     pub id: u32,
     pub nome: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct CategoriaResponse {
+pub struct SetorResponse {
     pub success: bool,
-    pub data: Option<Vec<Categoria>>,
+    pub data: Option<Vec<Setor>>,
     pub message: Option<String>,
 }
 
 #[command]
-pub async fn buscar_categorias_cadastro(app_handle: AppHandle) -> CategoriaResponse {
+pub async fn buscar_setores_cadastro(app_handle: AppHandle) -> SetorResponse {
     let client = Client::new();
-     let url = get_api_url(&app_handle);
-    let full_url = format!("{}/categoria/buscar", url);
+    let url = get_api_url(&app_handle);
+    let full_url = format!("{}/setor/buscar", url);
 
     let res = match client.get(&full_url).send().await {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
-            return CategoriaResponse {
+            return SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro de conexão com o servidor".to_string()),
@@ -36,11 +36,11 @@ pub async fn buscar_categorias_cadastro(app_handle: AppHandle) -> CategoriaRespo
         }
     };
 
-    match res.json::<CategoriaResponse>().await {
+    match res.json::<SetorResponse>().await {
         Ok(response) => response,
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
-            CategoriaResponse {
+            SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),
@@ -50,10 +50,10 @@ pub async fn buscar_categorias_cadastro(app_handle: AppHandle) -> CategoriaRespo
 }
 
 #[command]
-pub async fn criar_categoria(app_handle: AppHandle, nome: String) -> CategoriaResponse {
+pub async fn criar_setor(app_handle: AppHandle, nome: String) -> SetorResponse {
     let client = Client::new();
-    let url = get_api_url(&app_handle);
-    let full_url = format!("{}/categoria/criar", url);
+     let url = get_api_url(&app_handle);
+    let full_url = format!("{}/setor/criar", url);
 
     let payload = serde_json::json!({ "nome": nome });
 
@@ -61,7 +61,7 @@ pub async fn criar_categoria(app_handle: AppHandle, nome: String) -> CategoriaRe
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
-            return CategoriaResponse {
+            return SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro de conexão com o servidor".to_string()),
@@ -69,11 +69,11 @@ pub async fn criar_categoria(app_handle: AppHandle, nome: String) -> CategoriaRe
         }
     };
 
-    match res.json::<CategoriaResponse>().await {
+    match res.json::<SetorResponse>().await {
         Ok(response) => response,
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
-            CategoriaResponse {
+            SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),
@@ -83,10 +83,10 @@ pub async fn criar_categoria(app_handle: AppHandle, nome: String) -> CategoriaRe
 }
 
 #[command]
-pub async fn editar_categoria(app_handle: AppHandle, id: u32, nome: String) -> CategoriaResponse {
+pub async fn editar_setor(app_handle: AppHandle, id: u32, nome: String) -> SetorResponse {
     let client = Client::new();
-    let url = get_api_url(&app_handle);
-    let full_url = format!("{}/categoria/editar/{}", url, id);
+     let url = get_api_url(&app_handle);
+    let full_url = format!("{}/setor/editar/{}", url, id);
 
     let payload = serde_json::json!({ "nome": nome });
 
@@ -94,7 +94,7 @@ pub async fn editar_categoria(app_handle: AppHandle, id: u32, nome: String) -> C
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
-            return CategoriaResponse {
+            return SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro de conexão com o servidor".to_string()),
@@ -102,11 +102,11 @@ pub async fn editar_categoria(app_handle: AppHandle, id: u32, nome: String) -> C
         }
     };
 
-    match res.json::<CategoriaResponse>().await {
+    match res.json::<SetorResponse>().await {
         Ok(response) => response,
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
-            CategoriaResponse {
+            SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),
@@ -116,16 +116,16 @@ pub async fn editar_categoria(app_handle: AppHandle, id: u32, nome: String) -> C
 }
 
 #[command]
-pub async fn excluir_categoria(app_handle: AppHandle, id: u32) -> CategoriaResponse {
+pub async fn excluir_setor(app_handle: AppHandle, id: u32) -> SetorResponse {
     let client = Client::new();
-    let url = get_api_url(&app_handle);
-    let full_url = format!("{}/categoria/excluir/{}", url, id);
+     let url = get_api_url(&app_handle);
+    let full_url = format!("{}/setor/excluir/{}", url, id);
 
     let res = match client.delete(&full_url).send().await {
         Ok(res) => res,
         Err(e) => {
             println!("Erro de conexão: {:?}", e);
-            return CategoriaResponse {
+            return SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro de conexão com o servidor".to_string()),
@@ -133,11 +133,11 @@ pub async fn excluir_categoria(app_handle: AppHandle, id: u32) -> CategoriaRespo
         }
     };
 
-    match res.json::<CategoriaResponse>().await {
+    match res.json::<SetorResponse>().await {
         Ok(response) => response,
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
-            CategoriaResponse {
+            SetorResponse {
                 success: false,
                 data: None,
                 message: Some("Erro ao processar resposta".to_string()),

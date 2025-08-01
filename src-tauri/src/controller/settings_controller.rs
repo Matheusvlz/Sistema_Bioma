@@ -3,6 +3,9 @@ use serde::{Serialize, Deserialize};
 use reqwest::Client; // Importe o cliente HTTP
 use crate::model::usuario::{obter_usuario, salvar_usuario};
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 // Struct para a requisição que será enviada para a API Axum
 #[derive(Serialize, Debug)]
 struct UpdateSettingsApiRequest {
@@ -22,6 +25,7 @@ struct UpdateSettingsApiResponse {
 
 #[command]
 pub async fn update_user_settings(
+    app_handle: AppHandle,
     user_id: u32,
     profile_photo_base64: Option<String>, // Recebe o Data URL completo do frontend
     _background_color: String, // Não será persistido no backend da API neste exemplo
@@ -36,7 +40,7 @@ pub async fn update_user_settings(
     }
 
     let client = Client::new();
-    let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let update_url = format!("{}/update_user_settings", api_url); // Novo endpoint na sua API Axum
 
     let request_payload = UpdateSettingsApiRequest {

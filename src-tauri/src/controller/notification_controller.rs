@@ -8,6 +8,9 @@ use crate::model::usuario::obter_usuario;
 use crate::model::kanban_card::{FrontendKanbanCardData, DbKanbanCardData}; // These are your DB-mapping structs
 use crate::model::notification_task::NotificationTask; // Corrected path for NotificationTask
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GetInicioDataPayload {
     pub user_id: u32,
@@ -61,11 +64,11 @@ struct FinalizeCardPayload {
 }
 // MODIFIED FUNCTION: get_inicio_data_from_api to fetch both notifications and kanban cards via API
 #[tauri::command]
-pub async fn get_inicio_data_from_api() -> Result<ApiInicioResponse, String> {
+pub async fn get_inicio_data_from_api(app_handle: AppHandle) -> Result<ApiInicioResponse, String> {
     let usuario = obter_usuario().ok_or("Usuário não autenticado")?;
     println!("[Backend] Usuário autenticado para buscar dados iniciais: {:?}", usuario.id);
 
-    let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let full_url = format!("{}/get/notifications", api_url); // Make sure this matches your API route
     println!("[Backend] Enviando requisição para a API: {}", full_url);
 
@@ -99,13 +102,13 @@ pub async fn get_inicio_data_from_api() -> Result<ApiInicioResponse, String> {
 }
 
 #[tauri::command] 
-pub async fn finalizar_notificacao() -> Result<(), String> {
+pub async fn finalizar_notificacao(app_handle: AppHandle) -> Result<(), String> {
     // Obtém o usuário autenticado. Retorna um erro se não houver usuário.
     let usuario = obter_usuario().ok_or("Usuário não autenticado")?;
     println!("[Backend] Usuário autenticado para limpar notificações: {:?}", usuario.id);
 
     // Obtém a URL da API do ambiente ou usa um valor padrão.
-    let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     // Constrói a URL completa para a rota de marcação de notificação como lida.
     let full_url = format!("{}/mark/notification/read", api_url);
     println!("[Backend] Enviando requisição para a API: {}", full_url);
@@ -149,9 +152,9 @@ pub async fn finalizar_notificacao() -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn mark_kanban_card_as_completed(card_id: i32) -> Result<String, String> {
+pub async fn mark_kanban_card_as_completed(app_handle: AppHandle, card_id: i32) -> Result<String, String> {
     // Get the API URL from environment variables
-    let api_url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let api_url = get_api_url(&app_handle);
 
     let client = Client::new();
     let payload = FinalizeCardPayload { card_id };

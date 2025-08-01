@@ -67,6 +67,7 @@ const Login = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   required
+                  autoComplete="off"
                 />
               </div>
             </div>

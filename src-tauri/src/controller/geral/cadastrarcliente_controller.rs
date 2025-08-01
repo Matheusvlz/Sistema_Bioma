@@ -1,6 +1,8 @@
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
+use crate::config::get_api_url;
+use tauri::AppHandle;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ClienteCategoria {
@@ -152,11 +154,10 @@ pub async fn setor_portal() -> GeralResponse {
 }
 
 #[command]
-pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
+pub async fn salvar_cliente(app_handle: AppHandle, dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+      let url = get_api_url(&app_handle);
     let full_url = format!("{}/salvar_cliente", url);
-    println!("Dados recebidos em salvar_cliente_api: {:#?}", dados);
     
     let res = client
         .post(&full_url)
@@ -190,9 +191,9 @@ pub async fn salvar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
 }
 
 #[command]
-pub async fn editar_cliente(dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
+pub async fn editar_cliente(app_handle: AppHandle, dados: serde_json::Value) -> Result<SalvarClienteResponse, String> {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+      let url = get_api_url(&app_handle);
     let full_url = format!("{}/editar_cliente", url);
     println!("Dados recebidos em editar_cliente_api: {:#?}", dados);
 
@@ -228,9 +229,9 @@ pub async fn editar_cliente(dados: serde_json::Value) -> Result<SalvarClienteRes
 }
 
 #[command]
-pub async fn get_cliente_data(client_id: u32) -> GeralResponse {
+pub async fn get_cliente_data(app_handle: AppHandle, client_id: u32) -> GeralResponse {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+      let url = get_api_url(&app_handle);
     let full_url = format!("{}/cadastrar-cliente", url);
     let request_data = serde_json::json!({
         "client_id": client_id,
@@ -289,7 +290,8 @@ pub async fn get_cliente_data(client_id: u32) -> GeralResponse {
 
 async fn consulta_geral(consulta_tipo: String) -> GeralResponse {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+
     let full_url = format!("{}/cadastrar-cliente", url);
     let request_data = GeralRequest { consulta_tipo };
 

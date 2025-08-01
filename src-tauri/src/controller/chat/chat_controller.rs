@@ -3,6 +3,8 @@ use reqwest::Client;
 use crate::model::usuarios_todos::Usuario;
 use crate::model::usuario::obter_usuario;
 use bigdecimal::BigDecimal;
+use crate::config::get_api_url;
+use tauri::AppHandle;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ChatResponse {
@@ -78,8 +80,8 @@ pub struct GetChatsResponse {
 
 // Buscar todos os usuários
 #[tauri::command]
-pub async fn get_users() -> Result<ChatResponse, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn get_users(app_handle: AppHandle) -> Result<ChatResponse, String> {
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/get_users", url);
     println!("[LOG] Enviando requisição para: {}", full_url);
 
@@ -115,8 +117,8 @@ pub async fn get_users() -> Result<ChatResponse, String> {
 
 // Criar um novo chat
 #[tauri::command]
-pub async fn create_chat(user_ids: Vec<i32>, group_name: Option<String>, group_description: Option<String>) -> Result<ChatInfo, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn create_chat( user_ids: Vec<i32>, group_name: Option<String>, group_description: Option<String>) -> Result<ChatInfo, String> {
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
     let full_url = format!("{}/chat/create", url);
     println!("[LOG] Criando chat para: {}", full_url);
 
@@ -159,8 +161,8 @@ pub async fn create_chat(user_ids: Vec<i32>, group_name: Option<String>, group_d
 
 // Buscar chats de um usuário
 #[tauri::command]
-pub async fn get_user_chats(user_id: i32) -> Result<GetChatsResponse, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn get_user_chats(app_handle: AppHandle, user_id: i32) -> Result<GetChatsResponse, String> {
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/chat/user/{}", url, user_id);
     println!("[LOG] Buscando chats do usuário: {}", full_url);
 
@@ -196,8 +198,8 @@ pub async fn get_user_chats(user_id: i32) -> Result<GetChatsResponse, String> {
 
 // Enviar mensagem de texto
 #[tauri::command]
-pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result<MessageInfo, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+pub async fn send_message(app_handle: AppHandle, chat_id: i32, user_id: i32, content: String) -> Result<MessageInfo, String> {
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/chat/message/send", url);
     println!("[LOG] Enviando mensagem para: {}", full_url);
 
@@ -246,6 +248,7 @@ pub async fn send_message(chat_id: i32, user_id: i32, content: String) -> Result
 // Nova função específica para envio de arquivos
 #[tauri::command]
 pub async fn send_file_message(
+    app_handle: AppHandle,
     chat_id: i32, 
     user_id: i32, 
     file_name: String, 
@@ -253,7 +256,7 @@ pub async fn send_file_message(
     file_size: u64, 
     file_content: String
 ) -> Result<MessageInfo, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/chat/message/send", url);
     println!("[LOG] Enviando arquivo para: {}", full_url);
 
@@ -328,9 +331,9 @@ pub async fn send_file_message(
 
 // Buscar mensagens de um chat
 #[tauri::command]
-pub async fn get_chat_messages(chat_id: i32) -> Result<GetMessagesResponse, String> {
+pub async fn get_chat_messages(app_handle: AppHandle, chat_id: i32) -> Result<GetMessagesResponse, String> {
     // [LOG] Início da função e validação da URL da API
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+        let url = get_api_url(&app_handle);
 
     // Obter o ID do usuário logado
     let user_id = match obter_usuario() {

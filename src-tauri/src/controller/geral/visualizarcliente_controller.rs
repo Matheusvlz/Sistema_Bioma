@@ -3,6 +3,9 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Categoria {
     pub id: u32,
@@ -34,9 +37,9 @@ pub struct ConsultorResponse {
 }
 
 #[command]
-pub async fn buscar_categorias() -> CategoriaResponse {
+pub async fn buscar_categorias(app_handle: AppHandle) -> CategoriaResponse {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/clientes/categorias", url);
 
     let res = match client
@@ -69,9 +72,9 @@ pub async fn buscar_categorias() -> CategoriaResponse {
 }
 
 #[command]
-pub async fn buscar_consultores() -> ConsultorResponse {
+pub async fn buscar_consultores(app_handle: AppHandle) -> ConsultorResponse {
     let client = Client::new();
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/clientes/consultores", url);
 
     let res = match client

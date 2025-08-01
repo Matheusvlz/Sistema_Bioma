@@ -3,14 +3,33 @@
 mod controller;
 mod model;
 mod socket_listener;
+mod config;
 
-use controller::geral::cadastrarcliente_controller::{
-    cliente_categoria, consultor, editar_cliente, get_cliente_data, salvar_cliente, setor_portal,
+//COMPONENTES
+use controller::components::search_controller::{
+    buscar_clientes_dropdown, buscar_clientes_filtros, buscar_usuarios_dropdown
 };
+
+//GERAL
 use controller::geral_controller::{
-    buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas,
-    buscar_coletas_portal, buscar_solicitacoes_usuarios,
+    buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas, buscar_coletas_portal, buscar_solicitacoes_usuarios
 };
+use controller::geral::cadastrarcliente_controller::{
+    cliente_categoria, consultor, editar_cliente, get_cliente_data, salvar_cliente, setor_portal
+};
+use controller::geral::visualizarcliente_controller::{
+    buscar_categorias, buscar_consultores
+};
+use controller::geral::categoria_controller::{
+    buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
+};
+use controller::geral::usuarioportal_controller::{
+    buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario, verificar_email, cadastrar_usuario, historico_usuario
+};
+use controller::geral::setor_controller::{
+    buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
+};
+
 use controller::login_controller::fazer_login;
 use controller::login_controller::validate_user_credentials;
 
@@ -18,9 +37,6 @@ use model::usuario::usuario_logado;
 use model::usuario::verificar_autenticacao;
 use model::usuario::get_usuario_nome;
 
-use controller::components::search_controller::{
-    buscar_clientes_dropdown, buscar_clientes_filtros,
-};
 
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::settings_controller::update_user_settings;
@@ -37,8 +53,6 @@ use controller::chat::chat_controller::{
     send_file_message
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
-
-use controller::geral::categoria_controller::{buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria};
 
 use controller::qualidade::xlsx_controller::{import_xlsx_file, import_xlsx_from_bytes, get_xlsx_sheet_names, get_xlsx_sheet_names_from_bytes};
 
@@ -68,8 +82,17 @@ use controller::qualidade::tauri_print_commands_controller::{
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
+use controller::laboratorio::cadastrar_amostra_controller::{buscar_tercerizado, buscar_identificacao, buscar_legislacao, buscar_metodologias, buscar_acreditacao, buscar_categoria_amostra, consultar_consultores};
+
+use std::env;
+use crate::config::get_ws_url;
+
 fn main() {
-    dotenvy::dotenv().ok();
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let _ = env::set_current_dir(exe_dir);
+        }
+    }
 
     tauri::Builder::default()
         .setup(|app| {
@@ -78,37 +101,62 @@ fn main() {
             tauri::async_runtime::spawn({
                 let app_handle_clone = app_handle.clone();
                 async move {
-                    // Inicia a conexão WebSocket no backend Rust
-                    socket_listener::iniciar_socket(
-                        "ws://192.168.15.26:8082/ws/notificacoes",
-                        app_handle_clone,
-                    )
-                    .await;
+                    let ws_url = get_ws_url(&app_handle_clone);
+                    socket_listener::iniciar_socket(&ws_url, app_handle_clone).await;
                 }
             });
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            // Comandos existentes
-            fazer_login,
-            buscar_clientes_sem_cadastro,
-            buscar_amostras_pre_cadastradas,
-            buscar_coletas,
-            buscar_solicitacoes_usuarios,
-            buscar_coletas_portal,
-            usuario_logado,
-            verificar_autenticacao,
-            cliente_categoria,
-            consultor,
-            setor_portal,
-            salvar_cliente,
-            get_data_inicio,
-            get_data_for_screen,
-            editar_cliente,
-            get_cliente_data,
+            //SearchLayout
             buscar_clientes_filtros,
             buscar_clientes_dropdown,
+            buscar_usuarios_dropdown, 
+
+            //GERAL
+            buscar_clientes_sem_cadastro,//Geral
+            buscar_amostras_pre_cadastradas,//Geral
+            buscar_coletas,//Geral
+            buscar_solicitacoes_usuarios,//Geral
+            buscar_coletas_portal,//Geral
+            cliente_categoria,//Cadastrar Clientes
+            consultor,//Cadastrar Clientes
+            setor_portal,//Cadastrar Clientes
+            salvar_cliente,//Cadastrar Clientes
+            editar_cliente,//Cadastrar Clientes
+            get_cliente_data,//Cadastrar Clientes
+            buscar_categorias,//Visualizar Clientes
+            buscar_consultores,//Visualizar Clientes
+            buscar_categorias_cadastro,//Gerenciar Categorias
+            criar_categoria,//Gerenciar Categorias
+            editar_categoria,//Gerenciar Categorias
+            excluir_categoria,//Gerenciar Categorias
+            buscar_clientes_usuario,
+            buscar_setores_portal,
+            alterar_permissao_setor,
+            adicionar_cliente_usuario,
+            remover_cliente_usuario,
+            buscar_todos_setores_cliente,
+            alterar_setor_cliente,
+            buscar_setores_cadastro,
+            criar_setor,
+            editar_setor,
+            excluir_setor,
+            buscar_usuarios_cliente,
+            configurar_usuarios,
+            remover_cadastro_usuario,
+            excluir_usuario_cliente,
+            reenviar_email_usuario,
+            verificar_email,
+            cadastrar_usuario,
+            historico_usuario,
+
+            fazer_login,
+            usuario_logado,
+            verificar_autenticacao,
+            get_data_inicio,
+            get_data_for_screen,
             update_user_settings,
             salvar_ticket,
             send_ws_message,
@@ -117,10 +165,6 @@ fn main() {
             mark_kanban_card_as_completed,
             update_kanban,
             update_kanban_card_urgency_and_index,
-            buscar_categorias_cadastro,
-            criar_categoria,
-            editar_categoria,
-            excluir_categoria,
             get_users,
             create_chat,
             get_user_chats,
@@ -170,7 +214,14 @@ fn main() {
             // planilha laboratorio
             consultar_amostras_por_planilha,
             consultar_intervalos_planilhas,
-            gerar_nova_planilha
+            gerar_nova_planilha,
+            buscar_tercerizado, 
+            buscar_identificacao, 
+            buscar_legislacao,
+            buscar_metodologias, 
+            buscar_acreditacao, 
+            buscar_categoria_amostra, 
+            consultar_consultores
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

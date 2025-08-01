@@ -20,7 +20,8 @@ use crate::model::x9::X9Response; // <-- ASSUMA ESTE CAMINHO, AJUSTE SE NECESSÁ
 
 // Import your user model (assuming it's in `src/model/usuario.rs`)
 use crate::model::usuario::obter_usuario;
-
+use crate::config::get_api_url;
+use tauri::AppHandle;
 // --- AllResponseData Enum ---
 // This enum will reside here as it combines types from multiple models
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -36,11 +37,11 @@ pub enum AllResponseData {
 }
 
 #[command]
-pub async fn get_data_inicio() -> Result<RespostaTela<AllResponseData>, String> {
+pub async fn get_data_inicio(app_handle: AppHandle) -> Result<RespostaTela<AllResponseData>, String> {
     let usuario = obter_usuario().ok_or("Usuário não autenticado")?;
     println!("[LOG] Usuário autenticado: {:?}", usuario);
 
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = get_api_url(&app_handle);
     let full_url = format!("{}/get/inicio", url);
     println!("[LOG] Enviando requisição para: {}", full_url);
 
@@ -77,11 +78,11 @@ pub async fn get_data_inicio() -> Result<RespostaTela<AllResponseData>, String> 
 
 /// Tauri command to fetch data for a specific screen from the Axum API.
 #[command]
-pub async fn get_data_for_screen(screen_name: String) -> Result<RespostaTela<AllResponseData>, String> {
+pub async fn get_data_for_screen(app_handle: AppHandle, screen_name: String) -> Result<RespostaTela<AllResponseData>, String> {
     let usuario = obter_usuario().ok_or("Usuário não autenticado")?;
     println!("[LOG] Usuário autenticado: {:?}", usuario);
 
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+        let url = get_api_url(&app_handle);
     let full_url = format!("{}/get/tela", url);
     println!("[LOG] Enviando requisição para: {}", full_url);
 

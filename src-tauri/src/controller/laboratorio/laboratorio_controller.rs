@@ -2,6 +2,9 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ChecagemItem {
     pub fantasia: Option<String>,
@@ -81,7 +84,7 @@ struct LaboratorioRequest {
 async fn consulta_laboratorio(consulta_tipo: String) -> LaboratorioResponse {
     let client = Client::new();
     let request_data = LaboratorioRequest { consulta_tipo };
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
     let full_url = format!("{}/laboratorio", url);
 
     let res = match client

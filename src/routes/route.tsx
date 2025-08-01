@@ -13,10 +13,13 @@ import { CadastrarClientes } from '../view/geral/CadastrarCliente';
 import { VisualizarClientes } from '../view/geral/VisualizarCliente';
 import { ChatContainer } from '../components/chat/ChatContainer';
 import { GerenciarCategoria } from '../view/geral/GerenciarCategoria';
+import { UsuarioPortal } from '../view/geral/UsuarioPortal';
 import { CriarPlanilha } from '../view/qualidade/CriarPlanilha';
 import { CadastrarPlanilha } from  '../view/qualidade/CadastrarPlanilha';
+import { GerenciarSetores } from '../view/geral/GerenciarSetores';
 import { Planilha } from '../view/laboratorio/Planilha';
 import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
+import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -38,11 +41,12 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // SUBROTAS DE CLIENTES - Mark hasLayout as false for CadastrarClientes
 // No layout for this route
   
-  'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false }, // No layout for this route
+  'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false },
   'visualizar-clientes': { component: <VisualizarClientes />, hasLayout: false },
-  'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false }, // Example, keep layout
-  'cadastro-usuario-portal': { component: <Inicio />, hasLayout: false },
-  'cadastrar-setor-usuario': { component: <Inicio />, hasLayout: false },
+  'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false },
+  'cadastro-usuario-portal': { component: <UsuarioPortal />, hasLayout: false },
+  'gerenciar-setor': { component: <GerenciarSetores />, hasLayout: false },
+  'historico-usuario': { component: <HistoricoUsuario />, hasLayout: false },
   'cadastrar-consultor': { component: <Inicio />, hasLayout: false },
   'cadastrar-laboratorio-terceirizado': { component: <Inicio />, hasLayout: false },
 

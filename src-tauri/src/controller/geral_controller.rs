@@ -2,6 +2,9 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tauri::command;
 
+use crate::config::get_api_url;
+use tauri::AppHandle;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ClienteSemCadastro {
     pub id: u32,
@@ -129,7 +132,7 @@ pub async fn buscar_coletas_portal() -> GeralResponse {
 async fn consulta_geral(consulta_tipo: String) -> GeralResponse {
     let client = Client::new();
     let request_data = GeralRequest { consulta_tipo };
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
     let full_url = format!("{}/geral", url);
 
     let res = match client

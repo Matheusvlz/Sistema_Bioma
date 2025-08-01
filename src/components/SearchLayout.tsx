@@ -20,13 +20,6 @@ interface SearchField {
   options?: { value: string; label: string }[];
 }
 
-interface DropdownSearchConfig {
-  enabled: boolean;
-  placeholder?: string;
-  onSearch?: (query: string) => Promise<Cliente[]>;
-  onSelect?: (cliente: Cliente) => void;
-}
-
 interface SearchLayoutProps {
   fields?: SearchField[];
   onSearch?: (filters: Record<string, string>) => void;
@@ -40,6 +33,21 @@ interface CustomSelectProps {
   options: { value: string; label: string }[];
   placeholder?: string;
   id: string;
+}
+
+interface Usuario {
+  id: number;
+  nome: string;
+  usuario: string;
+}
+
+// Modifique a interface DropdownSearchConfig para aceitar ambos os tipos:
+interface DropdownSearchConfig {
+  enabled: boolean;
+  placeholder?: string;
+  type?: 'cliente' | 'usuario'; // Novo campo para definir o tipo
+  onSearch?: (query: string) => Promise<Cliente[] | Usuario[]>;
+  onSelect?: (item: Cliente | Usuario) => void;
 }
 
 const CustomSelect: React.FC<CustomSelectProps> = ({ value, onChange, options, placeholder }) => {
@@ -95,10 +103,11 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
 }) => {
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
   const [mainSearchQuery, setMainSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Cliente[]>([]);
+  const [searchResults, setSearchResults] = useState<(Cliente | Usuario)[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [filters, setFilters] = useState<Record<string, string>>({});
+  
 
   const searchRef = useRef<HTMLDivElement>(null);
   const shouldShowToggle = dropdownSearch.enabled && fields.length > 0;
@@ -115,34 +124,42 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
   }, []);
 
   const handleMainSearchChange = async (value: string) => {
-    setMainSearchQuery(value);
+  setMainSearchQuery(value);
 
-    if (value.trim().length >= 2 && dropdownSearch.onSearch) {
-      setIsSearching(true);
-      try {
-        const results = await dropdownSearch.onSearch(value);
-        setSearchResults(results);
-        setShowDropdown(results.length > 0);
-      } catch (error) {
-        console.error('Erro na busca:', error);
-        setSearchResults([]);
-        setShowDropdown(false);
-      } finally {
-        setIsSearching(false);
-      }
-    } else {
+  if (value.trim().length >= 2 && dropdownSearch.onSearch) {
+    setIsSearching(true);
+    try {
+      const results = await dropdownSearch.onSearch(value);
+      setSearchResults(results);
+      setShowDropdown(results.length > 0);
+    } catch (error) {
+      console.error('Erro na busca:', error);
       setSearchResults([]);
       setShowDropdown(false);
+    } finally {
+      setIsSearching(false);
     }
-  };
-
-  const handleClienteSelect = (cliente: Cliente) => {
-    setMainSearchQuery(cliente.fantasia || cliente.razao || '');
+  } else {
+    setSearchResults([]);
     setShowDropdown(false);
-    if (dropdownSearch.onSelect) {
-      dropdownSearch.onSelect(cliente);
-    }
-  };
+  }
+};
+
+  const handleItemSelect = (item: Cliente | Usuario) => {
+  let displayName = '';
+  
+  if (dropdownSearch.type === 'usuario') {
+    displayName = (item as Usuario).nome || (item as Usuario).usuario || '';
+  } else {
+    displayName = (item as Cliente).fantasia || (item as Cliente).razao || '';
+  }
+  
+  setMainSearchQuery(displayName);
+  setShowDropdown(false);
+  if (dropdownSearch.onSelect) {
+    dropdownSearch.onSelect(item);
+  }
+};
 
   const toggleAdvancedMode = () => {
     setIsAdvancedMode(!isAdvancedMode);
@@ -166,6 +183,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
     setFilters({});
     setMainSearchQuery('');
     setShowDropdown(false);
+    setSearchResults([]);
     if (onClear) {
       onClear();
     }
@@ -210,6 +228,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
               value={mainSearchQuery}
               onChange={(e) => handleMainSearchChange(e.target.value)}
               onFocus={() => { if (searchResults.length > 0) setShowDropdown(true); }}
+              autoComplete="off"
             />
             {mainSearchQuery && (
               <button className={styles["clear-button"]} onClick={handleClearFilters} title="Limpar busca">
@@ -225,20 +244,30 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
                   <span>Buscando...</span>
                 </div>
               ) : (
-                searchResults.map((cliente) => (
-                  <div key={cliente.id} className={styles["dropdown-item"]} onClick={() => handleClienteSelect(cliente)}>
+                searchResults.map((item) => (
+                  <div key={item.id} className={styles["dropdown-item"]} onClick={() => handleItemSelect(item)}>
                     <div className={styles["cliente-info"]}>
                       <div className={styles["cliente-name"]}>
-                        {cliente.fantasia || cliente.razao || 'Nome não informado'}
+                        {dropdownSearch.type === 'usuario' 
+                          ? (item as Usuario).nome || (item as Usuario).usuario || 'Nome não informado'
+                          : (item as Cliente).fantasia || (item as Cliente).razao || 'Nome não informado'
+                        }
                       </div>
-                      <div className={styles["cliente-details"]}>
-                        {cliente.documento && (
-                          <span className={styles["documento"]}>{formatDocument(cliente.documento)}</span>
-                        )}
-                        {cliente.cidade && cliente.uf && (
-                          <span className={styles["location"]}>{cliente.cidade} / {cliente.uf}</span>
-                        )}
-                      </div>
+                      {dropdownSearch.type === 'cliente' && (
+                        <div className={styles["cliente-details"]}>
+                          {(item as Cliente).documento && (
+                            <span className={styles["documento"]}>{formatDocument((item as Cliente).documento!)}</span>
+                          )}
+                          {(item as Cliente).cidade && (item as Cliente).uf && (
+                            <span className={styles["location"]}>{(item as Cliente).cidade} / {(item as Cliente).uf}</span>
+                          )}
+                        </div>
+                      )}
+                      {dropdownSearch.type === 'usuario' && (
+                        <div className={styles["cliente-details"]}>
+                          <span className={styles["documento"]}>{(item as Usuario).usuario}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -270,6 +299,7 @@ export const SearchLayout: React.FC<SearchLayoutProps> = ({
                     placeholder={`Digite ${field.label.toLowerCase()}...`}
                     value={filters[field.name] || ''}
                     onChange={(e) => handleFilterChange(field.name, e.target.value)}
+                    autoComplete="off"
                   />
                 )}
               </div>

@@ -181,6 +181,61 @@ export class WindowManager {
     }
   }
 
+  static async openGerenciarSetor(): Promise<WebviewWindow> {
+    try {
+      const monitors = await availableMonitors();
+      if (!monitors || monitors.length === 0) {
+        throw new Error('Não foi possível obter informações dos monitores');
+      }
+
+      const primaryMonitor = monitors[0];
+      const screenWidth = primaryMonitor.size.width;
+      const screenHeight = primaryMonitor.size.height;
+      const taskbarHeight = 70;
+      
+      const windowWidth = 500;
+      const windowHeight = screenHeight - taskbarHeight;
+      const windowX = screenWidth - windowWidth;
+      const windowY = 0;
+
+      return this.openWindow({
+        label: 'gerenciar-setor',
+        title: 'Gerenciar Setor',
+        url: '/#/gerenciar-setor',
+        width: windowWidth,
+        height: windowHeight,
+        allowMultiple: true,
+        x: windowX,
+        y: windowY,
+        center: false,
+        resizable: true,
+        data: { openedBy: 'cadastro-usuario-portal' }
+      });
+    } catch (error) {
+      console.error('Erro ao abrir janela de cadastrar setor:', error);
+      return this.openWindow({
+        label: 'gerenciar-setor',
+        title: 'Gerenciar Setor',
+        url: '/#/gerenciar-setor',
+        width: 500,
+        height: 800,
+        allowMultiple: true,
+        data: { openedBy: 'cadastro-usuario-portal' }
+      });
+    }
+  }
+
+  static async openUsuarioPortal(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastro-usuario-portal',
+      title: 'Gerenciar Usuários do Portal',
+      url: '/#/cadastro-usuario-portal',
+      width: 900,
+      height: 700,
+      allowMultiple: true
+    });
+  }
+
   static async openChat(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'chat',
@@ -222,6 +277,18 @@ export class WindowManager {
       url: '/#/planilha-laboratorio',
       width: 1200,
       height: 600,
+      allowMultiple: true
+    });
+  } 
+
+  static async openHistoricoUsuario(usuarioId?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'historico-usuario',
+      title: 'Histórico do Usuário',
+      url: '/#/historico-usuario',
+      width: 900,
+      height: 700,
+      data: usuarioId,
       allowMultiple: true
     });
   }

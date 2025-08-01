@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 use reqwest::Client;
 use std::env;
+use crate::config::get_api_url;
+use tauri::AppHandle;
 
 // Certifique-se de que estas structs estão definidas ou importe-as corretamente
 // Por exemplo, em `src/model/kanban_card.rs` ou similar:
@@ -44,7 +46,7 @@ pub struct KanbanCardUrgencyAndIndexUpdate {
 }
 
 #[tauri::command]
-pub async fn salvar_ticket(card_data: FrontendKanbanCardData) -> Result<(), String> {
+pub async fn salvar_ticket(app_handle: AppHandle, card_data: FrontendKanbanCardData) -> Result<(), String> {
     println!("Dados recebidos do frontend no Tauri (salvar_ticket): {:?}", card_data);
 
     let api_payload = ApiKanbanPayload {
@@ -58,8 +60,7 @@ pub async fn salvar_ticket(card_data: FrontendKanbanCardData) -> Result<(), Stri
         card_color: card_data.card_color,
     };
 
-    let api_url = env::var("API_URL")
-        .unwrap_or_else(|_| "http://localhost:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let endpoint = format!("{}/cadastrar/ticket", api_url);
 
     println!("Enviando requisição POST para: {}", endpoint);
@@ -90,7 +91,7 @@ pub async fn salvar_ticket(card_data: FrontendKanbanCardData) -> Result<(), Stri
 }
 
 #[tauri::command]
-pub async fn update_kanban(card_data: FrontendKanbanCardData) -> Result<(), String> {
+pub async fn update_kanban(app_handle: AppHandle, card_data: FrontendKanbanCardData) -> Result<(), String> {
     println!("Dados recebidos do frontend no Tauri (update_kanban): {:?}", card_data);
 
     let card_id = card_data.id.ok_or_else(|| "ID do cartão é necessário para atualização".to_string())?;
@@ -107,8 +108,7 @@ pub async fn update_kanban(card_data: FrontendKanbanCardData) -> Result<(), Stri
         card_color: card_data.card_color,
     };
 
-    let api_url = env::var("API_URL")
-        .unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let endpoint = format!("{}/atualizar/ticket/{}", api_url, card_id); // Endpoint PUT com ID na URL
 
     println!("Enviando requisição PUT para: {}", endpoint);
@@ -139,11 +139,10 @@ pub async fn update_kanban(card_data: FrontendKanbanCardData) -> Result<(), Stri
 }
 // Novo método para atualizar urgência e índice do cartão (quando movido entre painéis)
 #[tauri::command]
-pub async fn update_kanban_card_urgency_and_index(update_data: KanbanCardUrgencyAndIndexUpdate) -> Result<(), String> {
+pub async fn update_kanban_card_urgency_and_index(app_handle: AppHandle, update_data: KanbanCardUrgencyAndIndexUpdate) -> Result<(), String> {
     println!("Atualizando urgência e índice do cartão Kanban: {:?}", update_data);
 
-    let api_url = env::var("API_URL")
-        .unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let api_url = get_api_url(&app_handle);
     let endpoint = format!("{}/kanban/card/{}/update-urgency-and-index", api_url, update_data.id);
 
     let payload = serde_json::json!({
