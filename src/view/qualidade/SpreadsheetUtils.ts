@@ -64,6 +64,17 @@ export interface FormulaResult {
   formula_type: string;
 }
 
+export interface InsertionResult {
+  success: boolean;
+  error?: string;
+  updatedMerges: Array<{
+    oldRange: CellRange;
+    newRange: CellRange;
+    masterCell: CellPosition;
+  }>;
+  affectedCells: CellPosition[];
+}
+
 export interface FormulaSuggestion {
   function_name: string;
   display_text: string;
@@ -110,6 +121,355 @@ export interface MergeResult {
   masterCell: CellPosition;
   mergeRange: CellRange;
 }
+
+export interface UndoRedoState {
+  data: CellData[][];
+  selectedCells: CellPosition[];
+  columnWidths: number[];
+  rowHeights: number[];
+  timestamp: Date;
+  action: string;
+}
+
+export interface UndoRedoOperation {
+  type: 'cell_edit' | 'cell_style' | 'merge' | 'unmerge' | 'insert_row' | 'insert_col' | 'delete_row' | 'delete_col' | 'resize';
+  description: string;
+  beforeState: any;
+  afterState: any;
+  affectedCells: CellPosition[];
+}
+
+export class UndoRedoUtils {
+  /**
+   * Cria um snapshot do estado atual da planilha
+   */
+  static createSnapshot(
+    data: CellData[][],
+    selectedCells: CellPosition[],
+    columnWidths: number[],
+    rowHeights: number[],
+    action: string
+  ): UndoRedoState {
+    return {
+      data: JSON.parse(JSON.stringify(data)), // Deep copy
+      selectedCells: [...selectedCells],
+      columnWidths: [...columnWidths],
+      rowHeights: [...rowHeights],
+      timestamp: new Date(),
+      action
+    };
+  }
+
+  /**
+   * Compara dois estados para verificar se são diferentes
+   */
+  static areStatesDifferent(state1: UndoRedoState, state2: UndoRedoState): boolean {
+    // Comparação simples baseada em JSON
+    return JSON.stringify(state1.data) !== JSON.stringify(state2.data) ||
+           JSON.stringify(state1.columnWidths) !== JSON.stringify(state2.columnWidths) ||
+           JSON.stringify(state1.rowHeights) !== JSON.stringify(state2.rowHeights);
+  }
+
+  /**
+   * Otimiza o stack de undo removendo estados duplicados consecutivos
+   */
+  static optimizeUndoStack(stack: UndoRedoState[]): UndoRedoState[] {
+    if (stack.length <= 1) return stack;
+
+    const optimized: UndoRedoState[] = [stack[0]];
+    
+    for (let i = 1; i < stack.length; i++) {
+      if (this.areStatesDifferent(stack[i], stack[i - 1])) {
+        optimized.push(stack[i]);
+      }
+    }
+
+    return optimized;
+  }
+
+  /**
+   * Cria uma operação de undo/redo detalhada
+   */
+  static createOperation(
+    type: UndoRedoOperation['type'],
+    description: string,
+    beforeState: any,
+    afterState: any,
+    affectedCells: CellPosition[]
+  ): UndoRedoOperation {
+    return {
+      type,
+      description,
+      beforeState: JSON.parse(JSON.stringify(beforeState)),
+      afterState: JSON.parse(JSON.stringify(afterState)),
+      affectedCells: [...affectedCells]
+    };
+  }
+
+  /**
+   * Aplica uma operação de undo
+   */
+  static applyUndo(operation: UndoRedoOperation, data: CellData[][]): CellData[][] {
+    const newData = JSON.parse(JSON.stringify(data));
+    
+    switch (operation.type) {
+      case 'cell_edit':
+        operation.affectedCells.forEach(pos => {
+          if (newData[pos.row] && newData[pos.row][pos.col]) {
+            newData[pos.row][pos.col] = { ...operation.beforeState };
+          }
+        });
+        break;
+      
+      case 'cell_style':
+        operation.affectedCells.forEach(pos => {
+          if (newData[pos.row] && newData[pos.row][pos.col]) {
+            newData[pos.row][pos.col].style = { ...operation.beforeState.style };
+          }
+        });
+        break;
+      
+      // Adicionar mais casos conforme necessário
+      default:
+        console.warn(`Tipo de operação não suportado: ${operation.type}`);
+    }
+
+    return newData;
+  }
+
+  /**
+   * Aplica uma operação de redo
+   */
+  static applyRedo(operation: UndoRedoOperation, data: CellData[][]): CellData[][] {
+    const newData = JSON.parse(JSON.stringify(data));
+    
+    switch (operation.type) {
+      case 'cell_edit':
+        operation.affectedCells.forEach(pos => {
+          if (newData[pos.row] && newData[pos.row][pos.col]) {
+            newData[pos.row][pos.col] = { ...operation.afterState };
+          }
+        });
+        break;
+      
+      case 'cell_style':
+        operation.affectedCells.forEach(pos => {
+          if (newData[pos.row] && newData[pos.row][pos.col]) {
+            newData[pos.row][pos.col].style = { ...operation.afterState.style };
+          }
+        });
+        break;
+      
+      // Adicionar mais casos conforme necessário
+      default:
+        console.warn(`Tipo de operação não suportado: ${operation.type}`);
+    }
+
+    return newData;
+  }
+}
+
+// Utilitários para atalhos de teclado
+export class KeyboardShortcutUtils {
+  /**
+   * Verifica se uma combinação de teclas corresponde a um atalho específico
+   */
+  static isShortcut(event: KeyboardEvent, shortcut: string): boolean {
+    const keys = shortcut.toLowerCase().split('+');
+    const pressedKeys: string[] = [];
+
+    if (event.ctrlKey) pressedKeys.push('ctrl');
+    if (event.shiftKey) pressedKeys.push('shift');
+    if (event.altKey) pressedKeys.push('alt');
+    if (event.metaKey) pressedKeys.push('meta');
+    
+    // Adicionar a tecla principal
+    if (event.key && event.key !== 'Control' && event.key !== 'Shift' && event.key !== 'Alt' && event.key !== 'Meta') {
+      pressedKeys.push(event.key.toLowerCase());
+    }
+
+    return keys.every(key => pressedKeys.includes(key)) && keys.length === pressedKeys.length;
+  }
+
+  /**
+   * Lista de atalhos padrão da planilha
+   */
+  static getDefaultShortcuts(): Record<string, string> {
+    return {
+      'ctrl+z': 'Desfazer',
+      'ctrl+y': 'Refazer',
+      'ctrl+shift+z': 'Refazer',
+      'ctrl+enter': 'Confirmar entrada',
+      'escape': 'Cancelar/Voltar',
+      'ctrl+s': 'Salvar',
+      'ctrl+o': 'Abrir',
+      'ctrl+n': 'Novo',
+      'ctrl+c': 'Copiar',
+      'ctrl+v': 'Colar',
+      'ctrl+x': 'Recortar',
+      'delete': 'Excluir conteúdo',
+      'f2': 'Editar célula',
+      'enter': 'Confirmar e mover para baixo',
+      'tab': 'Mover para direita',
+      'shift+tab': 'Mover para esquerda',
+      'ctrl+a': 'Selecionar tudo',
+      'ctrl+f': 'Localizar',
+      'ctrl+h': 'Substituir'
+    };
+  }
+
+  /**
+   * Formata uma descrição de atalho para exibição
+   */
+  static formatShortcutDisplay(shortcut: string): string {
+    return shortcut
+      .split('+')
+      .map(key => {
+        switch (key.toLowerCase()) {
+          case 'ctrl': return 'Ctrl';
+          case 'shift': return 'Shift';
+          case 'alt': return 'Alt';
+          case 'meta': return 'Cmd';
+          case 'enter': return 'Enter';
+          case 'escape': return 'Esc';
+          default: return key.toUpperCase();
+        }
+      })
+      .join(' + ');
+  }
+}
+
+// Utilitários para navegação
+export class NavigationUtils {
+  /**
+   * Calcula a próxima célula baseada na direção
+   */
+  static getNextCell(
+    currentRow: number,
+    currentCol: number,
+    direction: 'up' | 'down' | 'left' | 'right',
+    maxRows: number,
+    maxCols: number
+  ): CellPosition | null {
+    let newRow = currentRow;
+    let newCol = currentCol;
+
+    switch (direction) {
+      case 'up':
+        newRow = Math.max(0, currentRow - 1);
+        break;
+      case 'down':
+        newRow = Math.min(maxRows - 1, currentRow + 1);
+        break;
+      case 'left':
+        newCol = Math.max(0, currentCol - 1);
+        break;
+      case 'right':
+        newCol = Math.min(maxCols - 1, currentCol + 1);
+        break;
+    }
+
+    // Retornar null se não houve mudança (já está no limite)
+    if (newRow === currentRow && newCol === currentCol) {
+      return null;
+    }
+
+    return { row: newRow, col: newCol };
+  }
+
+  /**
+   * Encontra a próxima célula não vazia em uma direção
+   */
+  static findNextNonEmptyCell(
+    data: CellData[][],
+    startRow: number,
+    startCol: number,
+    direction: 'up' | 'down' | 'left' | 'right'
+  ): CellPosition | null {
+    const maxRows = data.length;
+    const maxCols = data[0]?.length || 0;
+    
+    let currentRow = startRow;
+    let currentCol = startCol;
+
+    while (true) {
+      const nextCell = this.getNextCell(currentRow, currentCol, direction, maxRows, maxCols);
+      if (!nextCell) break;
+
+      currentRow = nextCell.row;
+      currentCol = nextCell.col;
+
+      const cell = data[currentRow]?.[currentCol];
+      if (cell && cell.value.trim() !== '') {
+        return { row: currentRow, col: currentCol };
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Calcula o range de células visíveis baseado no scroll
+   */
+  static getVisibleCellRange(
+    scrollTop: number,
+    scrollLeft: number,
+    containerHeight: number,
+    containerWidth: number,
+    rowHeights: number[],
+    columnWidths: number[]
+  ): CellRange {
+    let startRow = 0;
+    let endRow = 0;
+    let startCol = 0;
+    let endCol = 0;
+
+    // Calcular linha inicial
+    let currentHeight = 0;
+    for (let i = 0; i < rowHeights.length; i++) {
+      if (currentHeight + rowHeights[i] > scrollTop) {
+        startRow = i;
+        break;
+      }
+      currentHeight += rowHeights[i];
+    }
+
+    // Calcular linha final
+    currentHeight = 0;
+    for (let i = startRow; i < rowHeights.length; i++) {
+      currentHeight += rowHeights[i];
+      if (currentHeight > scrollTop + containerHeight) {
+        endRow = i;
+        break;
+      }
+    }
+    if (endRow === 0) endRow = rowHeights.length - 1;
+
+    // Calcular coluna inicial
+    let currentWidth = 0;
+    for (let i = 0; i < columnWidths.length; i++) {
+      if (currentWidth + columnWidths[i] > scrollLeft) {
+        startCol = i;
+        break;
+      }
+      currentWidth += columnWidths[i];
+    }
+
+    // Calcular coluna final
+    currentWidth = 0;
+    for (let i = startCol; i < columnWidths.length; i++) {
+      currentWidth += columnWidths[i];
+      if (currentWidth > scrollLeft + containerWidth) {
+        endCol = i;
+        break;
+      }
+    }
+    if (endCol === 0) endCol = columnWidths.length - 1;
+
+    return { startRow, startCol, endRow, endCol };
+  }
+}
+
 
 // Utilitários para referências de células
 export class CellReferenceUtils {
@@ -294,9 +654,38 @@ export class FormulaUtils {
     return result;
   }
 
-  /**
-   * Converte uma fórmula para formato de exibição
-   */
+   static updateFormulaReferences(
+    formula: string,
+    insertionType: 'row' | 'column',
+    insertionIndex: number
+  ): string {
+    if (!this.isFormula(formula)) return formula;
+
+    const cleanedFormula = this.cleanFormula(formula);
+    let updatedFormula = cleanedFormula;
+
+    // Padrão para encontrar referências de células
+    const cellRefPattern = /([A-Z]+)(\d+)/g;
+    
+    updatedFormula = updatedFormula.replace(cellRefPattern, (colStr, rowStr) => {
+      const col = CellReferenceUtils.getColumnIndex(colStr);
+      const row = parseInt(rowStr) - 1;
+
+      let newRow = row;
+      let newCol = col;
+
+      if (insertionType === 'row' && row >= insertionIndex) {
+        newRow = row + 1;
+      } else if (insertionType === 'column' && col >= insertionIndex) {
+        newCol = col + 1;
+      }
+
+      return CellReferenceUtils.getCellReference(newRow, newCol);
+    });
+
+    return this.addFormulaPrefix(updatedFormula);
+  }
+  
   static formatFormulaForDisplay(formula: string): string {
     return this.addFormulaPrefix(formula);
   }
@@ -338,6 +727,7 @@ export class CellMergeUtils {
     }
 
     return { isValid: true };
+    
   }
 
   /**
@@ -599,8 +989,12 @@ export class CellMergeUtils {
       });
     });
 
+
+    
     return Array.from(mergedGroups.values());
   }
+
+  
 
   /**
    * Calcula o colspan e rowspan para uma célula mesclada (para renderização HTML)
@@ -1013,6 +1407,614 @@ export class SpreadsheetDataUtils {
 }
 
 // Utilitários para formatação
+export class SpreadsheetOperationUtils {
+  /**
+   * Insere uma nova coluna em uma posição específica (compatível com merge)
+   */
+  static insertColumn(
+    data: CellData[][],
+    columnWidths: number[],
+    insertIndex: number,
+    defaultWidth: number = 100
+  ): {
+    newData: CellData[][];
+    newColumnWidths: number[];
+  } {
+    // Primeiro, ajustar as referências de merge
+    const adjustedData = this.adjustMergeReferencesForColumnInsert(data, insertIndex);
+    
+    const newData = adjustedData.map((row, rowIndex) => {
+      const newRow = [...row];
+      
+      // Inserir nova célula vazia na posição especificada
+      const newCell: CellData = {
+        value: '',
+        id: `cell-${rowIndex}-${insertIndex}`,
+        formula: null,
+        computed_value: null,
+        error: null,
+        is_formula: false,
+        style: {},
+        merged: false
+      };
+      
+      newRow.splice(insertIndex, 0, newCell);
+      
+      // Atualizar IDs das células após a inserção
+      return newRow.map((cell, colIndex) => ({
+        ...cell,
+        id: `cell-${rowIndex}-${colIndex}`
+      }));
+    });
+
+    const newColumnWidths = [...columnWidths];
+    newColumnWidths.splice(insertIndex, 0, defaultWidth);
+
+    return { newData, newColumnWidths };
+  }
+
+  /**
+   * Remove uma coluna em uma posição específica (compatível com merge)
+   */
+  static removeColumn(
+    data: CellData[][],
+    columnWidths: number[],
+    removeIndex: number
+  ): {
+    newData: CellData[][];
+    newColumnWidths: number[];
+    warnings: string[];
+  } {
+    const warnings: string[] = [];
+    
+    // Verificar se a coluna a ser removida contém células mescladas
+    const mergeConflicts = this.checkColumnMergeConflicts(data, removeIndex);
+    if (mergeConflicts.length > 0) {
+      // Desmesclar células que seriam afetadas
+      const unmergedData = this.handleMergeConflictsForColumnRemoval(data, removeIndex);
+      warnings.push(...mergeConflicts.map(conflict => 
+        `Células mescladas em ${conflict.range} foram desmescladas devido à remoção da coluna`
+      ));
+      data = unmergedData;
+    }
+
+    // Ajustar referências de merge antes da remoção
+    const adjustedData = this.adjustMergeReferencesForColumnRemoval(data, removeIndex);
+    
+    const newData = adjustedData.map((row, rowIndex) => {
+      const newRow = [...row];
+      newRow.splice(removeIndex, 1);
+      
+      // Atualizar IDs das células após a remoção
+      return newRow.map((cell, colIndex) => ({
+        ...cell,
+        id: `cell-${rowIndex}-${colIndex}`
+      }));
+    });
+
+    const newColumnWidths = [...columnWidths];
+    newColumnWidths.splice(removeIndex, 1);
+
+    return { newData, newColumnWidths, warnings };
+  }
+
+  /**
+   * Insere uma nova linha em uma posição específica (compatível com merge)
+   */
+  static insertRow(
+    data: CellData[][],
+    rowHeights: number[],
+    insertIndex: number,
+    cols: number,
+    defaultHeight: number = 32
+  ): {
+    newData: CellData[][];
+    newRowHeights: number[];
+  } {
+    // Primeiro, ajustar as referências de merge
+    const adjustedData = this.adjustMergeReferencesForRowInsert(data, insertIndex);
+    
+    const newData = [...adjustedData];
+    const newRow = Array(cols).fill(null).map((_, colIndex) => ({
+      value: '',
+      id: `cell-${insertIndex}-${colIndex}`,
+      formula: null,
+      computed_value: null,
+      error: null,
+      is_formula: false,
+      style: {},
+      merged: false
+    }));
+    
+    newData.splice(insertIndex, 0, newRow);
+    
+    // Atualizar IDs das células após a inserção
+    const updatedData = newData.map((row, rowIndex) => 
+      row.map((cell, colIndex) => ({
+        ...cell,
+        id: `cell-${rowIndex}-${colIndex}`
+      }))
+    );
+
+    const newRowHeights = [...rowHeights];
+    newRowHeights.splice(insertIndex, 0, defaultHeight);
+
+    return { newData: updatedData, newRowHeights };
+  }
+
+  /**
+   * Remove uma linha em uma posição específica (compatível com merge)
+   */
+  static removeRow(
+    data: CellData[][],
+    rowHeights: number[],
+    removeIndex: number
+  ): {
+    newData: CellData[][];
+    newRowHeights: number[];
+    warnings: string[];
+  } {
+    const warnings: string[] = [];
+    
+    // Verificar se a linha a ser removida contém células mescladas
+    const mergeConflicts = this.checkRowMergeConflicts(data, removeIndex);
+    if (mergeConflicts.length > 0) {
+      // Desmesclar células que seriam afetadas
+      const unmergedData = this.handleMergeConflictsForRowRemoval(data, removeIndex);
+      warnings.push(...mergeConflicts.map(conflict => 
+        `Células mescladas em ${conflict.range} foram desmescladas devido à remoção da linha`
+      ));
+      data = unmergedData;
+    }
+
+    // Ajustar referências de merge antes da remoção
+    const adjustedData = this.adjustMergeReferencesForRowRemoval(data, removeIndex);
+    
+    const newData = [...adjustedData];
+    newData.splice(removeIndex, 1);
+    
+    // Atualizar IDs das células após a remoção
+    const updatedData = newData.map((row, rowIndex) => 
+      row.map((cell, colIndex) => ({
+        ...cell,
+        id: `cell-${rowIndex}-${colIndex}`
+      }))
+    );
+
+    const newRowHeights = [...rowHeights];
+    newRowHeights.splice(removeIndex, 1);
+
+    return { newData: updatedData, newRowHeights, warnings };
+  }
+
+  /**
+   * Ajusta referências de merge quando uma coluna é inserida
+   */
+  private static adjustMergeReferencesForColumnInsert(
+    data: CellData[][],
+    insertIndex: number
+  ): CellData[][] {
+    return data.map(row =>
+      row.map(cell => {
+        if (!cell.merged || !cell.mergeRange || !cell.masterCell) {
+          return cell;
+        }
+
+        const newMergeRange = { ...cell.mergeRange };
+        const newMasterCell = { ...cell.masterCell };
+
+        // Ajustar startCol e endCol se necessário
+        if (cell.mergeRange.startCol >= insertIndex) {
+          newMergeRange.startCol++;
+        }
+        if (cell.mergeRange.endCol >= insertIndex) {
+          newMergeRange.endCol++;
+        }
+
+        // Ajustar masterCell col se necessário
+        if (cell.masterCell.col >= insertIndex) {
+          newMasterCell.col++;
+        }
+
+        return {
+          ...cell,
+          mergeRange: newMergeRange,
+          masterCell: newMasterCell
+        };
+      })
+    );
+  }
+
+  /**
+   * Ajusta referências de merge quando uma coluna é removida
+   */
+  private static adjustMergeReferencesForColumnRemoval(
+    data: CellData[][],
+    removeIndex: number
+  ): CellData[][] {
+    return data.map(row =>
+      row.map(cell => {
+        if (!cell.merged || !cell.mergeRange || !cell.masterCell) {
+          return cell;
+        }
+
+        const newMergeRange = { ...cell.mergeRange };
+        const newMasterCell = { ...cell.masterCell };
+
+        // Ajustar startCol e endCol se necessário
+        if (cell.mergeRange.startCol > removeIndex) {
+          newMergeRange.startCol--;
+        }
+        if (cell.mergeRange.endCol > removeIndex) {
+          newMergeRange.endCol--;
+        }
+
+        // Ajustar masterCell col se necessário
+        if (cell.masterCell.col > removeIndex) {
+          newMasterCell.col--;
+        }
+
+        return {
+          ...cell,
+          mergeRange: newMergeRange,
+          masterCell: newMasterCell
+        };
+      })
+    );
+  }
+
+  /**
+   * Ajusta referências de merge quando uma linha é inserida
+   */
+  private static adjustMergeReferencesForRowInsert(
+    data: CellData[][],
+    insertIndex: number
+  ): CellData[][] {
+    return data.map(row =>
+      row.map(cell => {
+        if (!cell.merged || !cell.mergeRange || !cell.masterCell) {
+          return cell;
+        }
+
+        const newMergeRange = { ...cell.mergeRange };
+        const newMasterCell = { ...cell.masterCell };
+
+        // Ajustar startRow e endRow se necessário
+        if (cell.mergeRange.startRow >= insertIndex) {
+          newMergeRange.startRow++;
+        }
+        if (cell.mergeRange.endRow >= insertIndex) {
+          newMergeRange.endRow++;
+        }
+
+        // Ajustar masterCell row se necessário
+        if (cell.masterCell.row >= insertIndex) {
+          newMasterCell.row++;
+        }
+
+        return {
+          ...cell,
+          mergeRange: newMergeRange,
+          masterCell: newMasterCell
+        };
+      })
+    );
+  }
+
+  /**
+   * Ajusta referências de merge quando uma linha é removida
+   */
+  private static adjustMergeReferencesForRowRemoval(
+    data: CellData[][],
+    removeIndex: number
+  ): CellData[][] {
+    return data.map(row =>
+      row.map(cell => {
+        if (!cell.merged || !cell.mergeRange || !cell.masterCell) {
+          return cell;
+        }
+
+        const newMergeRange = { ...cell.mergeRange };
+        const newMasterCell = { ...cell.masterCell };
+
+        // Ajustar startRow e endRow se necessário
+        if (cell.mergeRange.startRow > removeIndex) {
+          newMergeRange.startRow--;
+        }
+        if (cell.mergeRange.endRow > removeIndex) {
+          newMergeRange.endRow--;
+        }
+
+        // Ajustar masterCell row se necessário
+        if (cell.masterCell.row > removeIndex) {
+          newMasterCell.row--;
+        }
+
+        return {
+          ...cell,
+          mergeRange: newMergeRange,
+          masterCell: newMasterCell
+        };
+      })
+    );
+  }
+
+  /**
+   * Verifica conflitos de merge ao remover uma coluna
+   */
+  private static checkColumnMergeConflicts(
+    data: CellData[][],
+    removeIndex: number
+  ): Array<{ range: string; mergeRange: any }> {
+    const conflicts: Array<{ range: string; mergeRange: any }> = [];
+    const processedMerges = new Set<string>();
+
+    data.forEach((row) => {
+      row.forEach((cell) => {
+        if (cell.merged && cell.mergeRange && cell.masterCell) {
+          const mergeKey = `${cell.masterCell.row}-${cell.masterCell.col}`;
+          
+          if (!processedMerges.has(mergeKey)) {
+            processedMerges.add(mergeKey);
+            
+            const { startCol, endCol, startRow, endRow } = cell.mergeRange;
+            
+            // Verificar se o merge cruza a coluna a ser removida
+            if (startCol <= removeIndex && endCol >= removeIndex) {
+              conflicts.push({
+                range: `${this.getColumnLabel(startCol)}${startRow + 1}:${this.getColumnLabel(endCol)}${endRow + 1}`,
+                mergeRange: cell.mergeRange
+              });
+            }
+          }
+        }
+      });
+    });
+
+    return conflicts;
+  }
+
+  /**
+   * Verifica conflitos de merge ao remover uma linha
+   */
+  private static checkRowMergeConflicts(
+    data: CellData[][],
+    removeIndex: number
+  ): Array<{ range: string; mergeRange: any }> {
+    const conflicts: Array<{ range: string; mergeRange: any }> = [];
+    const processedMerges = new Set<string>();
+
+    data.forEach((row) => {
+      row.forEach((cell) => {
+        if (cell.merged && cell.mergeRange && cell.masterCell) {
+          const mergeKey = `${cell.masterCell.row}-${cell.masterCell.col}`;
+          
+          if (!processedMerges.has(mergeKey)) {
+            processedMerges.add(mergeKey);
+            
+            const { startCol, endCol, startRow, endRow } = cell.mergeRange;
+            
+            // Verificar se o merge cruza a linha a ser removida
+            if (startRow <= removeIndex && endRow >= removeIndex) {
+              conflicts.push({
+                range: `${this.getColumnLabel(startCol)}${startRow + 1}:${this.getColumnLabel(endCol)}${endRow + 1}`,
+                mergeRange: cell.mergeRange
+              });
+            }
+          }
+        }
+      });
+    });
+
+    return conflicts;
+  }
+
+  /**
+   * Desmescla células afetadas pela remoção de uma coluna
+   */
+  private static handleMergeConflictsForColumnRemoval(
+    data: CellData[][],
+    removeIndex: number
+  ): CellData[][] {
+    const newData = data.map(row => row.map(cell => ({ ...cell })));
+    
+    // Encontrar e desmesclar células afetadas
+    const processedMerges = new Set<string>();
+    
+    newData.forEach((row) => {
+      row.forEach((cell) => {
+        if (cell.merged && cell.mergeRange && cell.masterCell) {
+          const mergeKey = `${cell.masterCell.row}-${cell.masterCell.col}`;
+          
+          if (!processedMerges.has(mergeKey)) {
+            processedMerges.add(mergeKey);
+            
+            const { startCol, endCol, startRow, endRow } = cell.mergeRange;
+            
+            // Se o merge cruza a coluna a ser removida, desmesclar
+            if (startCol <= removeIndex && endCol >= removeIndex) {
+              this.unmergeCellsInRange(newData, startRow, startCol, endRow, endCol);
+            }
+          }
+        }
+      });
+    });
+
+    return newData;
+  }
+
+  /**
+   * Desmescla células afetadas pela remoção de uma linha
+   */
+  private static handleMergeConflictsForRowRemoval(
+    data: CellData[][],
+    removeIndex: number
+  ): CellData[][] {
+    const newData = data.map(row => row.map(cell => ({ ...cell })));
+    
+    // Encontrar e desmesclar células afetadas
+    const processedMerges = new Set<string>();
+    
+    newData.forEach((row) => {
+      row.forEach((cell) => {
+        if (cell.merged && cell.mergeRange && cell.masterCell) {
+          const mergeKey = `${cell.masterCell.row}-${cell.masterCell.col}`;
+          
+          if (!processedMerges.has(mergeKey)) {
+            processedMerges.add(mergeKey);
+            
+            const { startCol, endCol, startRow, endRow } = cell.mergeRange;
+            
+            // Se o merge cruza a linha a ser removida, desmesclar
+            if (startRow <= removeIndex && endRow >= removeIndex) {
+              this.unmergeCellsInRange(newData, startRow, startCol, endRow, endCol);
+            }
+          }
+        }
+      });
+    });
+
+    return newData;
+  }
+
+  /**
+   * Desmescla células em um intervalo específico
+   */
+  private static unmergeCellsInRange(
+    data: CellData[][],
+    startRow: number,
+    startCol: number,
+    endRow: number,
+    endCol: number
+  ): void {
+    // Encontrar a célula master
+    const masterCell = data[startRow]?.[startCol];
+    if (!masterCell) return;
+
+    // Preservar o valor da célula master
+    const masterValue = masterCell.value;
+    const masterFormula = masterCell.formula;
+    const masterComputedValue = masterCell.computed_value;
+    const masterIsFormula = masterCell.is_formula;
+    const masterStyle = masterCell.style;
+    const masterMedia = masterCell.media;
+
+    // Desmesclar todas as células no intervalo
+    for (let row = startRow; row <= endRow; row++) {
+      for (let col = startCol; col <= endCol; col++) {
+        if (data[row]?.[col]) {
+          if (row === startRow && col === startCol) {
+            // Célula master - manter dados mas remover merge
+            data[row][col] = {
+              ...data[row][col],
+              value: masterValue,
+              formula: masterFormula,
+              computed_value: masterComputedValue,
+              is_formula: masterIsFormula,
+              style: masterStyle,
+              media: masterMedia,
+              merged: false,
+              masterCell: undefined,
+              mergeRange: undefined
+            };
+          } else {
+            // Células secundárias - limpar
+            data[row][col] = {
+              ...data[row][col],
+              value: '',
+              formula: null,
+              computed_value: null,
+              is_formula: false,
+              merged: false,
+              masterCell: undefined,
+              mergeRange: undefined,
+              style: {},
+              media: undefined
+            };
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Converte índice de coluna para label (A, B, C, ...)
+   */
+  private static getColumnLabel(index: number): string {
+    let result = '';
+    let num = index;
+    
+    while (num >= 0) {
+      result = String.fromCharCode(65 + (num % 26)) + result;
+      num = Math.floor(num / 26) - 1;
+    }
+    
+    return result;
+  }
+
+  /**
+   * Valida se uma operação de inserção/remoção é possível
+   */
+  static validateOperation(
+    operation: 'insert' | 'remove',
+    type: 'row' | 'column',
+    index: number,
+    currentCount: number
+  ): { isValid: boolean; error?: string } {
+    if (operation === 'remove' && currentCount <= 1) {
+      return {
+        isValid: false,
+        error: `Não é possível remover a última ${type === 'row' ? 'linha' : 'coluna'}`
+      };
+    }
+
+    if (index < 0 || (operation === 'remove' && index >= currentCount)) {
+      return {
+        isValid: false,
+        error: `Índice ${index} fora dos limites`
+      };
+    }
+
+    if (operation === 'insert' && index > currentCount) {
+      return {
+        isValid: false,
+        error: `Índice de inserção ${index} fora dos limites`
+      };
+    }
+
+    return { isValid: true };
+  }
+
+  /**
+   * Atualiza referências de células em fórmulas após inserção/remoção
+   */
+  static updateCellReferences(
+    data: CellData[][],
+
+  ): CellData[][] {
+    return data.map(row =>
+      row.map(cell => {
+        if (!cell.formula || !cell.is_formula) return cell;
+
+        // Aqui você pode implementar a lógica para atualizar referências
+        // Por exemplo, se inserir uma coluna na posição 2, todas as referências
+        // para colunas >= 2 devem ser incrementadas
+        
+        // Esta é uma implementação simplificada
+        let updatedFormula = cell.formula;
+        
+        // TODO: Implementar lógica completa de atualização de referências
+        // Isso requereria parsing da fórmula e atualização das referências
+        
+        return {
+          ...cell,
+          formula: updatedFormula
+        };
+      })
+    );
+  }
+}
+// Utilitários para fórmulas (mantidos do arquivo original)
 export class FormattingUtils {
   /**
    * Formatos de número predefinidos
@@ -1074,6 +2076,8 @@ export class FormattingUtils {
   }
 }
 
+
+
 // Exportar todas as classes como um objeto padrão
 export default {
   CellReferenceUtils,
@@ -1081,5 +2085,6 @@ export default {
   CellMergeUtils,
   FormulaEvaluationUtils,
   SpreadsheetDataUtils,
-  FormattingUtils
+  FormattingUtils,
+  SpreadsheetOperationUtils
 };

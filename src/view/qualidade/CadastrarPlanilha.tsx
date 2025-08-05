@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { CellMergeUtils, CellReferenceUtils } from './SpreadsheetUtils'; // Importe as classes necessárias
+import { CellMergeUtils, CellReferenceUtils, SpreadsheetOperationUtils } from './SpreadsheetUtils'; // Importe as classes necessárias
 
 import {
   Save,
@@ -41,7 +41,11 @@ import {
   Database,
   Edit3,
   Lock,
-  User
+  User,
+  Undo,
+  Redo,
+  ArrowLeft,
+  Check,
   
 } from 'lucide-react';
 import styles from './styles/cadastrarplanilha.module.css';
@@ -84,6 +88,23 @@ interface TemplateData2 {
   json_data_base64?: string;
   updated_at: string | null; // O backend pode retornar uma string de data ou null
 }
+interface UndoRedoState {
+  data: CellData[][];
+  selectedCells: CellSelection[];
+  columnWidths: number[];
+  rowHeights: number[];
+  timestamp: Date;
+  action: string;
+}
+
+interface CopiedCellData {
+  value: string;
+  style?: CellStyle;
+  media?: CellMedia;
+  formula?: string | null;
+  is_formula?: boolean;
+}
+
 
 interface SaveTemplateData {
   tipo: 'template' | 'planilha_padrao';
@@ -106,7 +127,7 @@ interface CellMedia {
   alt?: string;
   title?: string;
   tableData?: string[][]; // Para tabelas
-  x?: number; // Posição X da imagem dentro da célula (em pixels ou porcentagem)
+  x?: number; // Posição X da imagem dentro da célula (em pixels ou porcentagem)f
   y?: number; // Posição Y da imagem dentro da célula (em pixels ou porcentagem)
   width?: number; // Largura da imagem (em pixels ou porcentagem)
   height?: number; // Altura da imagem (em pixels ou porcentagem)
@@ -201,6 +222,13 @@ interface UserValidation {
   senha: string;
 }
 
+interface FormulaDragState {
+  isDragging: boolean;
+  startCell: { row: number; col: number } | null;
+  currentCell: { row: number; col: number } | null;
+  dragRange: CellRange | null;
+}
+
 export const CadastrarPlanilha: React.FC = () => {
   const [spreadsheetName, setSpreadsheetName] = useState('Nova Planilha');
   const [rows, setRows] = useState(20);
@@ -214,7 +242,11 @@ export const CadastrarPlanilha: React.FC = () => {
   const [isPrintAreaMode, setIsPrintAreaMode] = useState(false);
   const [isSelectingPrintArea, setIsSelectingPrintArea] = useState(false);
   const [printAreaRange, setPrintAreaRange] = useState<CellRange | null>(null);
-  
+    const [undoStack, setUndoStack] = useState<UndoRedoState[]>([]);
+  const [redoStack, setRedoStack] = useState<UndoRedoState[]>([]);
+  const [maxUndoSteps] = useState(50); // Limite de passos no histórico
+    const [copiedCells, setCopiedCells] = useState<CopiedCellData[][]>([]);
+
   
   const [columnWidths, setColumnWidths] = useState<number[]>(() => Array(20).fill(100));
   const [rowHeights, setRowHeights] = useState<number[]>(() => Array(20).fill(32));
@@ -248,6 +280,31 @@ export const CadastrarPlanilha: React.FC = () => {
     usuario: '',
     senha: ''
   });
+    const addToHistory = useCallback(async (action: string, details: string) => {
+    try {
+      const usuario = await invoke<string>('get_usuario_nome');
+      const detailsWithUser = usuario ? `${details} - Usuário: ${usuario}` : details;
+      
+      const newEntry: HistoryEntry = {
+        timestamp: new Date(),
+        action,
+        details: detailsWithUser
+      };
+      
+      setHistory(prev => [newEntry, ...prev].slice(0, 50));
+    } catch (error) {
+      console.error('Erro ao obter nome do usuário:', error);
+      
+      // Fallback: adiciona entrada sem o nome do usuário
+      const newEntry: HistoryEntry = {
+        timestamp: new Date(),
+        action,
+        details
+      };
+      
+      setHistory(prev => [newEntry, ...prev].slice(0, 50));
+    }
+  }, []);
   const [validationError, setValidationError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
   // Estados para configuração de tabela
@@ -256,7 +313,12 @@ export const CadastrarPlanilha: React.FC = () => {
     cols: 3,
     selectedTemplate: 0
   });
-
+  const [formulaDrag, setFormulaDrag] = useState<FormulaDragState>({
+    isDragging: false,
+    startCell: null,
+    currentCell: null,
+    dragRange: null
+  });
   // Templates de estilo para tabelas
   const tableTemplates = [
     {
@@ -308,6 +370,8 @@ export const CadastrarPlanilha: React.FC = () => {
       alternateRowStyle: { backgroundColor: '#d1ecf1', color: '#212529', border: '1px solid #dee2e6' }
     }
   ];
+
+  
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1); // Estado para controle de zoom
@@ -344,7 +408,24 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
   const [editingHistoryValue, setEditingHistoryValue] = useState('');
   const [showFormulaModal, setShowFormulaModal] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
-  
+    const saveStateToUndo = useCallback((action: string) => {
+    const currentState: UndoRedoState = {
+      data: JSON.parse(JSON.stringify(data)), // Deep copy
+      selectedCells: [...selectedCells],
+      columnWidths: [...columnWidths],
+      rowHeights: [...rowHeights],
+      timestamp: new Date(),
+      action
+    };
+
+    setUndoStack(prev => {
+      const newStack = [currentState, ...prev];
+      return newStack.slice(0, maxUndoSteps); // Limitar tamanho do stack
+    });
+
+    // Limpar redo stack quando uma nova ação é feita
+    setRedoStack([]);
+  }, [data, selectedCells, columnWidths, rowHeights, maxUndoSteps]);
   // Estados para modal de mensagens
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModal, setMessageModal] = useState<{
@@ -356,7 +437,87 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
     title: '',
     message: ''
   });
-  
+    const handleUndo = useCallback(() => {
+    if (undoStack.length === 0) return;
+
+    const [stateToRestore, ...remainingUndo] = undoStack;
+    
+    // Salvar estado atual no redo stack
+    const currentState: UndoRedoState = {
+      data: JSON.parse(JSON.stringify(data)),
+      selectedCells: [...selectedCells],
+      columnWidths: [...columnWidths],
+      rowHeights: [...rowHeights],
+      timestamp: new Date(),
+      action: 'Redo point'
+    };
+
+    setRedoStack(prev => [currentState, ...prev].slice(0, maxUndoSteps));
+    setUndoStack(remainingUndo);
+
+    // Restaurar estado
+    setData(stateToRestore.data);
+    setSelectedCells(stateToRestore.selectedCells);
+    setColumnWidths(stateToRestore.columnWidths);
+    setRowHeights(stateToRestore.rowHeights);
+
+    addToHistory('Desfazer', `Ação desfeita: ${stateToRestore.action}`);
+  }, [undoStack, data, selectedCells, columnWidths, rowHeights, maxUndoSteps, addToHistory]);
+
+  const handleRedo = useCallback(() => {
+    if (redoStack.length === 0) return;
+
+    const [stateToRestore, ...remainingRedo] = redoStack;
+    
+    // Salvar estado atual no undo stack
+    const currentState: UndoRedoState = {
+      data: JSON.parse(JSON.stringify(data)),
+      selectedCells: [...selectedCells],
+      columnWidths: [...columnWidths],
+      rowHeights: [...rowHeights],
+      timestamp: new Date(),
+      action: 'Undo point'
+    };
+
+    setUndoStack(prev => [currentState, ...prev].slice(0, maxUndoSteps));
+    setRedoStack(remainingRedo);
+
+    // Restaurar estado
+    setData(stateToRestore.data);
+    setSelectedCells(stateToRestore.selectedCells);
+    setColumnWidths(stateToRestore.columnWidths);
+    setRowHeights(stateToRestore.rowHeights);
+
+    addToHistory('Refazer', `Ação refeita: ${stateToRestore.action}`);
+  }, [redoStack, data, selectedCells, columnWidths, rowHeights, maxUndoSteps, addToHistory]);
+
+  // Função para confirmar ação (Ctrl+Enter)
+
+    const handleGoBack = useCallback(() => {
+    // Implementar lógica de navegação - pode ser voltar para uma tela anterior
+    // ou limpar seleções atuais
+    if (selectedCells.length > 0) {
+      setSelectedCells([]);
+      setSelectionRange(null);
+      setFormulaBarValue('');
+      addToHistory('Voltar', 'Seleção limpa');
+    } else if (showMediaModal) {
+      setShowMediaModal(false);
+    } else if (showHistoryModal) {
+      setShowHistoryModal(false);
+    } else if (showFormulaModal) {
+      setShowFormulaModal(false);
+    } else if (showSaveTemplateModal) {
+      setShowSaveTemplateModal(false);
+    } else if (showUserValidationModal) {
+      setShowUserValidationModal(false);
+    } else {
+      // Aqui você pode implementar navegação para tela anterior
+      // Por exemplo, emitir um evento para o componente pai
+      emit('navigate_back');
+    }
+  }, [selectedCells, showMediaModal, showHistoryModal, showFormulaModal, showSaveTemplateModal, showUserValidationModal]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const xlsxInputRef = useRef<HTMLInputElement>(null);
@@ -372,7 +533,57 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
   const [formulaCategories, setFormulaCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('Todas');
   const formulaBarRef = useRef<HTMLInputElement>(null);
+    const handleConfirmAction = useCallback(() => {
+    if (selectedCells.length === 0) return;
+
+    // Aplicar fórmula ou valor da barra de fórmulas
+    if (formulaBarValue.trim()) {
+      const newData = [...data];
+      selectedCells.forEach(cell => {
+        const { row, col } = cell;
+        if (newData[row] && newData[row][col]) {
+          saveStateToUndo('Confirmar entrada');
+          newData[row][col] = {
+            ...newData[row][col],
+            value: formulaBarValue,
+            is_formula: formulaBarValue.startsWith('='),
+            formula: formulaBarValue.startsWith('=') ? formulaBarValue.substring(1) : null
+          };
+        }
+      });
+      setData(newData);
+      setFormulaBarValue('');
+      addToHistory('Confirmar', `Valor confirmado em ${selectedCells.length} célula(s)`);
+    }
+  }, [selectedCells, formulaBarValue, data, saveStateToUndo]);
+
+  
     const handleKeyDown = useCallback((event: KeyboardEvent) => {
+          // Ctrl+Z - Desfazer
+    if (event.ctrlKey && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault();
+      handleUndo();
+      return;
+    }
+
+    // Ctrl+Y, Ctrl+R ou Ctrl+Shift+Z - Refazer
+    if ((event.ctrlKey && event.key === 'y') || (event.ctrlKey && event.key === 'r') || (event.ctrlKey && event.shiftKey && event.key === 'z')) {
+      event.preventDefault();
+      handleRedo();
+      return;
+    }
+        if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+      handleConfirmAction();
+      return;
+    }
+
+    // Escape - Voltar/Cancelar
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      handleGoBack();
+      return;
+    }
     if (event.ctrlKey && event.shiftKey && event.key === 'B' && showHistoryModal) {
       event.preventDefault();
       setIsHistoryEditMode(prev => !prev);
@@ -383,8 +594,30 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
         setEditingHistoryValue('');
       }
     }
-  }, [showHistoryModal, isHistoryEditMode]);
+  }, [handleUndo, handleRedo, handleConfirmAction, handleGoBack, showHistoryModal, isHistoryEditMode]);
+const incrementCellReferences = useCallback((formula: string, rowOffset: number, colOffset: number): string => {
 
+    
+    // Regex para encontrar referências de células (ex: A1, B2, etc.)
+    const cellRefRegex = /([A-Z]+)(\d+)/g;
+    
+    return formula.replace(cellRefRegex, (match, colStr, rowStr) => {
+      const colIndex = CellReferenceUtils.getColumnIndex(colStr);
+      const rowIndex = parseInt(rowStr) - 1;
+      
+      const newColIndex = colIndex + colOffset;
+      const newRowIndex = rowIndex + rowOffset;
+      
+      // Verificar se as novas coordenadas são válidas
+      if (newColIndex >= 0 && newRowIndex >= 0 && newColIndex < cols && newRowIndex < rows) {
+        const newColStr = CellReferenceUtils.getColumnLabel(newColIndex);
+        const newRowStr = (newRowIndex + 1).toString();
+        return newColStr + newRowStr;
+      }
+      
+      return match; // Retornar a referência original se inválida
+    });
+  }, [cols, rows]);
   // Adicionar listener para o atalho de teclado
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
@@ -395,36 +628,319 @@ const [editingHistoryField, setEditingHistoryField] = useState<'action' | 'detai
 
   // Função para salvar edição do histórico
   // Função para cancelar edição do histórico
+    const copyCells = useCallback(() => {
+    if (selectedCells.length === 0) {
+      showMessage('info', 'Nenhuma Seleção', 'Selecione células para copiar.');
+      return;
+    }
+
+    // Determinar o range das células selecionadas
+    const rows = selectedCells.map(c => c.row);
+    const cols = selectedCells.map(c => c.col);
+    const minRow = Math.min(...rows);
+    const maxRow = Math.max(...rows);
+    const minCol = Math.min(...cols);
+    const maxCol = Math.max(...cols);
+
+   
+
+    // Copiar dados das células
+    const copied: CopiedCellData[][] = [];
+    for (let row = minRow; row <= maxRow; row++) {
+      const copiedRow: CopiedCellData[] = [];
+      for (let col = minCol; col <= maxCol; col++) {
+        const cell = data[row]?.[col];
+        if (cell) {
+          copiedRow.push({
+            value: cell.value,
+            style: cell.style ? { ...cell.style } : undefined,
+            media: cell.media ? { ...cell.media } : undefined,
+            formula: cell.formula,
+            is_formula: cell.is_formula
+          });
+        } else {
+          copiedRow.push({ value: '' });
+        }
+      }
+      copied.push(copiedRow);
+    }
+
+    setCopiedCells(copied);
+
+
+    const cellCount = selectedCells.length;
+    addToHistory('Copiar Células', `${cellCount} célula(s) copiada(s)`);
+    
+ 
+  }, [selectedCells, data, addToHistory]);
+  const handleImageDragStart = useCallback((e: React.DragEvent, rowIndex: number, colIndex: number) => {
+    const cell = data[rowIndex][colIndex];
+    if (cell.media && cell.media.type === 'image') {
+      setDraggedImage({
+        media: cell.media,
+        fromCell: { row: rowIndex, col: colIndex }
+      });
+      
+      // Definir dados do drag
+      e.dataTransfer.setData('text/plain', `image-${rowIndex}-${colIndex}`);
+      e.dataTransfer.effectAllowed = 'move';
+      
+      // Adicionar feedback visual
+      if (e.currentTarget instanceof HTMLElement) {
+        e.currentTarget.style.opacity = '0.5';
+      }
+    }
+  }, [data]);
+
+
+    const handleImageDragEnd = useCallback((e: React.DragEvent) => {
+    // Restaurar opacidade
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+    setDraggedImage(null);
+  }, []);
+
+
+    // Função para colar células
+  const pasteCells = useCallback(() => {
+    if (copiedCells.length === 0 || selectedCells.length === 0) {
+      showMessage('info', 'Nada para Colar', 'Copie células primeiro ou selecione onde colar.');
+      return;
+    }
+
+    const targetCell = selectedCells[0]; // Usar primeira célula selecionada como ponto de início
+    const pasteStartRow = targetCell.row;
+    const pasteStartCol = targetCell.col;
+
+    // Verificar se há espaço suficiente
+    const pasteEndRow = pasteStartRow + copiedCells.length - 1;
+    const pasteEndCol = pasteStartCol + (copiedCells[0]?.length || 0) - 1;
+
+    if (pasteEndRow >= rows || pasteEndCol >= cols) {
+
+      return;
+    }
+
+    // Salvar estado para undo
+    saveStateToUndo('Colar células');
+
+    // Colar dados
+    setData(prevData => {
+      const newData = prevData.map(row => [...row]);
+      
+      for (let i = 0; i < copiedCells.length; i++) {
+        for (let j = 0; j < copiedCells[i].length; j++) {
+          const targetRow = pasteStartRow + i;
+          const targetCol = pasteStartCol + j;
+          const copiedCell = copiedCells[i][j];
+          
+          if (newData[targetRow] && newData[targetRow][targetCol]) {
+            newData[targetRow][targetCol] = {
+              ...newData[targetRow][targetCol],
+              value: copiedCell.value,
+              style: copiedCell.style ? { ...copiedCell.style } : {},
+              media: copiedCell.media ? { ...copiedCell.media } : undefined,
+              formula: copiedCell.formula,
+              is_formula: copiedCell.is_formula || false
+            };
+          }
+        }
+      }
+      
+      return newData;
+    });
+
+    const cellCount = copiedCells.length * (copiedCells[0]?.length || 0);
+    addToHistory('Colar Células', `${cellCount} célula(s) colada(s)`);
+    
+  }, [copiedCells, selectedCells, rows, cols, saveStateToUndo, addToHistory]);
+
+  // Função para manipular eventos de teclado globais
+  const handleGlobalKeyDown = useCallback((event: KeyboardEvent) => {
+    // Ctrl+C para copiar
+    if (event.ctrlKey && event.key === 'c' && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      copyCells();
+      return;
+    }
+    
+ if (event.ctrlKey && event.key === 'n' && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      toggleBold();
+      return;
+    }
+    // Ctrl+V para colar
+    if (event.ctrlKey && event.key === 'v' && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      pasteCells();
+      return;
+    }
+
+    // Ctrl+Z para desfazer
+    if (event.ctrlKey && event.key === 'z' && !event.shiftKey && !event.altKey) {
+      event.preventDefault();
+      handleUndo();
+      return;
+    }
+
+    // Ctrl+Y ou Ctrl+Shift+Z para refazer
+    if ((event.ctrlKey && event.key === 'y') || (event.ctrlKey && event.shiftKey && event.key === 'z')) {
+      event.preventDefault();
+      handleRedo();
+      return;
+    }
+  }, [copyCells, pasteCells]);
   const cancelHistoryEdit = useCallback(() => {
     setEditingHistoryIndex(null);
     setEditingHistoryField(null);
     setEditingHistoryValue('');
   }, []);
-  const addToHistory = useCallback(async (action: string, details: string) => {
-    try {
-      const usuario = await invoke<string>('get_usuario_nome');
-      const detailsWithUser = usuario ? `${details} - Usuário: ${usuario}` : details;
-      
-      const newEntry: HistoryEntry = {
-        timestamp: new Date(),
-        action,
-        details: detailsWithUser
-      };
-      
-      setHistory(prev => [newEntry, ...prev].slice(0, 50));
-    } catch (error) {
-      console.error('Erro ao obter nome do usuário:', error);
-      
-      // Fallback: adiciona entrada sem o nome do usuário
-      const newEntry: HistoryEntry = {
-        timestamp: new Date(),
-        action,
-        details
-      };
-      
-      setHistory(prev => [newEntry, ...prev].slice(0, 50));
+  useEffect(() => {
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [handleGlobalKeyDown]);
+  const handleFormulaDragStart = useCallback((row: number, col: number, event: React.MouseEvent) => {
+    const cell = data[row]?.[col];
+    if (!cell || (!cell.formula && !cell.is_formula)) return;
+    
+    event.preventDefault();
+    
+    setFormulaDrag({
+      isDragging: true,
+      startCell: { row, col },
+      currentCell: { row, col },
+      dragRange: { startRow: row, startCol: col, endRow: row, endCol: col }
+    });
+    
+    // Salvar estado para undo
+    saveStateToUndo('Arrastar fórmula');
+  }, [data, saveStateToUndo]);
+
+   const handleFormulaDragMove = useCallback((row: number, col: number) => {
+    if (!formulaDrag.isDragging || !formulaDrag.startCell) return;
+    
+    const startRow = formulaDrag.startCell.row;
+    const startCol = formulaDrag.startCell.col;
+    
+    // Calcular o range do drag
+    const dragRange: CellRange = {
+      startRow: Math.min(startRow, row),
+      startCol: Math.min(startCol, col),
+      endRow: Math.max(startRow, row),
+      endCol: Math.max(startCol, col)
+    };
+    
+    setFormulaDrag(prev => ({
+      ...prev,
+      currentCell: { row, col },
+      dragRange
+    }));
+  }, [formulaDrag.isDragging, formulaDrag.startCell]);
+
+  // Função para finalizar o drag de fórmulas
+  const handleFormulaDragEnd = useCallback(() => {
+    if (!formulaDrag.isDragging || !formulaDrag.startCell || !formulaDrag.dragRange) {
+      setFormulaDrag({
+        isDragging: false,
+        startCell: null,
+        currentCell: null,
+        dragRange: null
+      });
+      return;
     }
-  }, []);
+    
+    const startCell = formulaDrag.startCell;
+    const dragRange = formulaDrag.dragRange;
+    const sourceCell = data[startCell.row]?.[startCell.col];
+    
+    if (!sourceCell || (!sourceCell.formula && !sourceCell.is_formula)) {
+      setFormulaDrag({
+        isDragging: false,
+        startCell: null,
+        currentCell: null,
+        dragRange: null
+      });
+      return;
+    }
+    
+    // Criar nova matriz de dados com as fórmulas copiadas
+    const newData = [...data];
+    
+    for (let row = dragRange.startRow; row <= dragRange.endRow; row++) {
+      for (let col = dragRange.startCol; col <= dragRange.endCol; col++) {
+        // Pular a célula original
+        if (row === startCell.row && col === startCell.col) continue;
+        
+        const rowOffset = row - startCell.row;
+        const colOffset = col - startCell.col;
+        
+        // Incrementar as referências na fórmula
+        const originalFormula = sourceCell.formula || sourceCell.value;
+        const newFormula = incrementCellReferences(originalFormula, rowOffset, colOffset);
+        
+        // Atualizar a célula
+        if (!newData[row]) {
+
+          newData[row] = Array(cols).fill(null).map((_, colIndex) => ({
+            value: '',
+            id: `cell-${row}-${colIndex}`,
+            formula: null,
+            computed_value: null,
+            error: null,
+            is_formula: false,
+            style: {}
+          }));
+       
+        }
+      
+           updateCell(row, col, newFormula, true);
+
+      }
+    }
+    
+    setData(newData);
+    
+    // Adicionar ao histórico
+    const cellCount = (dragRange.endRow - dragRange.startRow + 1) * (dragRange.endCol - dragRange.startCol + 1) - 1;
+    addToHistory('Arrastar fórmula', `Fórmula copiada para ${cellCount} células`);
+    
+    // Limpar estado do drag
+    setFormulaDrag({
+      isDragging: false,
+      startCell: null,
+      currentCell: null,
+      dragRange: null
+    });
+  }, [formulaDrag, data, cols, incrementCellReferences, addToHistory]);
+
+  // Event listeners para mouse
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (formulaDrag.isDragging) {
+        handleFormulaDragEnd();
+      }
+
+    };
+    
+    document.addEventListener('mouseup', handleMouseUp);
+    return () => document.removeEventListener('mouseup', handleMouseUp);
+  }, [formulaDrag.isDragging, handleFormulaDragEnd]);
+
+  // Função para verificar se uma célula está no range de drag
+  const isCellInDragRange = useCallback((row: number, col: number): boolean => {
+    if (!formulaDrag.dragRange) return false;
+    
+    return row >= formulaDrag.dragRange.startRow &&
+           row <= formulaDrag.dragRange.endRow &&
+           col >= formulaDrag.dragRange.startCol &&
+           col <= formulaDrag.dragRange.endCol;
+  }, [formulaDrag.dragRange]);
+
+  // Função para r
+
     const validateUser = useCallback(async (usuario: string, senha: string): Promise<boolean> => {
     try {
       setIsValidating(true);
@@ -1573,6 +2089,8 @@ const renderHistoryModal = () => {
     }
   }, [draggedImage, addToHistory]);
 
+
+  
   // Função para lidar com mouse up global
   const handleMouseUp = useCallback(() => {
     setIsSelecting(false);
@@ -1588,15 +2106,20 @@ const renderHistoryModal = () => {
   }, [printArea]);
 
   // Resto das funções existentes (mantendo todas as funções originais)
+
+  
   const updateCell = useCallback(async (rowIndex: number, colIndex: number, value: string, isFormula: boolean = false) => {
     const cellRef = getCellReference(rowIndex, colIndex);
     const oldCell = data[rowIndex][colIndex];
+    
+    // Salvar estado antes da modificação para permitir undo
+    saveStateToUndo(`Editar célula ${cellRef}`);
     
     try {
       if (isFormula || value.startsWith('=')) {
         // É uma fórmula
         const formulaValue = value.startsWith('=') ? value.substring(1) : value;
-        
+
         // Preparar dados das células para o backend
         const cellData: Record<string, string> = {};
         data.forEach((row, r) => {
@@ -1843,6 +2366,12 @@ const renderHistoryModal = () => {
   const updateSelectedCellsStyle = useCallback((styleUpdate: Partial<CellStyle>) => {
     if (selectedCells.length === 0) return;
 
+    // Salvar estado antes da modificação para permitir undo
+    const cellsText = selectedCells.length === 1 
+      ? `Célula ${getColumnLabel(selectedCells[0].col)}${selectedCells[0].row + 1}`
+      : `${selectedCells.length} células`;
+    saveStateToUndo(`Formatar ${cellsText}`);
+
     setData(prevData => {
       const newData = prevData.map(row => [...row]);
       
@@ -1857,27 +2386,46 @@ const renderHistoryModal = () => {
       
       return newData;
     });
-
-    const cellsText = selectedCells.length === 1 
-      ? `Célula ${getColumnLabel(selectedCells[0].col)}${selectedCells[0].row + 1}`
-      : `${selectedCells.length} células`;
     
     addToHistory('Formatação de Células', `${cellsText} formatadas`);
-  }, [selectedCells, addToHistory]);
+  }, [selectedCells, addToHistory, saveStateToUndo]);
 
-  const updateCellMedia = useCallback((rowIndex: number, colIndex: number, media: CellMedia) => {
+  const updateCellMedia = useCallback((rowIndex: number, colIndex: number, data: string) => {
+    // Salvar estado antes da modificação para permitir undo
+    saveStateToUndo(`Adicionar mídia à célula ${getColumnLabel(colIndex)}${rowIndex + 1}`);
+    
     setData(prevData => {
       const newData = prevData.map(row => [...row]);
-      newData[rowIndex][colIndex].media = media;
-      
-      addToHistory(
-        'Mídia Adicionada',
-        `${media.type} adicionada à célula ${getColumnLabel(colIndex)}${rowIndex + 1}`
-      );
-      
+
+      const newMedia: CellMedia = {
+        type: mediaType,
+        data: data,
+        url: mediaType === 'link' ? data : undefined,
+        alt: `Mídia na célula ${getColumnLabel(colIndex)}${rowIndex + 1}`,
+        width: 80,
+        height: 60,
+      };
+
+      newData[rowIndex][colIndex] = {
+        ...newData[rowIndex][colIndex],
+        media: newMedia,
+        value:
+          mediaType === 'image'
+            ? ''
+            : mediaType === 'video'
+            ? ''
+            : mediaType === 'audio'
+            ? ''
+            : mediaType === 'link'
+            ? newMedia.url || ''
+            : mediaType === 'table'
+            ? ''
+            : '',
+      };
+
       return newData;
     });
-  }, [addToHistory]);
+  }, [addToHistory, saveStateToUndo, mediaType]);
 
   const getColumnLabel = (index: number): string => {
     let label = '';
@@ -1889,9 +2437,6 @@ const renderHistoryModal = () => {
     return label;
   };
 
-  const isCellSelected = useCallback((rowIndex: number, colIndex: number): boolean => {
-    return selectedCells.some(cell => cell.row === rowIndex && cell.col === colIndex);
-  }, [selectedCells]);
 
   const isCellInRange = useCallback((rowIndex: number, colIndex: number): boolean => {
     if (!selectionRange) return false;
@@ -1993,6 +2538,9 @@ const renderHistoryModal = () => {
   }, [rows, cols]);
 
   const addRow = useCallback(() => {
+    // Salvar estado antes da modificação para permitir undo
+    saveStateToUndo(`Adicionar linha ${rows + 1}`);
+    
     setData(prevData => {
       const newRow = Array(cols).fill(null).map((_, colIndex) => ({
         value: '',
@@ -2008,9 +2556,12 @@ const renderHistoryModal = () => {
     });
     setRows(prev => prev + 1);
     setRowHeights(prev => [...prev, 32]);
-  }, [cols, rows, addToHistory]);
+  }, [cols, rows, addToHistory, saveStateToUndo]);
 
   const addColumn = useCallback(() => {
+    // Salvar estado antes da modificação para permitir undo
+    saveStateToUndo(`Adicionar coluna ${getColumnLabel(cols)}`);
+    
     setData(prevData => {
       const newData = prevData.map((row, rowIndex) => [
         ...row,
@@ -2029,10 +2580,13 @@ const renderHistoryModal = () => {
     });
     setCols(prev => prev + 1);
     setColumnWidths(prev => [...prev, 100]);
-  }, [cols, addToHistory]);
+  }, [cols, addToHistory, saveStateToUndo]);
 
   const removeRow = useCallback(() => {
     if (rows > 1) {
+      // Salvar estado antes da modificação para permitir undo
+      saveStateToUndo(`Remover linha ${rows}`);
+      
       setData(prevData => {
         const newData = prevData.slice(0, -1);
         addToHistory('Remover Linha', `Linha ${rows} removida`);
@@ -2041,10 +2595,13 @@ const renderHistoryModal = () => {
       setRows(prev => prev - 1);
       setRowHeights(prev => prev.slice(0, -1));
     }
-  }, [rows, addToHistory]);
+  }, [rows, addToHistory, saveStateToUndo]);
 
   const removeColumn = useCallback(() => {
     if (cols > 1) {
+      // Salvar estado antes da modificação para permitir undo
+      saveStateToUndo(`Remover coluna ${getColumnLabel(cols - 1)}`);
+      
       setData(prevData => {
         const newData = prevData.map(row => row.slice(0, -1));
         addToHistory('Remover Coluna', `Coluna ${getColumnLabel(cols - 1)} removida`);
@@ -2053,10 +2610,13 @@ const renderHistoryModal = () => {
       setCols(prev => prev - 1);
       setColumnWidths(prev => prev.slice(0, -1));
     }
-  }, [cols, addToHistory]);
+  }, [cols, addToHistory, saveStateToUndo]);
 
   const clearSpreadsheet = useCallback(() => {
     if (confirm('Tem certeza que deseja limpar toda a planilha?')) {
+      // Salvar estado antes da modificação para permitir undo
+      saveStateToUndo('Limpar planilha');
+      
       setData(prevData => 
         prevData.map(row => 
           row.map(cell => ({ 
@@ -2072,7 +2632,7 @@ const renderHistoryModal = () => {
       );
       addToHistory('Limpar Planilha', 'Todos os dados foram removidos');
     }
-  }, [addToHistory]);
+  }, [addToHistory, saveStateToUndo]);
 
   const saveAsTemplate = useCallback(() => {
     const template: SpreadsheetData = {
@@ -2421,19 +2981,11 @@ const renderHistoryModal = () => {
   const handleMediaUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || selectedCells.length === 0) return;
-
+const firstCell = selectedCells[0];
     const reader = new FileReader();
     reader.onload = (e) => {
-      const data = e.target?.result as string;
-      const media: CellMedia = {
-        type: mediaType,
-        data: data,
-        alt: file.name,
-        title: file.name
-      };
-      
-      const firstCell = selectedCells[0];
-      updateCellMedia(firstCell.row, firstCell.col, media);
+      const dataUrl = e.target?.result as string;
+      updateCellMedia(firstCell.row, firstCell.col, dataUrl);
       setShowMediaModal(false);
     };
     reader.readAsDataURL(file);
@@ -2442,51 +2994,43 @@ const renderHistoryModal = () => {
   const addMediaURL = useCallback((url: string) => {
     if (selectedCells.length === 0) return;
 
-    const media: CellMedia = {
-      type: mediaType,
-      url: url,
-      title: url
-    };
-    
     const firstCell = selectedCells[0];
-    updateCellMedia(firstCell.row, firstCell.col, media);
+    updateCellMedia(firstCell.row, firstCell.col, url);
     setShowMediaModal(false);
   }, [selectedCells, mediaType, updateCellMedia]);
 
   const createTable = useCallback(() => {
     if (selectedCells.length === 0) return;
 
+    // Salvar estado antes da modificação para permitir undo
+    const firstCell2 = selectedCells[0];
+    saveStateToUndo(`Criar tabela na célula ${getColumnLabel(firstCell2.col)}${firstCell2.row + 1}`);
+
     const template = tableTemplates[tableConfig.selectedTemplate];
-    const { rows: tableRows, cols: tableCols } = tableConfig;
+     const { rows: tableRows, cols: tableCols } = tableConfig;
     
-    // Criar dados da tabela com o template selecionado
-    const styledTableData: string[][] = [];
+    // Criar dados da tabela baseado na configuração
+    const tableData: string[][] = [];
+
     
-    for (let row = 0; row < tableRows; row++) {
-      const rowData: string[] = [];
-      for (let col = 0; col < tableCols; col++) {
-        if (row === 0) {
-          // Primeira linha (cabeçalho)
-          rowData.push(`Cabeçalho ${col + 1}`);
+    for (let i = 0; i < tableConfig.rows; i++) {
+      const row: string[] = [];
+      for (let j = 0; j < tableConfig.cols; j++) {
+        if (i === 0) {
+          row.push(`Cabeçalho ${j + 1}`);
         } else {
-          // Linhas de dados
-          rowData.push(`Linha ${row}, Col ${col + 1}`);
+          row.push(`Linha ${i}, Col ${j + 1}`);
         }
       }
-      styledTableData.push(rowData);
+      tableData.push(row);
     }
 
-    const media: CellMedia = {
-      type: 'table',
-      tableData: styledTableData
-    };
-    
-    const firstCell = selectedCells[0];
-    updateCellMedia(firstCell.row, firstCell.col, media);
-    
-    // Aplicar estilos às células da tabela na planilha
-    const startRow = firstCell.row;
-    const startCol = firstCell.col;
+    // Criar dados da mídia para a tabela
+    const tableMediaData = JSON.stringify(tableData);
+    updateCellMedia(firstCell2.row, firstCell2.col, tableMediaData);
+    setShowMediaModal(false); // Aplicar estilos às células da tabela na planilha
+    const startRow = firstCell2.row;
+    const startCol = firstCell2.col;
     
     for (let row = 0; row < tableRows && startRow + row < data.length; row++) {
       for (let col = 0; col < tableCols && startCol + col < data[0].length; col++) {
@@ -2523,7 +3067,7 @@ const renderHistoryModal = () => {
     
     setShowMediaModal(false);
     addToHistory('Tabela Criada', `Tabela ${tableRows}x${tableCols} criada com template ${template.name}`);
-  }, [selectedCells, updateCellMedia, tableConfig, tableTemplates, data, addToHistory]);
+  }, [selectedCells, updateCellMedia, tableConfig, tableTemplates, data, addToHistory, saveStateToUndo]);
 
   // Funções de redimensionamento
   const handleMouseDown = useCallback((e: React.MouseEvent, type: 'col' | 'row', index: number) => {
@@ -2734,21 +3278,20 @@ useEffect(() => {
             >
               {cell.media.data && (
                 <div style={{ position: 'relative' }}>
-                  <img 
-                    ref={imageRef}
-                    src={cell.media.data} 
-                    alt={cell.media.alt || 'Imagem'} 
-                    style={{
-                      maxWidth: cell.media.width ? `${cell.media.width}px` : '80px',
-                      maxHeight: cell.media.height ? `${cell.media.height}px` : '60px',
-                      objectFit: 'contain',
-                      position: 'absolute',
-                      left: cell.media.x !== undefined ? `${cell.media.x}px` : '50%',
-                      top: cell.media.y !== undefined ? `${cell.media.y}px` : '50%',
-                      transform: cell.media.x !== undefined && cell.media.y !== undefined ? 'none' : 'translate(-50%, -50%)',
-                      pointerEvents: 'none', // Evita interferência com o drag
-                    }}
-                  />
+                  <img
+            src={cell.media.data || cell.media.url}
+            alt={cell.media.alt || 'Imagem'}
+            draggable={true}
+            onDragStart={(e) => handleImageDragStart(e, rowIndex, colIndex)}
+            onDragEnd={handleImageDragEnd}
+            style={{
+              width: cell.media.width || 80,
+              height: cell.media.height || 60,
+              objectFit: 'cover',
+              cursor: 'move',
+              border: draggedImage?.fromCell.row === rowIndex && draggedImage?.fromCell.col === colIndex ? '2px dashed #007bff' : 'none'
+            }}
+          />
                   <div
                     className={styles["resize-handle"]}
                     onMouseDown={(e) => handleImageResizeStart(e, rowIndex, colIndex)}
@@ -2855,9 +3398,7 @@ useEffect(() => {
     const displayValue = cell.computed_value || cell.value;
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-        {cell.is_formula && (
-          <Info size={12} color="#16a34a" style={{ flexShrink: 0 }} />
-        )}
+       
         <input
           type="text"
           className={styles["cell-input"]}
@@ -3179,9 +3720,6 @@ useEffect(() => {
                     cellStyle.backgroundColor = '#ffe6e6';
                     cellStyle.color = '#d32f2f';
                     cellContent = cell.error;
-                  } else if (cell.is_formula) {
-                    cellClass = 'formula-cell';
-                    cellStyle.backgroundColor = '#e8f5e8';
                   } else if (cell.media) {
                     cellClass = 'media-cell';
                     cellStyle.backgroundColor = '#f0f8ff';
@@ -3217,6 +3755,288 @@ useEffect(() => {
     );
   }, [spreadsheetName, rows, cols, data, getColumnLabel, printArea, getPrintAreaInfo]);
 
+    const insertColumnAt = useCallback((index: number) => {
+    const { newData, newColumnWidths } = SpreadsheetOperationUtils.insertColumn(
+      data,
+      columnWidths,
+      index,
+      100
+    );
+    
+    setData(newData);
+    setColumnWidths(newColumnWidths);
+    setCols(prev => prev + 1);
+    
+    addToHistory('Inserir Coluna', `Nova coluna inserida na posição ${getColumnLabel(index)}`);
+  }, [data, columnWidths, addToHistory, getColumnLabel]);
+
+   const removeColumnAt = useCallback((index: number) => {
+    const validation = SpreadsheetOperationUtils.validateOperation('remove', 'column', index, cols);
+    if (!validation.isValid) {
+      alert(validation.error);
+      return;
+    }
+    
+    const { newData, newColumnWidths } = SpreadsheetOperationUtils.removeColumn(
+      data,
+      columnWidths,
+      index
+    );
+    
+    setData(newData);
+    setColumnWidths(newColumnWidths);
+    setCols(prev => prev - 1);
+    
+    addToHistory('Remover Coluna', `Coluna ${getColumnLabel(index)} removida`);
+  }, [data, columnWidths, cols, addToHistory, getColumnLabel])
+  const insertRowAt = useCallback((index: number) => {
+    const { newData, newRowHeights } = SpreadsheetOperationUtils.insertRow(
+      data,
+      rowHeights,
+      index,
+      cols,
+      32
+    );
+    
+    setData(newData);
+    setRowHeights(newRowHeights);
+    setRows(prev => prev + 1);
+    
+    addToHistory('Inserir Linha', `Nova linha inserida na posição ${index + 1}`);
+  }, [data, rowHeights, cols, addToHistory]);
+
+  const removeRowAt = useCallback((index: number) => {
+    const validation = SpreadsheetOperationUtils.validateOperation('remove', 'row', index, rows);
+    if (!validation.isValid) {
+      alert(validation.error);
+      return;
+    }
+    
+    const { newData, newRowHeights } = SpreadsheetOperationUtils.removeRow(
+      data,
+      rowHeights,
+      index
+    );
+    
+    setData(newData);
+    setRowHeights(newRowHeights);
+    setRows(prev => prev - 1);
+    
+    addToHistory('Remover Linha', `Linha ${index + 1} removida`);
+  }, [data, rowHeights, rows, addToHistory]);
+
+  const renderColumnHeader = useCallback((colIndex: number) => {
+    return (
+      <div 
+        key={`col-header-${colIndex}`} 
+        className={`${styles["cell"]} ${styles["header"]} ${styles["column-header"]}`}
+        style={{ 
+          width: columnWidths[colIndex], 
+          minWidth: columnWidths[colIndex],
+          height: columnHeaderHeight,
+          minHeight: columnHeaderHeight
+        }}
+      >
+        <div className={styles["column-header-content"]}>
+          <button
+            className={styles["header-button"]}
+            onClick={() => insertColumnAt(colIndex)}
+            title={`Inserir coluna antes de ${getColumnLabel(colIndex)}`}
+          >
+            <Plus size={12} />
+          </button>
+          
+          <span className={styles["header-label"]}>
+            {getColumnLabel(colIndex)}
+          </span>
+          
+          <button
+            className={styles["header-button"]}
+            onClick={() => removeColumnAt(colIndex)}
+            title={`Remover coluna ${getColumnLabel(colIndex)}`}
+            disabled={cols <= 1}
+          >
+            <Minus size={12} />
+          </button>
+        </div>
+        
+        <div
+          className={`${styles["column-resizer"]} ${isResizing?.type === 'col' && isResizing.index === colIndex ? styles["resizing"] : ''}`}
+          onMouseDown={(e) => handleMouseDown(e, 'col', colIndex)}
+        />
+      </div>
+    );
+  }, [columnWidths, columnHeaderHeight, cols, insertColumnAt, removeColumnAt, getColumnLabel, isResizing, handleMouseDown]);
+
+ const renderCell = useCallback((row: number, col: number) => {
+  const cell = data[row]?.[col];
+  
+  // Verificar se a célula deve ser renderizada (considerando merge)
+  const { shouldRender } = CellMergeUtils.getCellSpan(data, row, col);
+  if (!shouldRender) {
+    return null;
+  }
+  
+  // Verificações de estado
+  const isSelected = selectedCells.some(selected => selected.row === row && selected.col === col);
+  const isInDragRange = isCellInDragRange(row, col);
+  const isInRange = isCellInRange(row, col);
+  const isInPrintArea = isCellInPrintArea(row, col);
+  const isInPrintAreaRange = isCellInPrintAreaRange(row, col);
+  const hasFormula = cell?.formula || cell?.is_formula;
+  const isMasterCell = cell?.merged && cell?.masterCell && 
+                       cell.masterCell.row === row && 
+                       cell.masterCell.col === col;
+  
+  return (
+    <div
+      key={`cell-${row}-${col}`}
+      className={`
+        ${styles.cell}
+        ${isSelected ? `${styles.cellSelected} ${styles.selected}` : ''}
+        ${isInDragRange ? styles.cellDragHighlight : ''}
+        ${isInRange ? styles['in-range'] : ''}
+        ${isInPrintArea ? styles['print-area-cell'] : ''}
+        ${isInPrintAreaRange ? styles['print-area-selecting'] : ''}
+
+        ${draggedImage ? styles['drop-target'] : ''}
+        ${isMasterCell ? styles.master : ''}
+      `}
+      style={{
+        width: columnWidths[col],
+        height: rowHeights[row],
+        ...getCellStyle(row, col),
+        ...cell?.style
+      }}
+      onMouseDown={(e) => {
+        // Se a célula tem fórmula e o usuário clica no canto inferior direito, iniciar drag
+        if (hasFormula && e.button === 0) {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          // Verificar se o clique foi no canto inferior direito (área de 8x8 pixels)
+          if (x >= rect.width - 8 && y >= rect.height - 8) {
+            handleFormulaDragStart(row, col, e);
+            return;
+          }
+        }
+        
+        // Usar o handler existente ou fallback para seleção simples
+        if (handleCellMouseDown) {
+          handleCellMouseDown(row, col, e);
+        } else {
+          setSelectedCells([{ row, col }]);
+        }
+      }}
+      onMouseEnter={() => {
+        if (formulaDrag.isDragging) {
+          handleFormulaDragMove(row, col);
+        }
+        if (handleCellMouseEnter) {
+          handleCellMouseEnter(row, col);
+        }
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (draggedImage) {
+          e.currentTarget.style.backgroundColor = '#e0f2fe';
+          e.currentTarget.style.border = '2px dashed #0284c7';
+        }
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (draggedImage) {
+          e.currentTarget.style.backgroundColor = '';
+          e.currentTarget.style.border = '';
+        }
+      }}
+      onDrop={(e) => {
+        if (handleCellDrop) {
+          handleCellDrop(row, col, e);
+        }
+        e.currentTarget.style.backgroundColor = '';
+        e.currentTarget.style.border = '';
+      }}
+    >
+      {/* Conteúdo da célula */}
+      <div className={styles.cellContent}>
+        {renderCellContent ? renderCellContent(row, col) : (cell?.computed_value || cell?.value)}
+      </div>
+      
+      {/* Handle de drag para fórmulas */}
+      {hasFormula && isSelected && (
+        <div 
+          className={styles.formulaDragHandle}
+          onMouseDown={(e) => handleFormulaDragStart(row, col, e)}
+        />
+      )}
+    </div>
+  );
+}, [
+  data, 
+  selectedCells, 
+  columnWidths, 
+  rowHeights, 
+  isCellInDragRange, 
+  isCellInRange,
+  isCellInPrintArea,
+  isCellInPrintAreaRange,
+  formulaDrag.isDragging, 
+  draggedImage,
+  handleFormulaDragStart, 
+  handleFormulaDragMove,
+  handleCellMouseDown,
+  handleCellMouseEnter,
+  handleCellDrop,
+  renderCellContent,
+  getCellStyle,
+  setSelectedCells
+]);
+  // Renderizar header de linha com botões
+  const renderRowHeader = useCallback((rowIndex: number) => {
+    return (
+      <div 
+        className={`${styles["cell"]} ${styles["header"]} ${styles["row-header"]}`}
+        style={{ 
+          height: rowHeights[rowIndex], 
+          minHeight: rowHeights[rowIndex], 
+          width: rowHeaderWidth, 
+          minWidth: rowHeaderWidth
+        }}
+      >
+        <div className={styles["row-header-content"]}>
+          <button
+            className={styles["header-button"]}
+            onClick={() => insertRowAt(rowIndex)}
+            title={`Inserir linha antes da linha ${rowIndex + 1}`}
+          >
+            <Plus size={12} />
+          </button>
+          
+          <span className={styles["header-label"]}>
+            {rowIndex + 1}
+          </span>
+          
+          <button
+            className={styles["header-button"]}
+            onClick={() => removeRowAt(rowIndex)}
+            title={`Remover linha ${rowIndex + 1}`}
+            disabled={rows <= 1}
+          >
+            <Minus size={12} />
+          </button>
+        </div>
+        
+        <div
+          className={`${styles["row-resizer"]} ${isResizing?.type === 'row' && isResizing.index === rowIndex ? styles["resizing"] : ''}`}
+          onMouseDown={(e) => handleMouseDown(e, 'row', rowIndex)}
+        />
+      </div>
+    );
+  }, [rowHeights, rowHeaderWidth, rows, insertRowAt, removeRowAt, isResizing, handleMouseDown]);
   // Event listener global para prevenir scroll com setas do teclado na planilha
   useEffect(() => {
     const handleGlobalMouseUp = () => {
@@ -3266,6 +4086,9 @@ useEffect(() => {
       document.removeEventListener('keydown', handleGlobalKeyDown);
     };
   }, [isResizing, isResizingImage, addToHistory, showSuggestions]);
+
+
+    
 
   return (
     <div className={`${styles["container"]} ${styles["maximized"]}`}>
@@ -3329,6 +4152,59 @@ useEffect(() => {
                  Salvar 
               </button>
               )}
+
+        <button
+          onClick={handleGoBack}
+          className={styles.toolbarButton}
+          title="Voltar (Esc)"
+        >
+          <ArrowLeft size={16} />
+          <span>Voltar</span>
+        </button>
+
+        {/* Separador */}
+        <div className={styles.separator} />
+
+        {/* Controles de Undo/Redo */}
+        <button
+          onClick={handleUndo}
+          disabled={undoStack.length === 0}
+          className={`${styles.toolbarButton} ${undoStack.length === 0 ? styles.disabled : ''}`}
+          title="Desfazer (Ctrl+Z)"
+        >
+          <Undo size={16} />
+          <span>Desfazer</span>
+        </button>
+
+        <button
+          onClick={handleRedo}
+          disabled={redoStack.length === 0}
+          className={`${styles.toolbarButton} ${redoStack.length === 0 ? styles.disabled : ''}`}
+          title="Refazer (Ctrl+Y)"
+        >
+          <Redo size={16} />
+          <span>Refazer</span>
+        </button>
+
+        {/* Separador */}
+        <div className={styles.separator} />
+
+        {/* Botão de confirmar */}
+        <button
+          onClick={handleConfirmAction}
+          disabled={selectedCells.length === 0 || !formulaBarValue.trim()}
+          className={`${styles.toolbarButton} ${styles.confirmButton} ${
+            selectedCells.length === 0 || !formulaBarValue.trim() ? styles.disabled : ''
+          }`}
+          title="Confirmar (Ctrl+Enter)"
+        >
+          <Check size={16} />
+          <span>Confirmar</span>
+        </button>
+
+        {/* Separador */}
+        <div className={styles.separator} />
+
 
                  {typeResponse && typeResponse?.type === "Duplicar"  && (
                 <button className={styles["button"]} onClick={openSaveTemplateModal}>
@@ -4032,106 +4908,19 @@ useEffect(() => {
               </div>
               
               {/* Headers das colunas */}
-              {Array(cols).fill(null).map((_, colIndex) => (
-                <div 
-                  key={`col-header-${colIndex}`} 
-                  className={`${styles["cell"]} ${styles["header"]} ${styles["column-header"]} ${
-                    printArea && colIndex >= printArea.startCol && colIndex <= printArea.endCol ? styles["print-area-header"] : ''
-                  }`}
-                                    style={{ 
-                    width: columnWidths[colIndex], 
-                    minWidth: columnWidths[colIndex],
-                    height: columnHeaderHeight,
-                    minHeight: columnHeaderHeight
-                  }}
-                >
-                  {getColumnLabel(colIndex)}
-                  <div
-                    className={`${styles["column-resizer"]} ${isResizing?.type === 'col' && isResizing.index === colIndex ? styles["resizing"] : ''}`}
-                    onMouseDown={(e) => handleMouseDown(e, 'col', colIndex)}
-                  />
-                </div>
-              ))}
+                       {Array(cols).fill(null).map((_, colIndex) => renderColumnHeader(colIndex))}
               
               {/* Linhas da planilha */}
               {Array(rows).fill(null).map((_, rowIndex) => (
                 <React.Fragment key={`row-${rowIndex}`}>
                   {/* Header da linha */}
-                  <div 
-                    className={`${styles["cell"]} ${styles["header"]} ${styles["row-header"]} ${
-                      printArea && rowIndex >= printArea.startRow && rowIndex <= printArea.endRow ? styles["print-area-header"] : ''
-                    }`}
-                         style={{ height: rowHeights[rowIndex], minHeight: rowHeights[rowIndex], width: rowHeaderWidth, minWidth: rowHeaderWidth }}
-                  >
-                    {rowIndex + 1}
-                    <div
-                      className={`${styles["row-resizer"]} ${isResizing?.type === 'row' && isResizing.index === rowIndex ? styles["resizing"] : ''}`}
-                      onMouseDown={(e) => handleMouseDown(e, 'row', rowIndex)}
-                    />
-                  </div>
+                  {renderRowHeader(rowIndex)}
                   
                   {/* Células da linha */}
-                  {Array(cols).fill(null).map((_, colIndex) => {
-                    const cell = data[rowIndex]?.[colIndex];
-                    const { shouldRender } = CellMergeUtils.getCellSpan(data, rowIndex, colIndex);
-                    
-                    if (!shouldRender) {
-                      return null;
-                    }
-
-                    const isMasterCell = cell?.merged && cell?.masterCell && 
-                                       cell.masterCell.row === rowIndex && 
-                                       cell.masterCell.col === colIndex;
-
-                    return (
-                      <div 
-                        key={`cell-${rowIndex}-${colIndex}`} 
-                        className={`${styles["cell"]} ${
-                          isCellSelected(rowIndex, colIndex) ? styles["selected"] : ''
-                        } ${
-                          isCellInRange(rowIndex, colIndex) ? styles["in-range"] : ''
-                        } ${
-                          data[rowIndex]?.[colIndex]?.is_formula ? styles["formula-cell"] : ''
-                        } ${
-                          isCellInPrintArea(rowIndex, colIndex) ? styles["print-area-cell"] : ''
-                        } ${
-                          isCellInPrintAreaRange(rowIndex, colIndex) ? styles["print-area-selecting"] : ''
-                        } ${
-                          draggedImage ? styles["drop-target"] : ''
-                        }  ${
-                          isMasterCell ? styles["master"] : ''
-                        }`}
-                        style={getCellStyle(rowIndex, colIndex)}
-                        onMouseDown={(e) => handleCellMouseDown(rowIndex, colIndex, e)}
-                        onMouseEnter={() => handleCellMouseEnter(rowIndex, colIndex)}
-                        onDragOver={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (draggedImage) {
-                            e.currentTarget.style.backgroundColor = '#e0f2fe';
-                            e.currentTarget.style.border = '2px dashed #0284c7';
-                          }
-                        }}
-                        onDragLeave={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (draggedImage) {
-                            e.currentTarget.style.backgroundColor = '';
-                            e.currentTarget.style.border = '';
-                          }
-                        }}
-                        onDrop={(e) => {
-                          handleCellDrop(rowIndex, colIndex, e);
-                          e.currentTarget.style.backgroundColor = '';
-                          e.currentTarget.style.border = '';
-                        }}
-                      >
-                        {renderCellContent(rowIndex, colIndex)}
-                      </div>
-                    );
-                  })}
+                                  {Array(cols).fill(null).map((_, colIndex) => renderCell(rowIndex, colIndex))}
                 </React.Fragment>
               ))}
+        
             </div>
           </div>
         </div>

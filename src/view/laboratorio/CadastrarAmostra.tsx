@@ -61,6 +61,9 @@ interface ClienteResponse {
 
 
 
+
+
+
 export const CadastrarAmostra: React.FC = () => {
   const [activeTab, setActiveTab] = useState('cadastro');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -500,7 +503,7 @@ export const CadastrarAmostra: React.FC = () => {
       color: '#6b7280'
     }
   };
-
+ 
 
     function handleClienteSelect(cliente: Cliente) {
     setSelectedClienteObj(cliente);

@@ -604,7 +604,6 @@
   justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease-out;
-  backdrop-filter: blur(4px);
 }
 
 .modal-content {
@@ -2041,3 +2040,370 @@
     margin-top: 8px;
   }
 }
+.cellWithFormula {
+  position: relative;
+  background-color: #f8f9fa !important;
+  border: 1px solid #007bff !important;
+}
+
+/* Handle de drag para fórmulas */
+.formulaDragHandle {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  background-color: #007bff;
+  border: 1px solid #ffffff;
+  cursor: crosshair;
+  z-index: 10;
+  border-radius: 1px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.formulaDragHandle:hover {
+  background-color: #0056b3;
+  transform: scale(1.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Célula destacada durante o drag */
+.cellDragHighlight {
+  background-color: #e3f2fd !important;
+  border: 2px dashed #2196f3 !important;
+  opacity: 0.8;
+}
+
+/* Overlay para mostrar o range de drag */
+.dragOverlay {
+  position: absolute;
+  background-color: rgba(33, 150, 243, 0.2);
+  border: 2px solid #2196f3;
+  pointer-events: none;
+  z-index: 5;
+  border-radius: 2px;
+}
+
+/* Cursor durante o drag */
+.formulaDragging {
+  cursor: crosshair !important;
+}
+
+/* Célula selecionada com fórmula */
+.cellSelected.cellWithFormula {
+  background-color: #e3f2fd !important;
+  border: 2px solid #2196f3 !important;
+}
+
+/* Animação para feedback visual */
+@keyframes dragFeedback {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.cellDragFeedback {
+  animation: dragFeedback 0.3s ease-in-out;
+}
+
+/* Tooltip para mostrar a fórmula durante o drag */
+.formulaDragTooltip {
+  position: absolute;
+  background-color: #333;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  z-index: 1000;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.formulaDragTooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #333 transparent transparent transparent;
+}
+
+/* Indicador de direção do drag */
+.dragDirectionIndicator {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.dragDirectionIndicator.down {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 8px solid #2196f3;
+}
+
+.dragDirectionIndicator.right {
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #2196f3;
+}
+
+.dragDirectionIndicator.up {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 8px solid #2196f3;
+}
+
+.dragDirectionIndicator.left {
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-right: 8px solid #2196f3;
+}
+
+/* Efeito de brilho para células com fórmulas */
+.cellWithFormula::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #007bff;
+  border-radius: 50%;
+  opacity: 0.6;
+  z-index: 2;
+}
+
+/* Estilo para células durante o processo de drag */
+.cellDuringDrag {
+  transition: all 0.1s ease;
+  border-color: #2196f3 !important;
+}
+
+/* Estilo para a célula de origem durante o drag */
+.cellDragSource {
+  background-color: #bbdefb !important;
+  border: 2px solid #1976d2 !important;
+  box-shadow: 0 0 10px rgba(25, 118, 210, 0.5);
+}
+
+/* Estilo para células de destino válidas */
+.cellValidDropTarget {
+  background-color: #c8e6c9 !important;
+  border: 1px dashed #4caf50 !important;
+}
+
+/* Estilo para células de destino inválidas */
+.cellInvalidDropTarget {
+  background-color: #ffcdd2 !important;
+  border: 1px dashed #f44336 !important;
+}
+
+/* Contador de células afetadas */
+.dragCellCounter {
+  position: absolute;
+  background-color: #2196f3;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: bold;
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Linha de conexão visual durante o drag */
+.dragConnectionLine {
+  position: absolute;
+  height: 2px;
+  background-color: #2196f3;
+  z-index: 8;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.dragConnectionLine::before,
+.dragConnectionLine::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: #2196f3;
+  border-radius: 50%;
+  top: -2px;
+}
+
+.dragConnectionLine::before {
+  left: -3px;
+}
+
+.dragConnectionLine::after {
+  right: -3px;
+}
+
+/* Responsividade para telas menores */
+@media (max-width: 768px) {
+  .formulaDragHandle {
+    width: 12px;
+    height: 12px;
+    bottom: -3px;
+    right: -3px;
+  }
+  
+  .formulaDragTooltip {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  
+  .dragCellCounter {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+}
+
+/* Modo escuro */
+@media (prefers-color-scheme: dark) {
+  .cellWithFormula {
+    background-color: #1e1e1e !important;
+    border-color: #4fc3f7 !important;
+  }
+  
+  .formulaDragHandle {
+    background-color: #4fc3f7;
+    border-color: #333;
+  }
+  
+  .formulaDragHandle:hover {
+    background-color: #29b6f6;
+  }
+  
+  .cellDragHighlight {
+    background-color: #263238 !important;
+    border-color: #4fc3f7 !important;
+  }
+  
+  .dragOverlay {
+    background-color: rgba(79, 195, 247, 0.2);
+    border-color: #4fc3f7;
+  }
+  
+  .cellWithFormula::before {
+    background-color: #4fc3f7;
+  }
+  
+  .formulaDragTooltip {
+    background-color: #424242;
+  }
+  
+  .formulaDragTooltip::after {
+    border-color: #424242 transparent transparent transparent;
+  }
+}
+
+/* Animações de entrada e saída */
+.formulaDragHandle {
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dragOverlay {
+  animation: slideIn 0.1s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Estados de interação */
+.formulaDragHandle:active {
+  transform: scale(0.9);
+  background-color: #1565c0;
+}
+
+/* Prevenção de seleção de texto durante o drag */
+.formulaDragging * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Estilo para células com erro de fórmula */
+.cellWithFormula.cellError {
+  background-color: #ffebee !important;
+  border-color: #f44336 !important;
+}
+
+.cellWithFormula.cellError .formulaDragHandle {
+  background-color: #f44336;
+}
+
+.cellWithFormula.cellError .formulaDragHandle:hover {
+  background-color: #d32f2f;
+}
+
+/* Indicador de progresso para operações longas */
+.dragProgressIndicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  font-size: 14px;
+}
+
+.dragProgressBar {
+  width: 200px;
+  height: 4px;
+  background-color: #333;
+  border-radius: 2px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.dragProgressBar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  background-color: #2196f3;
+  width: var(--progress, 0%);
+  transition: width 0.3s ease;
+}
+
