@@ -2209,6 +2209,7 @@ const renderHistoryModal = () => {
           return newData;
         });
 
+        
         if (oldCell.value !== value) {
           addToHistory('Edição de Célula', `Célula ${cellRef}: "${oldCell.value}" → "${value}"`);
         }
