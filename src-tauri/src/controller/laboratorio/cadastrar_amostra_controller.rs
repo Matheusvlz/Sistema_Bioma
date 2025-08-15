@@ -101,15 +101,16 @@ pub struct ApiResponse<T> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmostraCompleta {
-    pub id: u32,
+    pub id: Option<u32>,
     pub numero: String,
     pub hora_coleta: String,
     pub identificacao: String,
     pub temperatura: String,
     pub complemento: String,
     pub condicoes_ambientais: String,
-    pub item_orcamento: String,
+    pub item_orcamento: Option<u32>,
     pub parametros_selecionados: Vec<ParametroSelecionado>,
+
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -137,30 +138,30 @@ pub struct ParametroSelecionado {
 pub struct DadosGeraisCadastro {
     // Dados do cliente
     pub cliente_id: Option<u32>,
-    pub cliente_nome: String,
+    pub cliente_nome: Option<String>,
     pub consultor_id: Option<u32>,
     
     // Datas e horários
-    pub data_inicio: String,
-    pub hora_inicio: String,
-    pub data_coleta: String,
-    pub hora_coleta: String,
-    pub data_entrada_lab: String,
-    pub hora_entrada_lab: String,
+    pub data_inicio: Option<String>,
+    pub hora_inicio: Option<String>,
+    pub data_coleta: Option<String>,
+    pub hora_coleta: Option<String>,
+    pub data_entrada_lab: Option<String>,
+    pub hora_entrada_lab: Option<String>,
     
     // Dados da coleta
-    pub coletor: String, // "Cliente" ou "Biomade"
-    pub nome_coletor: String,
-    pub procedimento_amostragem: String,
+    pub coletor: Option<u32>, // "Cliente" ou "Biomade"
+    pub nome_coletor: Option<String>,
+    pub procedimento_amostragem: Option<String>,
     pub categoria_id: Option<u32>,
-    pub acompanhante: String,
+    pub acompanhante: Option<String>,
     
     // Configurações
     pub orcamento: bool,
     pub dados_amostragem: bool,
     pub controle_qualidade: bool,
-    pub vazao: String,
-    pub unidade_vazao: String,
+    pub vazao: Option<String>,
+    pub unidade_vazao: Option<String>,
     pub vazao_cliente: bool,
     
     // Contatos
@@ -181,13 +182,13 @@ pub struct DadosGeraisCadastro {
     pub laboratorio: String,
     
     // Unidades e forma de coleta
-    pub unidade_amostra: String,
-    pub forma_coleta: String,
-    pub unidade_area_amostrada: String,
-    pub area_amostrada: String,
+    pub unidade_amostra: Option<String>,
+    pub forma_coleta: Option<String>,
+    pub unidade_area_amostrada: Option<String>,
+    pub area_amostrada: Option<String>,
     
     // Campos condicionais para eficácia de limpeza
-    pub tipo_relatorio: String,
+    pub tipo_relatorio: u32,
     pub principio_ativo: Option<String>,
     pub produto_anterior: Option<String>,
     pub lote: Option<String>,
@@ -202,7 +203,7 @@ pub struct DadosGeraisCadastro {
     pub remessa_cliente: Option<String>,
     
     // Configurações de tempo
-    pub mesmo_horario_todas_amostras: bool,
+    pub mesmo_horario_todas_amostras: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -213,10 +214,8 @@ pub struct CadastroAmostraCompletaRequest {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CadastroResponse {
-    pub success: bool,
-    pub message: String,
-    pub amostra_ids: Option<Vec<u32>>,
-    pub numero_protocolo: Option<String>,
+    pub id_solicitacao: u64,
+    pub protocolo: String,
 }
 
 // === FUNÇÕES AUXILIARES ===
@@ -273,18 +272,17 @@ async fn fazer_requisicao_api<T: for<'de> Deserialize<'de> + std::fmt::Debug>(
 
 // Função auxiliar para validar dados obrigatórios
 fn validar_dados_cadastro(dados: &CadastroAmostraCompletaRequest) -> Result<(), String> {
-    // Validar dados gerais
-    if dados.dados_gerais.cliente_nome.trim().is_empty() {
+    // Validar dados gerais - usando as_ref() para acessar Option<String> e then trim()
+    if let Some(ref cliente_nome) = dados.dados_gerais.cliente_nome {
+        if cliente_nome.trim().is_empty() {
+            return Err("Nome do cliente é obrigatório".to_string());
+        }
+    } else {
         return Err("Nome do cliente é obrigatório".to_string());
     }
+
     
-    if dados.dados_gerais.data_coleta.trim().is_empty() {
-        return Err("Data de coleta é obrigatória".to_string());
-    }
-    
-    if dados.dados_gerais.email_solicitante.trim().is_empty() {
-        return Err("Email do solicitante é obrigatório".to_string());
-    }
+
     
     // Validar se há pelo menos uma amostra
     if dados.amostras.is_empty() {
@@ -297,17 +295,11 @@ fn validar_dados_cadastro(dados: &CadastroAmostraCompletaRequest) -> Result<(), 
             return Err(format!("Número da amostra {} é obrigatório", index + 1));
         }
         
-        if amostra.identificacao.trim().is_empty() {
-            return Err(format!("Identificação da amostra {} é obrigatória", index + 1));
-        }
-        
-        if amostra.parametros_selecionados.is_empty() {
-            return Err(format!("É necessário selecionar pelo menos um parâmetro para a amostra {}", index + 1));
-        }
+ 
     }
     
-    // Validar campos condicionais
-    if dados.dados_gerais.tipo_relatorio == "Eficácia limpeza" {
+    // Validar campos condicionais - comparar com Some(valor)
+    if dados.dados_gerais.tipo_relatorio == 3 {
         if dados.dados_gerais.principio_ativo.as_ref().map_or(true, |s| s.trim().is_empty()) {
             return Err("Princípio ativo é obrigatório para relatórios de eficácia de limpeza".to_string());
         }
@@ -397,7 +389,7 @@ fn preparar_dados_para_api(dados: &CadastroAmostraCompletaRequest) -> serde_json
     });
     
     // Adicionar campos condicionais se necessário
-    if dados.dados_gerais.tipo_relatorio == "Eficácia limpeza" {
+    if dados.dados_gerais.tipo_relatorio == 3 {
         if let Some(ref principio_ativo) = dados.dados_gerais.principio_ativo {
             payload["dados_gerais"]["principio_ativo"] = serde_json::Value::String(principio_ativo.clone());
         }
@@ -486,6 +478,17 @@ pub async fn buscar_acreditacao(app_handle: AppHandle) -> Result<Vec<Categoria>,
 }
 
 #[command]
+pub async fn buscar_pg(app_handle: AppHandle) -> Result<Vec<Categoria>, String> {
+    fazer_requisicao_api(&app_handle, "buscar_pg", reqwest::Method::POST).await
+}
+
+#[command]
+pub async fn buscar_certificado(app_handle: AppHandle) -> Result<Vec<Categoria>, String> {
+    fazer_requisicao_api(&app_handle, "buscar_certificado", reqwest::Method::POST).await
+}
+
+
+#[command]
 pub async fn buscar_metodologias(app_handle: AppHandle) -> Result<Vec<Categoria>, String> {
     fazer_requisicao_api(&app_handle, "buscar_metodologias", reqwest::Method::POST).await
 }
@@ -544,7 +547,6 @@ pub async fn buscar_orcamentos(
 }
 
 // === NOVA FUNÇÃO PRINCIPAL ===
-
 #[command]
 pub async fn cadastrar_amostra_completa(
     app_handle: AppHandle,
@@ -552,16 +554,14 @@ pub async fn cadastrar_amostra_completa(
 ) -> Result<CadastroResponse, String> {
     println!("Iniciando cadastro de amostra completa...");
     
-    // Validar dados de entrada
+    // --- 1. Validar dados de entrada ---
     if let Err(erro_validacao) = validar_dados_cadastro(&dados_cadastro) {
         println!("Erro de validação: {}", erro_validacao);
         return Err(erro_validacao);
     }
     
-    // Preparar dados para envio à API
+    // --- 2. Preparar e enviar a requisição ---
     let payload = preparar_dados_para_api(&dados_cadastro);
-    
-    // Configurar cliente HTTP
     let client = Client::new();
     let url = get_api_url(&app_handle);
     let endpoint = format!("{}/cadastrar_amostra_completa", url);
@@ -569,7 +569,6 @@ pub async fn cadastrar_amostra_completa(
     println!("Enviando dados para: {}", endpoint);
     println!("Payload: {}", serde_json::to_string_pretty(&payload).unwrap_or_default());
     
-    // Fazer requisição à API
     let response = client
         .post(&endpoint)
         .json(&payload)
@@ -580,43 +579,43 @@ pub async fn cadastrar_amostra_completa(
             format!("Erro de conexão com o servidor: {}", e)
         })?;
     
+    // --- 3. Tratar a resposta da API ---
     let status = response.status();
-    let body_text = response
-        .text()
-        .await
-        .map_err(|e| {
-            println!("Erro ao ler resposta: {:?}", e);
-            format!("Erro ao ler resposta do servidor: {}", e)
-        })?;
-    
     println!("Status da resposta: {}", status);
-    println!("Corpo da resposta: {}", body_text);
     
-    if body_text.is_empty() {
-        return Err(format!(
-            "Resposta vazia do servidor (Status: {})",
-            status
-        ));
-    }
+    // Apenas tenta parsear o JSON se o status for de sucesso (2xx)
+    if status.is_success() {
+        let api_response: ApiResponse<CadastroResponse> = response
+            .json()
+            .await
+            .map_err(|e| {
+                println!("Erro ao parsear JSON: {:?}", e);
+                format!("Erro ao processar resposta do servidor: {}", e)
+            })?;
     
-    // Parsear resposta
-    let api_response: ApiResponse<CadastroResponse> = serde_json::from_str(&body_text)
-        .map_err(|e| {
-            println!("Erro ao parsear JSON: {:?}", e);
-            format!("Erro ao processar resposta do servidor: {}", e)
-        })?;
-    
-    if api_response.success {
-        if let Some(dados_resposta) = api_response.data {
-            println!("Cadastro realizado com sucesso!");
-            Ok(dados_resposta)
+        if api_response.success {
+            if let Some(dados_resposta) = api_response.data {
+                println!("Cadastro realizado com sucesso!");
+                Ok(dados_resposta)
+            } else {
+                Err("Resposta da API foi bem-sucedida, mas não retornou dados.".to_string())
+            }
         } else {
-            Err("Resposta da API foi bem-sucedida, mas não retornou dados.".to_string())
+            let erro_msg = api_response.message.unwrap_or("Erro desconhecido na API".to_string());
+            println!("Erro da API: {}", erro_msg);
+            Err(erro_msg)
         }
     } else {
-        let erro_msg = api_response.message.unwrap_or("Erro desconhecido na API".to_string());
-        println!("Erro da API: {}", erro_msg);
-        Err(erro_msg)
+        // Se a resposta for um erro (4xx, 5xx), lemos o corpo como texto
+        // para dar mais detalhes ao usuário.
+        let body_text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Não foi possível ler o corpo da resposta".to_string());
+
+        println!("Corpo da resposta de erro: {}", body_text);
+
+        Err(format!("Erro do servidor (Status: {}): {}", status, body_text))
     }
 }
 
@@ -645,7 +644,7 @@ pub fn converter_data_para_timestamp(data_str: &str, hora_str: &str) -> Result<i
     
     for formato in &formatos {
         if let Ok(naive_dt) = NaiveDateTime::parse_from_str(&datetime_str, formato) {
-            let dt: DateTime<Utc> = DateTime::from_utc(naive_dt, Utc);
+            let dt: DateTime<Utc> = DateTime::from_naive_utc_and_offset(naive_dt, Utc);
             return Ok(dt.timestamp());
         }
     }
