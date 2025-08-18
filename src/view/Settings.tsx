@@ -48,7 +48,7 @@ export const Settings: React.FC = () => {
           setUsuario(user);
           // Constrói o URL completo da foto de perfil
           // Certifique-se de que `import.meta.env.VITE_API_URL` está configurado no seu frontend
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://192.168.15.26:8082'; // Usando a URL que você confirmou
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8082'; // Usando a URL que você confirmou
           const fullProfilePhotoUrl = user.profile_photo ? `${apiUrl}${user.profile_photo}` : 'https://placehold.co/150x150/065f46/ffffff?text=User';
           setProfileImage(fullProfilePhotoUrl);
           setIsDarkMode(user.dark_mode); // Define o modo escuro a partir do usuário logado
@@ -133,7 +133,7 @@ export const Settings: React.FC = () => {
     } else if (profileImage === 'https://placehold.co/150x150/065f46/ffffff?text=User' && usuario.profile_photo) {
       // Se a imagem atual é o placeholder e o usuário tinha uma foto, significa que a foto foi "removida"
       base64Image = null; // Envia null para limpar a foto no backend
-    } else if (profileImage && !profileImage.startsWith('data:') && usuario.profile_photo && profileImage === `${import.meta.env.VITE_API_URL || 'http://192.168.15.26:8082'}${usuario.profile_photo}`) {
+    } else if (profileImage && !profileImage.startsWith('data:') && usuario.profile_photo && profileImage === `${import.meta.env.VITE_API_URL || 'http://127.0.0.1:8082'}${usuario.profile_photo}`) {
       // Se a imagem atual é a mesma que veio do backend (não é um Data URL novo), não envia nada
       base64Image = undefined;
     }
@@ -154,7 +154,7 @@ export const Settings: React.FC = () => {
         const updatedUser: Usuario | null = await invoke('usuario_logado');
         if (updatedUser) {
           setUsuario(updatedUser);
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://192.168.15.26:8082';
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8082';
           const fullProfilePhotoUrl = updatedUser.profile_photo ? `${apiUrl}${updatedUser.profile_photo}` : 'https://placehold.co/150x150/065f46/ffffff?text=User';
           setProfileImage(fullProfilePhotoUrl);
           setIsDarkMode(updatedUser.dark_mode); // Atualiza o modo escuro com o valor do backend

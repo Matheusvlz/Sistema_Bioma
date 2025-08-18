@@ -236,6 +236,17 @@ export class WindowManager {
     });
   }
 
+  static async openCadastrarConsultor(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-consultor',
+      title: 'Cadastrar Consultor',
+      url: '/#/cadastrar-consultor', // Garanta que sua rota React exista!
+      width: 1200,
+      height: 900,
+      allowMultiple: true, // Permite abrir mais de uma janela de cadastro
+    });
+  }
+
   static async openChat(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'chat',

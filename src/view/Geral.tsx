@@ -363,6 +363,9 @@ export const Geral: React.FC = () => {
             case 'gerenciar-setor':
               await WindowManager.openGerenciarSetor();
               break;
+            case 'cadastrar-consultor':
+              await WindowManager.openCadastrarConsultor();
+              break;
             default:
               navigate(route as any);
               break;
@@ -647,7 +650,7 @@ export const Geral: React.FC = () => {
     {
       title: 'Clientes',
       icon: <FaUsers />,
-      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Gerenciar Setores', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
+      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Gerenciar Setores', 'Gerenciar Consultores', 'Cadastrar Laboratório Terceirizado'],
       category: 'clientes' as const,
     },
     {

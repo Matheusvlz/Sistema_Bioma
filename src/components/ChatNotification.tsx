@@ -53,7 +53,7 @@ export const ChatNotification: React.FC<ChatNotificationProps> = ({
 
     const getAvatarUrl = () => {
         if (notification.sender_avatar) {
-            return `http://192.168.15.26:8082${notification.sender_avatar}`;
+            return `http://127.0.0.1:8082${notification.sender_avatar}`;
         }
         return `https://ui-avatars.com/api/?name=${encodeURIComponent(notification.sender_name)}&background=random&color=fff&size=64`;
     };

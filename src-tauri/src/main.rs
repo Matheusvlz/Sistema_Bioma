@@ -4,6 +4,7 @@ mod controller;
 mod model;
 mod socket_listener;
 mod config;
+mod utils;
 
 //COMPONENTES
 use controller::components::search_controller::{
@@ -11,6 +12,7 @@ use controller::components::search_controller::{
 };
 
 //GERAL
+
 use controller::geral_controller::{
     buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas, buscar_coletas_portal, buscar_solicitacoes_usuarios
 };
@@ -29,6 +31,8 @@ use controller::geral::usuarioportal_controller::{
 use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
 };
+use controller::geral::consultor_controller::{ show_cadastrados, cadastrar_consultor, editar_consultor, deletar_consultor
+}; 
 
 use controller::login_controller::fazer_login;
 use controller::login_controller::validate_user_credentials;
@@ -82,20 +86,7 @@ use controller::qualidade::tauri_print_commands_controller::{
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
-use controller::laboratorio::cadastrar_amostra_controller::{buscar_tercerizado, 
-    buscar_identificacao, 
-    buscar_legislacao,
-    buscar_metodologias,
-    buscar_acreditacao, 
-    buscar_categoria_amostra, 
-    consultar_consultores, 
-    buscar_dados_cliente, 
-    buscar_parametros, 
-    buscar_orcamentos, 
-    cadastrar_amostra_completa, 
-    buscar_pg,
-    buscar_certificado
-};
+use controller::laboratorio::cadastrar_amostra_controller::{buscar_tercerizado, buscar_identificacao, buscar_legislacao, buscar_metodologias, buscar_acreditacao, buscar_categoria_amostra, consultar_consultores, buscar_dados_cliente, buscar_parametros, buscar_orcamentos, cadastrar_amostra_completa};
 
 use std::env;
 use crate::config::get_ws_url;
@@ -145,6 +136,10 @@ fn main() {
             criar_categoria,//Gerenciar Categorias
             editar_categoria,//Gerenciar Categorias
             excluir_categoria,//Gerenciar Categorias
+            show_cadastrados,
+            cadastrar_consultor,
+            editar_consultor,
+            deletar_consultor,
             buscar_clientes_usuario,
             buscar_setores_portal,
             alterar_permissao_setor,
@@ -238,9 +233,7 @@ fn main() {
             buscar_dados_cliente,
             buscar_parametros,
             buscar_orcamentos,
-            cadastrar_amostra_completa,
-            buscar_pg,
-            buscar_certificado
+            cadastrar_amostra_completa
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

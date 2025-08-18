@@ -17,7 +17,7 @@ interface Amostra {
   temperatura: string;
   complemento: string;
   condicoesAmbientais: string;
-  itemOrcamento: number | null;
+  itemOrcamento: string;
   // NOVO: Estado de parâmetros específico para cada amostra
   parametrosDisponiveis: Parametro[];
   parametrosSelecionados: Parametro[];
@@ -113,25 +113,13 @@ interface DadosClienteResponse {
 }
 
 export const CadastrarAmostra: React.FC = () => {
-  const getCurrentDate = (): string => {
-  const now = new Date();
-  return now.toISOString().split('T')[0];
-};
-
-// Função utilitária para obter hora atual no formato HH:MM
-const getCurrentTime = (): string => {
-  const now = new Date();
-  return now.toTimeString().slice(0, 5);
-};
-
   const [activeTab, setActiveTab] = useState('cadastro');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [selectedClient, setSelectedClient] = useState('');
   const [selectedConsultor, setSelectedConsultor] = useState('');
-  const [startDate, setStartDate] = useState(getCurrentDate());
-  const [collectDate, setCollectDate] = useState(getCurrentDate());
-  const [labEntryDate, setLabEntryDate] = useState(getCurrentDate());
-  
+  const [startDate, setStartDate] = useState('');
+  const [collectDate, setCollectDate] = useState('');
+  const [labEntryDate, setLabEntryDate] = useState('');
   const [collector, setCollector] = useState('Cliente');
   const [collectorName, setCollectorName] = useState('');
   const [samplingProcedure, setSamplingProcedure] = useState('');
@@ -155,9 +143,6 @@ const getCurrentTime = (): string => {
   const [legislacoes, setLegislacoes] = useState<Categoria[]>([]);
   const [identificacoes, setIdentificacoes] = useState<Identificacao[]>([]);
   const [terceirizados, setTerceirizados] = useState<Categoria[]>([]);
-
-   const [pgs, setPg] = useState<Categoria[]>([]);
-  const [relatorios, setRelatorios] = useState<Categoria[]>([]);
   const [consultores, setConsultores] = useState<Categoria[]>([]);
   const [solicitantes, setSolicitantes] = useState<SolicitanteComEmail[]>([]);
   const [setores, setSetores] = useState<Categoria[]>([]);
@@ -203,22 +188,21 @@ const [areaAmostradaValue, setAreaAmostradaValue] = useState('');
   const [setorSearchQuery, setSetorSearchQuery] = useState('');
   const setorRef = useRef<HTMLDivElement>(null);
   // Add these to your component's state declarations
-  const [startTime, setStartTime] = useState(getCurrentTime());
-  const [collectTime, setCollectTime] = useState(getCurrentTime());
-  const [labEntryTime, setLabEntryTime] = useState(getCurrentTime());
-  
-  const [selectedReportType, setSelectedReportType] = useState<number>();
+  const [startTime, setStartTime] = useState('');
+  const [collectTime, setCollectTime] = useState('');
+const [labEntryTime, setLabEntryTime] = useState('');
+  const [selectedReportType, setSelectedReportType] = useState('');
   // Estado das amostras, agora cada uma com seu próprio estado de parâmetros
   const [amostras, setAmostras] = useState<Amostra[]>([
     {
       id: 1,
       numero: '',
-       horaColeta: getCurrentTime(),
+      horaColeta: '',
       identificacao: '',
       temperatura: '',
       complemento: '',
       condicoesAmbientais: '',
-      itemOrcamento: null,
+      itemOrcamento: '',
       // Estado de parâmetros inicial
       parametrosDisponiveis: [],
       parametrosSelecionados: [],
@@ -244,46 +228,6 @@ const [remessaCliente, setRemessaCliente] = useState('');
   const [activeAmostraTab, setActiveAmostraTab] = useState(1);
   
   const [activeSampleSidebarTab, setActiveSampleSidebarTab] = useState('dados');
-
-    useEffect(() => {
-    if (!loading && categorias.length > 0 && !category) {
-      setCategory(categorias[0].nome);
-    }
-  }, [loading, categorias, category]);
-
-  useEffect(() => {
-    if (!loading && acreditacoes.length > 0 && !selectedAcreditacao) {
-      setSelectedAcreditacao(acreditacoes[0].nome);
-    }
-  }, [loading, acreditacoes, selectedAcreditacao]);
-
-  useEffect(() => {
-    if (!loading && legislacoes.length > 0 && !selectedLegislacao) {
-      setSelectedLegislacao(legislacoes[0].nome);
-      // Também carrega os parâmetros da primeira legislação
-      handleLegislacaoChange({ target: { value: legislacoes[0].nome } } as React.ChangeEvent<HTMLSelectElement>);
-    }
-  }, [loading, legislacoes, selectedLegislacao]);
-
-  useEffect(() => {
-    if (!loading && terceirizados.length > 0 && !selectedTerceirizado) {
-      setSelectedTerceirizado(terceirizados[0].nome);
-    }
-  }, [loading, terceirizados, selectedTerceirizado]);
-
-  useEffect(() => {
-    if (!loading && consultores.length > 0 && !selectedConsultor) {
-      setSelectedConsultor(consultores[0].nome);
-    }
-  }, [loading, consultores, selectedConsultor]);
-
-  useEffect(() => {
-    if (!loading && relatorios.length > 0 && selectedReportType === undefined) {
-      setSelectedReportType(relatorios[0].id);
-    }
-  }, [loading, relatorios, selectedReportType]);
-
-
   // --- LÓGICA PARA EXTRAIR ANOS ÚNICOS E FILTRAR ORÇAMENTOS ---
   const availableYears = useMemo(() => {
     const years = new Set(orcamentos.map(o => o.ano));
@@ -340,7 +284,7 @@ const [remessaCliente, setRemessaCliente] = useState('');
   };
 
     const shouldShowLimpeza = useMemo(() => {
-    return selectedReportType === 3;
+    return selectedReportType === 'Eficácia limpeza';
   }, [selectedReportType]);
 
   const adicionarSetores = () => {
@@ -1043,9 +987,7 @@ const styles: { [key: string]: React.CSSProperties } = {
           legislacoesData,
           identificacoesData,
           terceirizadosData,
-          pgData,
-          consultoresData,
-          certificadoData
+          consultoresData
         ] = await Promise.all([
           invoke('buscar_categoria_amostra'),
           invoke('buscar_acreditacao'),
@@ -1053,10 +995,7 @@ const styles: { [key: string]: React.CSSProperties } = {
           invoke('buscar_legislacao'),
           invoke('buscar_identificacao'),
           invoke('buscar_tercerizado'),
-          invoke('buscar_pg'),
-          invoke('consultar_consultores'),
-          invoke('buscar_certificado')
-          
+          invoke('consultar_consultores')
         ]);
 
         setCategorias(categoriasData as Categoria[]);
@@ -1065,10 +1004,7 @@ const styles: { [key: string]: React.CSSProperties } = {
         setLegislacoes(legislacoesData as Categoria[]);
         setIdentificacoes(identificacoesData as Identificacao[]);
         setTerceirizados(terceirizadosData as Categoria[]);
-        setPg(pgData as Categoria[]);
-        setRelatorios(certificadoData as Categoria[]);
         setConsultores(consultoresData as Categoria[]);
-
 
       } catch (err) {
         console.error('Erro ao carregar dados:', err);
@@ -1261,7 +1197,7 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
       temperatura: '',
       complemento: '',
       condicoesAmbientais: '',
-      itemOrcamento: null,
+      itemOrcamento: '',
       // Inicializa a nova amostra com a lista de parâmetros base atual
       parametrosDisponiveis: parametrosBase,
       parametrosSelecionados: [],
@@ -1310,7 +1246,7 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
         temperatura: '',
         complemento: '',
         condicoesAmbientais: '',
-        itemOrcamento: null
+        itemOrcamento: ''
       } : amostra
     ));
   };
@@ -1389,20 +1325,20 @@ const renderCadastroContent = () => (
             <div style={styles.grid12}>
               <div style={styles.col3}>
             <label style={styles.label}>Relatório de ensaios</label>
-                       <select
+            <select
                 style={styles.select}
-                value={selectedReportType || ''}
-                onChange={(e) => setSelectedReportType(Number(e.target.value))}
+                value={selectedReportType}
+                onChange={(e) => setSelectedReportType(e.target.value)}
             >
-                <option value="">Selecione</option>
-                {relatorios.map((legislacao) => (
-                  
-                  <option key={legislacao.id} value={legislacao.id}>
-                    {legislacao.nome}
-                  </option>
-                ))}
+                <option>1 amostra por relatório</option>
+                <option>Agrupar amostras</option>
+                <option>Eficácia limpeza</option>
+                <option>Estudo de prateleira</option>
+                <option>IN 60</option>
+                <option>Monitoramento ambiental</option>
+                <option>Solo</option>
             </select>
-            {(selectedReportType === 2  || selectedReportType === 5 )&& (
+            {selectedReportType === 'Agrupar amostras' || selectedReportType === 'Solo' && (
                 <div style={{ marginTop: '10px' }}>
                     <label style={styles.checkboxLabel}>
                         <input
@@ -1533,12 +1469,7 @@ const renderCadastroContent = () => (
         </div>
         <div style={styles.col3}><label style={styles.label}>Coletado por</label><select value={collector} onChange={(e) => setCollector(e.target.value)} style={styles.select}><option>Cliente</option><option>Laboratório</option></select></div>
         <div style={styles.col3}><label style={styles.label}>Nome do Coletor</label><input type="text" value={collectorName} onChange={(e) => setCollectorName(e.target.value)} style={styles.input}/></div>
-        <div style={styles.col6}><label style={styles.label}>Procedimento de Amostragem</label><select value={samplingProcedure} onChange={(e) => setSamplingProcedure(e.target.value)} style={styles.select}>       <option value="">Selecione uma Opção</option>  {pgs.map((legislacao) => (
-                  
-                  <option key={legislacao.id} value={legislacao.id}>
-                    {legislacao.nome}
-                  </option>
-                ))}</select></div>
+        <div style={styles.col6}><label style={styles.label}>Procedimento de Amostragem</label><select value={samplingProcedure} onChange={(e) => setSamplingProcedure(e.target.value)} style={styles.select}><option value="">Selecione</option></select></div>
         <div style={styles.col6}><label style={styles.label}>Acompanhante</label><input type="text" value={companion} onChange={(e) => setCompanion(e.target.value)} style={styles.input}/></div>
     </div>
 </div>
@@ -2095,7 +2026,7 @@ const renderDadosContent = () => {
   if (!amostraAtiva) return null;
 
   const amostraIndex = amostras.findIndex(a => a.id === activeAmostraTab);
-  const labelAmostra = selectedReportType === 6
+  const labelAmostra = selectedReportType === 'Estudo de prateleira' 
     ? `Amostra ${alfabeto[amostraIndex] || amostraIndex + 1}` 
     : `Amostra ${amostraIndex + 1}`;
 
@@ -2152,11 +2083,7 @@ const renderDadosContent = () => {
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
           >
-              {identificacoes.map((legislacao) => (
-                <option key={legislacao.id} value={legislacao.id}>
-                  {legislacao.id1}
-                </option>
-              ))}
+            <option value="">Selecione</option>
           </select>
         </div>
         <div style={styles.col4}>
@@ -2197,18 +2124,18 @@ const renderDadosContent = () => {
         <div style={styles.col6}>
           <label style={styles.label}>Item do orçamento</label>
           <select
-              value={amostraAtiva.itemOrcamento !== null ? amostraAtiva.itemOrcamento : ''}
-            onChange={(e) => atualizarAmostra(amostraAtiva.id, 'itemOrcamento', Number(e.target.value))}
+            value={amostraAtiva.itemOrcamento}
+            onChange={(e) => atualizarAmostra(amostraAtiva.id, 'itemOrcamento', e.target.value)}
             style={styles.select}
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
           >
             <option value="">Selecione</option>
-                {orcamentoItems.map((c) => <option key={c.id_item} value={c.id_item}>{c.descricao}</option>)}
+                {orcamentoItems.map((c) => <option key={c.id_item} value={c.descricao}>{c.descricao}</option>)}
           </select>
         </div>
 
-{selectedReportType === 3 && (
+{selectedReportType === 'Eficácia limpeza' && (
     <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
         <div>
             <label style={styles.label}>Unidade Amostra</label>
@@ -2246,7 +2173,7 @@ const renderDadosContent = () => {
     </div>
 )}
 
-{selectedReportType === 4 && (
+{selectedReportType === 'Monitoramento ambiental' && (
     <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
         <div>
             <label style={styles.label}>Unidade Amostra</label>
@@ -2267,7 +2194,7 @@ const renderDadosContent = () => {
     </div>
 )}
 
-{selectedReportType === 7 && (
+{selectedReportType === 'IN 60' && (
     <div style={{ marginTop: '10px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', alignItems: 'end' }}>
          <div>
             <label style={styles.label}>Protocolo do Cliente</label>
@@ -2330,7 +2257,7 @@ const renderDadosContent = () => {
   };
 
 const renderSampleSection = () => {
-const handleCadastrar = async () => {
+ const handleCadastrar = async () => {
   // 1. Validação inicial
   if (!selectedClienteObj) {
     alert("Erro: Nenhum cliente foi selecionado. Por favor, selecione um cliente para continuar.");
@@ -2340,85 +2267,78 @@ const handleCadastrar = async () => {
   const legislacaoSelecionada = legislacoes.find(l => l.nome === selectedLegislacao);
 
   const dadosCadastro = {
-    dados_gerais: {
-      // Dados do cliente
-      cliente_id: selectedClienteObj.id,
-      cliente_nome: selectedClienteObj.fantasia || "",
-      consultor_id: selectedConsultor ? parseInt(selectedConsultor) : null,
+    configuracoesGerais: {
+      // Dados básicos do cliente e configuração
+      clienteId: selectedClienteObj.id,
+      solicitanteId: selectedSolicitanteObj?.id || null,
+      emailSolicitante: emailSolicitante,
+      consultor: selectedConsultor,
+      
+      // Tipo de relatório e configurações condicionais
+      tipoRelatorio: selectedReportType,
+      mesmaHoraTodasAmostras: sameTimeForAllSamples,
       
       // Datas e horários
-      data_inicio: startDate,
-      hora_inicio: startTime,
-      data_coleta: collectDate,
-      hora_coleta: collectTime,
-      data_entrada_lab: labEntryDate,
-      hora_entrada_lab: labEntryTime,
+      dataInicioAmostragem: startDate,
+      horaInicioAmostragem: startTime,
+      dataColeta: collectDate,
+      horaColeta: collectTime,
+      dataEntradaLaboratorio: labEntryDate,
+      horaEntradaLaboratorio: labEntryTime,
       
       // Dados da coleta
-      coletor: 101,
-      nome_coletor: collectorName,
-      procedimento_amostragem: samplingProcedure,
-      categoria_id: category ? parseInt(category) : null,
+      coletadoPor: collector,
+      nomeColetor: collectorName,
+      procedimentoAmostragem: samplingProcedure,
       acompanhante: companion,
       
-      // Configurações
-      orcamento: budget,
-      dados_amostragem: samplingData,
-      controle_qualidade: qualityControl,
+      // Orçamento
+      orcamentoVinculado: budget,
+      orcamentoSelecionado: selectedOrcamento,
+      anoFiltroOrcamento: anoFiltro,
+      
+      // Dados adicionais
+      informarVazaoCliente: vazaoClient,
       vazao: flow,
-      unidade_vazao: flowUnit,
-      vazao_cliente: vazaoClient,
+      unidadeVazao: flowUnit,
+      incluirDadosAmostragem: samplingData,
+      controleQualidade: qualityControl,
       
-      // Contatos
-      email_solicitante: emailSolicitante,
-      solicitante_id: selectedSolicitanteObj?.id || null,
+      // Classificações
+      acreditacao: selectedAcreditacao,
+      categoria: category,
+      legislacaoId: legislacaoSelecionada?.id || null,
+      metodologias: selectedMethodologies.map(m => m.id),
       
-      // Metodologias e configurações técnicas
-      metodologias_selecionadas: selectedMethodologies.map(m => m.id),
-      acreditacao_id: selectedAcreditacao ? parseInt(selectedAcreditacao) : null,
-      legislacao_id: legislacaoSelecionada?.id || null,
-      terceirizado_id: null, // Adicione se tiver esse campo
-      orcamento_id: selectedOrcamento ? parseInt(selectedOrcamento) : null,
-      setores_selecionados: setoresSelecionados.map(s => s.id),
+      // Terceirização
+      terceirizacao: {
+        amostraTerceirizada: amostraTerceirizada,
+        tipoAnalise: tipoAnalise,
+        laboratorio: laboratorio,
+      },
       
-      // Configurações específicas
-      amostra_terceirizada: amostraTerceirizada,
-      tipo_analise: tipoAnalise,
-      laboratorio: laboratorio,
-      
-      // Unidades e forma de coleta
-      unidade_amostra: unidadeAmostraValue || "",
-      forma_coleta: formaDeColetaValue || "",
-      unidade_area_amostrada: unidadeAreaAmostradaValue || "",
-      area_amostrada: areaAmostradaValue || "",
-      
-      // Tipo de relatório
-      tipo_relatorio: selectedReportType,
-      mesmo_horario_todas_amostras: sameTimeForAllSamples,
-      
-      // Campos condicionais para eficácia de limpeza
-      ...(selectedReportType === 3 && {
-        principio_ativo: principioAtivo || null,
-        produto_anterior: produtoAnterior || null,
-        lote: lote || null,
-        agente_limpeza: agenteLimpeza || null,
-        data_limpeza: dataLimpeza || null,
-        momento_limpeza: momentoLimpeza || null,
-        tempo_decorrido: tempoDecorrido || null,
-        unidade_tempo_decorrido: unidadeTempoDecorrido || null,
-      }),
-      
-      // Campos condicionais IN 60
-      ...(selectedReportType === 7 && {
-        protocolo_cliente: protocoloCliente || null,
-        remessa_cliente: remessaCliente || null,
+      // Campos específicos para Eficácia de Limpeza
+      ...(selectedReportType === 'Eficácia limpeza' && {
+        eficaciaLimpeza: {
+          principioAtivo: principioAtivo,
+          produtoAnterior: produtoAnterior,
+          lote: lote,
+          agenteLimpeza: agenteLimpeza,
+          dataLimpeza: dataLimpeza,
+          momentoLimpeza: momentoLimpeza,
+          tempoDecorrido: tempoDecorrido,
+          unidadeTempoDecorrido: unidadeTempoDecorrido,
+        }
       })
     },
     
+    // Setores selecionados
+    setoresSelecionados: setoresSelecionados.map(s => s.id),
+    
     // Amostras com todos os campos
     amostras: amostras.map((amostra, index) => {
-      const baseAmostra = {
-        id: amostra.id, 
+           const baseAmostra = {
+        id: amostra.id,
         numero: amostra.numero,
         hora_coleta: amostra.horaColeta,
         identificacao: amostra.identificacao,
@@ -2426,35 +2346,46 @@ const handleCadastrar = async () => {
         complemento: amostra.complemento,
         condicoes_ambientais: amostra.condicoesAmbientais,
         item_orcamento: amostra.itemOrcamento,
-        parametros_selecionados: amostra.parametrosSelecionados || []
+        parametros_selecionados: amostra.parametrosSelecionados.map(p => p.id_parametro)
       };
+
+
+      // Adiciona campos específicos baseados no tipo de relatório
+      if (selectedReportType === 'Eficácia limpeza' || selectedReportType === 'Monitoramento ambiental') {
+        return {
+          ...baseAmostra,
+          unidadeAmostra: unidadeAmostraValue,
+          formaColeta: formaDeColetaValue,
+          ...(selectedReportType === 'Eficácia limpeza' && {
+            unidadeAreaAmostrada: unidadeAreaAmostradaValue,
+            areaAmostrada: areaAmostradaValue,
+          })
+        };
+      }
+
+      if (selectedReportType === 'IN 60') {
+        return {
+          ...baseAmostra,
+          protocoloCliente: protocoloCliente,
+          remessaCliente: remessaCliente,
+        };
+      }
 
       return baseAmostra;
     })
   };
 
-  // Garantir que campos obrigatórios string não sejam undefined/null
-  if (!dadosCadastro.dados_gerais.cliente_nome) {
-    dadosCadastro.dados_gerais.cliente_nome = "";
-  }
-  if (!dadosCadastro.dados_gerais.vazao) {
-    dadosCadastro.dados_gerais.vazao = "";
-  }
-  if (!dadosCadastro.dados_gerais.unidade_vazao) {
-    dadosCadastro.dados_gerais.unidade_vazao = "";
-  }
-  if (!dadosCadastro.dados_gerais.tipo_analise) {
-    dadosCadastro.dados_gerais.tipo_analise = "";
-  }
-  if (!dadosCadastro.dados_gerais.laboratorio) {
-    dadosCadastro.dados_gerais.laboratorio = "";
-  }
+alert(JSON.stringify(dadosCadastro, null, 2));
 
-  alert(JSON.stringify(dadosCadastro, null, 2));
+  alert("Dados coletados com sucesso! Verifique o console (F12) para ver todos os dados.");
 
   try {
-    await invoke('cadastrar_amostra_completa', { dadosCadastro: dadosCadastro });
-    alert("Amostra cadastrada com sucesso!");
+  
+    
+await invoke('cadastrar_amostra_completa', { dadosCadastro: dadosCadastro });
+
+
+ 
   } catch (error) {
     console.error("Erro ao tentar cadastrar amostra:", error);
     alert(`Ocorreu um erro ao cadastrar: ${error}`);

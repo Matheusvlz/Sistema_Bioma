@@ -20,6 +20,8 @@ import { GerenciarSetores } from '../view/geral/GerenciarSetores';
 import { Planilha } from '../view/laboratorio/Planilha';
 import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
+import VisualizarConsultor from '../view/geral/VisualizarConsultor';
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -47,7 +49,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'cadastro-usuario-portal': { component: <UsuarioPortal />, hasLayout: false },
   'gerenciar-setor': { component: <GerenciarSetores />, hasLayout: false },
   'historico-usuario': { component: <HistoricoUsuario />, hasLayout: false },
-  'cadastrar-consultor': { component: <Inicio />, hasLayout: false },
+  'cadastrar-consultor': { component: <VisualizarConsultor />, hasLayout: false },
   'cadastrar-laboratorio-terceirizado': { component: <Inicio />, hasLayout: false },
 
   // SUBROTAS DE ESTRUTURAS
@@ -77,6 +79,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // SUBROTAS DE CONTAS
   'cadastrar-calculo': { component: <Inicio />, hasLayout: true },
   'visualizar-calculo': { component: <Inicio />, hasLayout: true },
+  
 
   'chat': { component: <ChatContainer />, hasLayout: false }, 
   'criar-planilha': { component: <CriarPlanilha />, hasLayout: false }, 

@@ -118,7 +118,7 @@ pub async fn get_users(app_handle: AppHandle) -> Result<ChatResponse, String> {
 // Criar um novo chat
 #[tauri::command]
 pub async fn create_chat( user_ids: Vec<i32>, group_name: Option<String>, group_description: Option<String>) -> Result<ChatInfo, String> {
-    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://192.168.15.26:8082".to_string());
+    let url = std::env::var("API_URL").unwrap_or_else(|_| "http://127.0.0.1:8082".to_string());
     let full_url = format!("{}/chat/create", url);
     println!("[LOG] Criando chat para: {}", full_url);
 

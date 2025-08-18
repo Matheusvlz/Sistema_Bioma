@@ -348,7 +348,7 @@ useEffect(() => {
           const user: Usuario | null = await invoke('usuario_logado');
           if (user) {
             setUsuario(user);
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://192.168.15.26:8082';
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8082';
             const fullProfilePhotoUrl = user.profile_photo ? `${apiUrl}${user.profile_photo}` : 'https://placehold.co/40x40/065f46/ffffff?text=U';
             setProfileImageUrl(fullProfilePhotoUrl);
             document.body.classList.toggle('dark-mode', user.dark_mode);

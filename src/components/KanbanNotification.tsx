@@ -139,7 +139,7 @@ export const KanbanNotification: React.FC<KanbanNotificationProps> = ({
 
     const getUserAvatar = () => {
         if (notification.data?.userPhotoUrl) {
-            return `http://192.168.15.26:8082${notification.data.userPhotoUrl}`;
+            return `http://127.0.0.1:8082${notification.data.userPhotoUrl}`;
         }
         return `https://ui-avatars.com/api/?name=Usuario&background=random&color=fff&size=32`;
     };

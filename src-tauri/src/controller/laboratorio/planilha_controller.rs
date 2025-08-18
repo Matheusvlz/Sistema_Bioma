@@ -35,7 +35,7 @@ pub struct NumerosEspecificosResponse {
 
 #[command]
 pub async fn consultar_amostras_por_planilha( planilha_id: u32) -> Result<Vec<i32>, String> {
-    let url = format!("http://192.168.15.26:8082/planilha/{}/amostras", planilha_id);
+    let url = format!("http://127.0.0.1:8082/planilha/{}/amostras", planilha_id);
 
     let client = Client::new();
     let response = client
@@ -58,7 +58,7 @@ pub async fn consultar_amostras_por_planilha( planilha_id: u32) -> Result<Vec<i3
 
 #[command]
 pub async fn consultar_intervalos_planilhas() -> Result<Vec<NumberRange>, String> {
-    let url = "http://192.168.15.26:8082/get_final_number";
+    let url = "http://127.0.0.1:8082/get_final_number";
 
     let client = Client::new();
     let response = client
@@ -89,7 +89,7 @@ pub struct NovaPlanilhaResponse {
 
 #[command]
 pub async fn gerar_nova_planilha() -> Result<NovaPlanilhaResponse, String> {
-    let url = "http://192.168.15.26:8082/gerar_planilha";
+    let url = "http://127.0.0.1:8082/gerar_planilha";
 
 let user_id = get_user_id().ok_or("Usuário não autenticado")?;
     let client = Client::new();

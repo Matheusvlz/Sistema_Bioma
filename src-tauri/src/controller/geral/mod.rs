@@ -3,3 +3,4 @@ pub mod visualizarcliente_controller;
 pub mod categoria_controller;
 pub mod usuarioportal_controller;
 pub mod setor_controller;
+pub mod consultor_controller;
