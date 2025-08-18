@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Sidebar from './Sidebar';
-import { TestTubeDiagonal, ClipboardPen, Plus, Search, X , RefreshCcw} from 'lucide-react';
+import { TestTubeDiagonal, ClipboardPen, Plus, Search, X, RefreshCcw, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import { ParametrosSelector } from './ParametrosSelector';
 // Ícones simples usando SVG
@@ -23,6 +23,247 @@ interface Amostra {
   parametrosSelecionados: Parametro[];
   checkedDisponiveis: number[];
   checkedSelecionados: number[];
+}
+
+interface CustomSelectProps<T> {
+  options: T[];
+  value: string;
+  onChange: (value: string, item?: T) => void;
+  placeholder?: string;
+  displayKey: keyof T;
+  valueKey?: keyof T;
+  label?: string;
+  style?: React.CSSProperties;
+  disabled?: boolean;
+}
+
+// Componente CustomSelect reutilizável
+function CustomSelect<T extends Record<string, any>>({
+  options,
+  value,
+  onChange,
+  placeholder = "Selecione...",
+  displayKey,
+  valueKey,
+  label,
+  style,
+  disabled = false
+}: CustomSelectProps<T>) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [displayValue, setDisplayValue] = useState('');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Filtrar opções baseado na busca
+  const filteredOptions = useMemo(() => {
+    if (!searchQuery) return options;
+    return options.filter(option => 
+      String(option[displayKey]).toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [options, searchQuery, displayKey]);
+
+  // Atualizar o valor de exibição quando o valor selecionado mudar
+  useEffect(() => {
+    if (value) {
+      const selectedOption = options.find(option => 
+        String(valueKey ? option[valueKey] : option[displayKey]) === value
+      );
+      if (selectedOption) {
+        setDisplayValue(String(selectedOption[displayKey]));
+        setSearchQuery(String(selectedOption[displayKey]));
+      }
+    } else {
+      setDisplayValue('');
+      setSearchQuery('');
+    }
+  }, [value, options, displayKey, valueKey]);
+
+  // Fechar dropdown quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+        // Restaurar o valor de exibição se não houver seleção válida
+        if (value) {
+          const selectedOption = options.find(option => 
+            String(valueKey ? option[valueKey] : option[displayKey]) === value
+          );
+          if (selectedOption) {
+            setSearchQuery(String(selectedOption[displayKey]));
+          }
+        } else {
+          setSearchQuery('');
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [value, options, displayKey, valueKey]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    if (!isOpen) setIsOpen(true);
+  };
+
+  const handleOptionSelect = (option: T) => {
+    const selectedValue = String(valueKey ? option[valueKey] : option[displayKey]);
+    onChange(selectedValue, option);
+    setIsOpen(false);
+    setSearchQuery(String(option[displayKey]));
+    setDisplayValue(String(option[displayKey]));
+  };
+
+  const handleInputFocus = () => {
+    setIsOpen(true);
+  };
+
+  const customSelectStyles: { [key: string]: React.CSSProperties } = {
+    container: {
+      position: 'relative',
+      width: '100%',
+      ...style
+    },
+    label: {
+      display: 'block',
+      fontSize: '11px',
+      fontWeight: '500',
+      color: '#374151',
+      marginBottom: '4px',
+    },
+    inputContainer: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center'
+    },
+    input: {
+      width: '100%',
+      height: '32px',
+      padding: '0 32px 0 8px',
+      border: '1px solid #d1d5db',
+      borderRadius: '4px',
+      fontSize: '12px',
+      outline: 'none',
+      backgroundColor: disabled ? '#f9fafb' : 'white',
+      cursor: disabled ? 'not-allowed' : 'text',
+      transition: 'all 0.2s ease'
+    },
+    inputFocused: {
+      borderColor: '#059669',
+      boxShadow: '0 0 0 1px #059669'
+    },
+    chevron: {
+      position: 'absolute',
+      right: '8px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#64748b',
+      pointerEvents: 'none',
+      transition: 'transform 0.2s ease'
+    },
+    chevronOpen: {
+      transform: 'translateY(-50%) rotate(180deg)'
+    },
+    dropdown: {
+      position: 'absolute',
+      top: '100%',
+      left: 0,
+      right: 0,
+      backgroundColor: 'white',
+      border: '1px solid #d1d5db',
+      borderTop: 'none',
+      borderRadius: '0 0 4px 4px',
+      maxHeight: '200px',
+      overflowY: 'auto',
+      zIndex: 1000,
+      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+    },
+    option: {
+      padding: '8px 12px',
+      cursor: 'pointer',
+      borderBottom: '1px solid #f1f5f9',
+      fontSize: '12px',
+      transition: 'background-color 0.2s ease'
+    },
+    optionHover: {
+      backgroundColor: '#f8fafc'
+    },
+    optionSelected: {
+      backgroundColor: '#059669',
+      color: 'white'
+    },
+    noOptions: {
+      padding: '8px 12px',
+      fontSize: '12px',
+      color: '#64748b',
+      fontStyle: 'italic'
+    }
+  };
+
+  return (
+    <div ref={containerRef} style={customSelectStyles.container}>
+      {label && <label style={customSelectStyles.label}>{label}</label>}
+      <div style={customSelectStyles.inputContainer}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          placeholder={placeholder}
+          disabled={disabled}
+          style={{
+            ...customSelectStyles.input,
+            ...(isOpen ? customSelectStyles.inputFocused : {})
+          }}
+        />
+        <ChevronDown 
+          size={16} 
+          style={{
+            ...customSelectStyles.chevron,
+            ...(isOpen ? customSelectStyles.chevronOpen : {})
+          }}
+        />
+      </div>
+      
+      {isOpen && !disabled && (
+        <div style={customSelectStyles.dropdown}>
+          {filteredOptions.length > 0 ? (
+            filteredOptions.map((option, index) => {
+              const optionValue = String(valueKey ? option[valueKey] : option[displayKey]);
+              const isSelected = optionValue === value;
+              
+              return (
+                <div
+                  key={index}
+                  style={{
+                    ...customSelectStyles.option,
+                    ...(isSelected ? customSelectStyles.optionSelected : {})
+                  }}
+                  onClick={() => handleOptionSelect(option)}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = '#f8fafc';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  {String(option[displayKey])}
+                </div>
+              );
+            })
+          ) : (
+            <div style={customSelectStyles.noOptions}>
+              Nenhuma opção encontrada
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export interface ParametroResponse {
@@ -155,7 +396,8 @@ const getCurrentTime = (): string => {
   const [legislacoes, setLegislacoes] = useState<Categoria[]>([]);
   const [identificacoes, setIdentificacoes] = useState<Identificacao[]>([]);
   const [terceirizados, setTerceirizados] = useState<Categoria[]>([]);
-
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
    const [pgs, setPg] = useState<Categoria[]>([]);
   const [relatorios, setRelatorios] = useState<Categoria[]>([]);
   const [consultores, setConsultores] = useState<Categoria[]>([]);
@@ -180,7 +422,7 @@ const getCurrentTime = (): string => {
   const [amostraTerceirizada, setAmostraTerceirizada] = useState(false);
   const [tipoAnalise, setTipoAnalise] = useState('total');
   const [laboratorio, setLaboratorio] = useState('Biomade Soluções Biotecnológicas');
-
+ const [selectedIdentificacao, setSelectedIdentificacao] = useState('');
 
 const [unidadeAmostraValue, setUnidadeAmostraValue] = useState('');
 const [formaDeColetaValue, setFormaDeColetaValue] = useState('');
@@ -261,8 +503,8 @@ const [remessaCliente, setRemessaCliente] = useState('');
     if (!loading && legislacoes.length > 0 && !selectedLegislacao) {
       setSelectedLegislacao(legislacoes[0].nome);
       // Também carrega os parâmetros da primeira legislação
-      handleLegislacaoChange({ target: { value: legislacoes[0].nome } } as React.ChangeEvent<HTMLSelectElement>);
-    }
+      handleLegislacaoChange(legislacoes[0].nome);
+        }
   }, [loading, legislacoes, selectedLegislacao]);
 
   useEffect(() => {
@@ -276,6 +518,12 @@ const [remessaCliente, setRemessaCliente] = useState('');
       setSelectedConsultor(consultores[0].nome);
     }
   }, [loading, consultores, selectedConsultor]);
+
+  useEffect(() => {
+    if (!loading && identificacoes.length > 0 && !selectedIdentificacao) {
+      setSelectedIdentificacao(identificacoes[0].id1);
+    }
+  }, [loading, identificacoes, selectedIdentificacao]);
 
   useEffect(() => {
     if (!loading && relatorios.length > 0 && selectedReportType === undefined) {
@@ -1180,12 +1428,10 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
   };
 
   // NOVO: Função refatorada para lidar com a mudança da legislação
-  const handleLegislacaoChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const nomeSelecionado = e.target.value;
-    setSelectedLegislacao(nomeSelecionado);
-
-    const legislacao = legislacoes.find((l) => l.nome === nomeSelecionado);
-    if (legislacao) {
+  const handleLegislacaoChange = async (value: string, legislacao?: Categoria) => {
+    setSelectedLegislacao(value);
+    
+      if (legislacao) {
       try {
         const response = await invoke<ParametroResponse>("buscar_parametros", {
           legislacaoId: legislacao.id,
@@ -1227,6 +1473,9 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
     }
   };
 
+    const handleIdentificacaoChange = (value: string, identificacao?: Identificacao) => {
+    setSelectedIdentificacao(value);
+  };
 
 
   const handleClearSearch = () => {
@@ -1283,7 +1532,6 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
     }
   };
 
-  // ✅ *** CORRECTION STARTS HERE *** ✅
   const atualizarAmostra = (id: number, campo: keyof Amostra, valor: any) => {
     setAmostras(prevAmostras =>
       prevAmostras.map(amostra => {
@@ -1298,7 +1546,6 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
       })
     );
   };
-  // ✅ *** CORRECTION ENDS HERE *** ✅
 
   const limparAmostra = (id: number) => {
     setAmostras(amostras.map(amostra => 
@@ -1738,24 +1985,18 @@ const renderCadastroContent = () => (
             </div>
 
             {/* Seção de Legislação - Seleção Única */}
-            <div style={styles.col3}>
-              <label style={styles.label}>Legislação (Seleção Única)</label>
-              <select
-                style={styles.select}
-                value={selectedLegislacao}
-                onChange={handleLegislacaoChange} // ATUALIZADO
-                onFocus={handleInputFocus}
-                onBlur={handleInputBlur}
-                disabled={loading}
-              >
-                <option value="">Selecione uma legislação</option>
-                {legislacoes.map((legislacao) => (
-                  <option key={legislacao.id} value={legislacao.nome}>
-                    {legislacao.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <div style={styles.col3}>
+                  <div style={styles.formField}>
+                    <CustomSelect
+                      options={legislacoes}
+                      value={selectedLegislacao}
+                      onChange={handleLegislacaoChange}
+                      displayKey="nome"
+                      label="Legislação"
+                      placeholder="Selecione uma legislação..."
+                    />
+                  </div>
+                </div>
           </div>
         </div>
       </div>
@@ -2144,20 +2385,18 @@ const renderDadosContent = () => {
 
       <div style={{...styles.grid12, marginTop: '16px'}}>
         <div style={styles.col4}>
-          <label style={styles.label}>Identificação</label>
-          <select
-            value={amostraAtiva.identificacao}
-            onChange={(e) => atualizarAmostra(amostraAtiva.id, 'identificacao', e.target.value)}
-            style={styles.select}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-          >
-              {identificacoes.map((legislacao) => (
-                <option key={legislacao.id} value={legislacao.id}>
-                  {legislacao.id1}
-                </option>
-              ))}
-          </select>
+     
+                  <div style={styles.formField}>
+   <CustomSelect
+  options={identificacoes}
+  value={selectedIdentificacao}
+  onChange={(item) => atualizarAmostra(amostraAtiva.id, 'identificacao', item)}
+  displayKey="id1"
+  valueKey="id1"
+  label="Identificação"
+  placeholder="Selecione uma identificação..."
+/>
+                  </div>
         </div>
         <div style={styles.col4}>
           <label style={styles.label}>Temperatura</label>
@@ -2450,19 +2689,37 @@ const handleCadastrar = async () => {
     dadosCadastro.dados_gerais.laboratorio = "";
   }
 
-  alert(JSON.stringify(dadosCadastro, null, 2));
+ // alert(JSON.stringify(dadosCadastro, null, 2));
 
   try {
     await invoke('cadastrar_amostra_completa', { dadosCadastro: dadosCadastro });
-    alert("Amostra cadastrada com sucesso!");
+    setShowSuccessModal(true);
   } catch (error) {
     console.error("Erro ao tentar cadastrar amostra:", error);
-    alert(`Ocorreu um erro ao cadastrar: ${error}`);
+    setShowErrorModal(true);
   }
 };
 
+const ErrorModal = () => (
+  <div style={styles.overlay}>
+    <div style={{ ...styles.modal, alignItems: 'center', textAlign: 'center', gap: '16px' }}>
+      <XCircle size={48} color="#ef4444" />
+      <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Erro!</h3>
+      <p style={{ margin: '0', fontSize: '14px', color: '#475569' }}>Ocorreu um erro ao cadastrar a amostra.</p>
+      <button
+        style={{ ...styles.primaryButton, backgroundColor: '#ef4444', marginTop: '16px' }}
+        onClick={() => setShowErrorModal(false)}
+      >
+        Fechar
+      </button>
+    </div>
+  </div>
+);
   return (
+    
     <div style={styles.sampleContainer}>
+        {showSuccessModal && <SuccessModal />}
+        {showErrorModal && <ErrorModal />}
       <div style={styles.sampleTabsContainer}>
         <div style={styles.sampleTabsList}>
           {amostras.map((amostra, index) => (
@@ -2544,6 +2801,23 @@ const handleCadastrar = async () => {
     </div>
   );
 };
+
+
+const SuccessModal = () => (
+  <div style={styles.overlay}>
+    <div style={{ ...styles.modal, alignItems: 'center', textAlign: 'center', gap: '16px' }}>
+      <CheckCircle size={48} color="#059669" />
+      <h3 style={{ margin: '0', fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>Sucesso!</h3>
+      <p style={{ margin: '0', fontSize: '14px', color: '#475569' }}>Amostra cadastrada com sucesso.</p>
+      <button
+        style={{ ...styles.primaryButton, marginTop: '16px' }}
+        onClick={() => setShowSuccessModal(false)}
+      >
+        Fechar
+      </button>
+    </div>
+  </div>
+);
 
   return (
     <div style={styles.container}>

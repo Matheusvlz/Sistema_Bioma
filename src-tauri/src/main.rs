@@ -96,6 +96,9 @@ use controller::laboratorio::cadastrar_amostra_controller::{buscar_tercerizado,
     buscar_pg,
     buscar_certificado
 };
+use controller::laboratorio::visualizar_amostra::{
+    buscar_amostras
+};
 
 use std::env;
 use crate::config::get_ws_url;
@@ -240,7 +243,8 @@ fn main() {
             buscar_orcamentos,
             cadastrar_amostra_completa,
             buscar_pg,
-            buscar_certificado
+            buscar_certificado,
+            buscar_amostras
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

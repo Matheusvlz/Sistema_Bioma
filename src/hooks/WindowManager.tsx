@@ -302,6 +302,18 @@ export class WindowManager {
       allowMultiple: true
     });
   }
+    static async openVisualizarAmostas(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-amostras',
+      title: 'Visulizar Amostras',
+      url: '/#/visualizar-amostras',
+      width: 1200,
+      height: 600,
+      allowMultiple: true
+    });
+  }
+
+
 
   
 }

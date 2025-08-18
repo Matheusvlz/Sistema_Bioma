@@ -621,6 +621,7 @@ export const Laboratorio: React.FC = memo(() => {
 
       case "Visualizar":
         console.log("Ação: Visualizar amostras!");
+       WindowManager.openVisualizarAmostas();
         break;
 
       // ... outros cases permanecem iguais

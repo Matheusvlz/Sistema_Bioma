@@ -1,4 +1,3 @@
-// route.tsx
 import { Inicio } from '../view/Main';
 import { Reports } from '../view/Reports';
 import { Settings } from '../view/Settings';
@@ -20,7 +19,9 @@ import { GerenciarSetores } from '../view/geral/GerenciarSetores';
 import { Planilha } from '../view/laboratorio/Planilha';
 import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
-// Define a new type for route configurations
+import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
+
+
 interface RouteConfig {
   component: React.ReactNode;
   hasLayout: boolean; // Add this property
@@ -38,9 +39,6 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   qualidade: { component: <Qualidade />, hasLayout: true },
   frota: { component: <Frota />, hasLayout: true },
 
-  // SUBROTAS DE CLIENTES - Mark hasLayout as false for CadastrarClientes
-// No layout for this route
-  
   'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false },
   'visualizar-clientes': { component: <VisualizarClientes />, hasLayout: false },
   'gerenciar-categoria': { component: <GerenciarCategoria />, hasLayout: false },
@@ -82,10 +80,11 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'criar-planilha': { component: <CriarPlanilha />, hasLayout: false }, 
   'cadastrar-planilha': {component: <CadastrarPlanilha />, hasLayout: false},
 
-  // Planilha
+  // LAB
   'planilha-laboratorio': {component: <Planilha />, hasLayout: false},
-  
-  'cadastrar-amostra': {component: <CadastrarAmostra />, hasLayout: false}
+  'cadastrar-amostra': {component: <CadastrarAmostra />, hasLayout: false},
+  'visualizar-amostras': {component: <VisualizarAmostra />, hasLayout: false}
+
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
