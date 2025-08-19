@@ -3,3 +3,8 @@ pub mod visualizarcliente_controller;
 pub mod categoria_controller;
 pub mod usuarioportal_controller;
 pub mod setor_controller;
+pub mod consultor_controller;
+pub mod lab_terceirizado_controller;
+pub mod tipo_controller;
+pub mod grupo_controller;
+

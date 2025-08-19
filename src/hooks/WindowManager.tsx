@@ -236,6 +236,17 @@ export class WindowManager {
     });
   }
 
+  static async openCadastrarConsultor(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-consultor',
+      title: 'Cadastrar Consultor',
+      url: '/#/cadastrar-consultor', // Garanta que sua rota React exista!
+      width: 1200,
+      height: 900,
+      allowMultiple: true, // Permite abrir mais de uma janela de cadastro
+    });
+  }
+
   static async openChat(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'chat',
@@ -310,6 +321,44 @@ export class WindowManager {
       width: 1200,
       height: 600,
       allowMultiple: true
+    });
+  }
+  // LAB TERCEIRIZADO
+  
+  static async openCadastrarLabTerceirizado(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-laboratorio-terceirizado',
+      title: 'Gerir Laboratórios Terceirizados',
+      url: '/#/cadastrar-laboratorio-terceirizado',
+      width: 1200,
+      height: 800,
+      allowMultiple: true,
+    });
+  }
+  
+  // TIPOS
+
+  static async openGerenciarTipos(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-tipo', 
+      title: 'Gerir Tipos',
+      url: '/#/estrutura-tipo', 
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // GRUPOS
+
+  static async openGerenciarGrupos(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-grupo',
+      title: 'Gerir Grupos',
+      url: '/#/estrutura-grupo',
+      width: 900,
+      height: 700,
+      allowMultiple: false, 
     });
   }
 

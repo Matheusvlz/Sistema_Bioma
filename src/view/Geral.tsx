@@ -344,36 +344,51 @@ export const Geral: React.FC = () => {
 
   const handleSubtitleNavigation = async (category: keyof typeof subtitleRoutes, index: number) => {
     const route = subtitleRoutes[category][index];
-    if (route) {
-      if (category === 'clientes') {
-        try {
-          switch (route) {
-            case 'cadastrar-clientes':
-              await WindowManager.openCadastroClientes();
-              break;
-            case 'visualizar-clientes':
-              await WindowManager.openVisualizarCliente();
-              break;
-            case 'gerenciar-categoria':
-              await WindowManager.openCadastrarCategoria();
-              break;
-            case 'cadastro-usuario-portal':
-              await WindowManager.openUsuarioPortal();
-              break;
-            case 'gerenciar-setor':
-              await WindowManager.openGerenciarSetor();
-              break;
-            default:
-              navigate(route as any);
-              break;
-          }
-        } catch (error) {
-          console.error('Erro ao abrir janela:', error);
+    if (!route) return;
+  
+    try {
+      // Usamos um switch para lidar com TODOS os casos especiais que abrem janelas,
+      // independentemente da categoria.
+      switch (route) {
+        // Casos da categoria 'clientes'
+        case 'cadastrar-clientes':
+          await WindowManager.openCadastroClientes();
+          break;
+        case 'visualizar-clientes':
+          await WindowManager.openVisualizarCliente();
+          break;
+        case 'gerenciar-categoria':
+          await WindowManager.openCadastrarCategoria();
+          break;
+        case 'cadastro-usuario-portal':
+          await WindowManager.openUsuarioPortal();
+          break;
+        case 'gerenciar-setor':
+          await WindowManager.openGerenciarSetor();
+          break;
+        case 'cadastrar-consultor':
+          await WindowManager.openCadastrarConsultor();
+          break;
+        case 'cadastrar-laboratorio-terceirizado':
+          await WindowManager.openCadastrarLabTerceirizado();
+          break;
+        
+        // Casos da categoria 'estruturas'
+        case 'estrutura-tipo':
+          await WindowManager.openGerenciarTipos();
+          break;
+
+        case 'estrutura-grupo':
+          await WindowManager.openGerenciarGrupos();
+          break;
+  
+        // Se não for um caso especial, navega dentro da mesma janela
+        default:
           navigate(route as any);
-        }
-      } else {
-        navigate(route as any);
+          break;
       }
+    } catch (error) {
+      console.error(`Erro ao tentar abrir a janela para a rota '${route}':`, error);
     }
   };
 
@@ -647,7 +662,7 @@ export const Geral: React.FC = () => {
     {
       title: 'Clientes',
       icon: <FaUsers />,
-      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Gerenciar Setores', 'Cadastrar Consultor', 'Cadastrar Laboratório Terceirizado'],
+      subtitles: ['Cadastrar Clientes', 'Visualizar Clientes', 'Gerenciar Categorias', 'Cadastro de Usuário no Portal', 'Gerenciar Setores', 'Gerenciar Consultores', 'Cadastrar Laboratório Terceirizado'],
       category: 'clientes' as const,
     },
     {
