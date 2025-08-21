@@ -433,6 +433,9 @@ const [areaAmostradaValue, setAreaAmostradaValue] = useState('');
   const [collectTime, setCollectTime] = useState('');
 const [labEntryTime, setLabEntryTime] = useState('');
   const [selectedReportType, setSelectedReportType] = useState('');
+  const [ showErrorModal, setShowErrorModal] = useState<boolean>(false);
+    const [ showSuccessModal, setShowSuccessModal] = useState<boolean>(false);
+  
   // Estado das amostras, agora cada uma com seu próprio estado de parâmetros
   const [amostras, setAmostras] = useState<Amostra[]>([
     {
