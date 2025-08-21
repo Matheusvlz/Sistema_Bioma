@@ -272,7 +272,7 @@ export const VisualizarAmostra = () => {
     if (loading) {
       return (
         <div className="noResultsContainer">
-          <Loader className="noResultsIcon animate-spin" />
+          <Loader className="noResultsIcon animate-spin-custom" />
           <p className="noResultsTitle">Buscando...</p>
           <p className="noResultsSubtitle">Aguarde enquanto processamos sua solicitação.</p>
         </div>
@@ -378,9 +378,9 @@ export const VisualizarAmostra = () => {
                     <span className="clientName">{amostra.fantasia}</span>
                   </div>
                   <div className="tableCell">
-                    <span className={`statusBadge status${amostra.status.toLowerCase()}`}>
-                      {amostra.status}
-                    </span>
+                   <span className={`statusBadge status${amostra.numero_amostras}`}>
+  {amostra.numero_amostras != null ? 'Emitido' : ''}
+</span>
                   </div>
                   <div className="tableCell">
                     <span className="dateText">{amostra.datalab}</span>
@@ -461,11 +461,6 @@ export const VisualizarAmostra = () => {
     <div className="container">
       <div className="scrollableContainer">
         <div className="maxWidth">
-          {/* Header */}
-          <div className="header">
-            <h1 className="title">Visualizar Amostras</h1>
-            <p className="subtitle">Sistema de consulta e visualização de amostras laboratoriais</p>
-          </div>
 
           {/* Search Mode Toggle */}
           <div className="searchModeToggle">
@@ -599,7 +594,7 @@ export const VisualizarAmostra = () => {
                       value={filters.amostra}
                       onChange={(e) => handleInputChange('amostra', e.target.value)}
                       className="samplePrefix"
-                      placeholder="A"
+                      placeholder="de"
                     />
                     <input
                       type="text"

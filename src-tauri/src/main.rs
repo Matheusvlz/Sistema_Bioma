@@ -97,7 +97,7 @@ use controller::laboratorio::cadastrar_amostra_controller::{buscar_tercerizado,
     buscar_certificado
 };
 use controller::laboratorio::visualizar_amostra::{
-    buscar_amostras
+    buscar_amostras,
 };
 
 use std::env;
