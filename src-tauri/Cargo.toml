@@ -21,10 +21,10 @@ reqwest = { version = "0.12.22", features = ["json"] }
 tokio = { version = "1.46.0", features = ["rt-multi-thread", "macros"] }
 
 # Framework Tauri versão 2
-tauri = { version = "2.6.2", features = [] }
+tauri = { version = "2.8.0", features = [] }
 
 # Plugin opcional para abrir arquivos/URLs
-tauri-plugin-opener = "2"
+tauri-plugin-opener = "2.5.0"
 
 # Serialização e desserialização com derive
 serde = { version = "1", features = ["derive"] }

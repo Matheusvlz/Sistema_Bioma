@@ -14,3 +14,10 @@ pub mod api_response;
 pub mod lab_terceirizado;
 pub mod tipo;
 pub mod grupo;
+pub mod matriz;
+pub mod unidade;
+pub mod parametro;
+pub mod pg;
+pub mod pop;
+pub mod tecnica;
+                                                                                            

@@ -381,6 +381,28 @@ export const Geral: React.FC = () => {
         case 'estrutura-grupo':
           await WindowManager.openGerenciarGrupos();
           break;
+
+        case 'estrutura-matriz':
+          await WindowManager.openGerenciarMatrizes();
+          break;
+        case 'estrutura-unidade':
+          await WindowManager.openGerenciarUnidades();
+          break;
+        case 'estrutura-parametro':
+          await WindowManager.openGerenciarParametros();
+          break;
+          case 'estrutura-parametro':
+            await WindowManager.openGerenciarParametros();
+            break;
+        case 'estrutura-pg-coleta':
+          await WindowManager.openGerenciarPGColeta();
+          break;
+        case 'estrutura-pg-coleta':
+          await WindowManager.openGerenciarPGColeta();
+          break;
+        case 'estrutura-pop':
+          await WindowManager.openGerenciarPops();
+          break;
   
         // Se não for um caso especial, navega dentro da mesma janela
         default:

@@ -26,7 +26,11 @@ import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizad
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
 import VisualizarTipos from '../view/geral/VisualizarTipos';
 import VisualizarGrupos from '../view/geral/VisualizarGrupos';
-
+import VisualizarMatrizes from '../view/geral/VisualizarMatrizes';
+import VisualizarUnidades from '../view/geral/VisualizarUnidades';
+import VisualizarParametros from '../view/geral/VisualizarParametros';
+import VisualizarPGColeta from '../view/geral/VisualizarPGColeta';
+import VisualizarPops from '../view/geral/VisualizarPops';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -58,11 +62,10 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // SUBROTAS DE ESTRUTURAS
   'estrutura-tipo': { component: <VisualizarTipos />, hasLayout: false },
   'estrutura-grupo': { component: <VisualizarGrupos />, hasLayout: false },
-  'estrutura-matriz': { component: <Inicio />, hasLayout: true },
-  'estrutura-unidade': { component: <Inicio />, hasLayout: true },
-  'estrutura-parametro': { component: <Inicio />, hasLayout: true },
-  'estrutura-pg-coleta': { component: <Inicio />, hasLayout: true },
-  'estrutura-pop': { component: <Inicio />, hasLayout: true },
+  'estrutura-unidade': { component: <VisualizarUnidades />, hasLayout: false },
+  'estrutura-parametro': { component: <VisualizarParametros />, hasLayout: false },
+  'estrutura-pg-coleta': { component: <VisualizarPGColeta />, hasLayout: false },
+  'estrutura-pop': { component: <VisualizarPops />, hasLayout: false },
   'estrutura-tecnica': { component: <Inicio />, hasLayout: true },
   'estrutura-identificacao': { component: <Inicio />, hasLayout: true },
   'estrutura-metodologia': { component: <Inicio />, hasLayout: true },
@@ -70,7 +73,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'estrutura-categoria': { component: <Inicio />, hasLayout: true },
   'estrutura-forma-contato': { component: <Inicio />, hasLayout: true },
   'estrutura-observacao': { component: <Inicio />, hasLayout: true },
-  'estrutura-submatriz': { component: <Inicio />, hasLayout: true },
+  'estrutura-matriz': { component: <VisualizarMatrizes />, hasLayout: false },
 
   // SUBROTAS DE RELACIONAMENTOS
   'rel-parametro-pop': { component: <Inicio />, hasLayout: true },

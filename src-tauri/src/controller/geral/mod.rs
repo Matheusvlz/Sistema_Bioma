@@ -7,4 +7,9 @@ pub mod consultor_controller;
 pub mod lab_terceirizado_controller;
 pub mod tipo_controller;
 pub mod grupo_controller;
-
+pub mod matriz_controller;
+pub mod unidade_controller;
+pub mod parametro_controller;
+pub mod pg_controller;
+pub mod pop_controller;
+pub mod tecnica_controller;

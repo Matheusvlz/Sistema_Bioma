@@ -9,7 +9,7 @@ pub struct Tipo {
 }
 
 // Struct para receber dados do Frontend ao criar/editar.
-// 👇 CORREÇÃO: Adicionado `Serialize` aqui.
+
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
 pub struct TipoPayload {

@@ -362,6 +362,71 @@ export class WindowManager {
     });
   }
 
+  // Matriz
+
+  static async openGerenciarMatrizes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-matriz',
+      title: 'Gerir Matrizes',
+      url: '/#/estrutura-matriz',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Unidade
+
+  static async openGerenciarUnidades(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-unidade',
+      title: 'Gerir Unidades',
+      url: '/#/estrutura-unidade',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Paramtetros
+
+  static async openGerenciarParametros(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-parametro',
+      title: 'Gerir Parâmetros',
+      url: '/#/estrutura-parametro',
+      width: 1200, 
+      height: 800,
+      allowMultiple: false,
+    });
+  }
+
+  // PG coletas
+
+  static async openGerenciarPGColeta(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-pg-coleta',
+      title: 'Gerir PG de Coleta',
+      url: '/#/estrutura-pg-coleta',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // POP
+
+  static async openGerenciarPops(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-pop',
+      title: 'Gerir POPs',
+      url: '/#/estrutura-pop',
+      width: 1200, // Um pouco maior para acomodar a tabela
+      height: 800,
+      allowMultiple: false,
+    });
+  }
+
 
 
   

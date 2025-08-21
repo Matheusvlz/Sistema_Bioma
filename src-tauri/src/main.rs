@@ -71,6 +71,52 @@ use controller::laboratorio::cadastrar_amostra_controller::{
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
+
+use controller::geral::matriz_controller::{
+    listar_matrizes,
+    cadastrar_matriz,
+    editar_matriz,
+    deletar_matriz
+};
+
+// Adicione a importação para o novo controller de unidades
+use controller::geral::unidade_controller::{
+    listar_unidades,
+    cadastrar_unidade,
+    editar_unidade,
+    deletar_unidade
+};
+
+// Adicione a importação para o novo controller de parâmetros
+use controller::geral::parametro_controller::{
+    listar_parametros,
+    cadastrar_parametro,
+    editar_parametro,
+    deletar_parametro
+};
+
+// Adicione a importação para o novo controller de PG de Coleta
+use controller::geral::pg_controller::{
+    buscar_pg_ativo,
+    criar_nova_versao_pg
+};
+
+// Adição do controller do POP
+
+use controller::geral::pop_controller::{
+    listar_pops,
+    cadastrar_pop,
+    editar_pop,
+    deletar_pop
+};
+
+// Tecnica
+
+use controller::geral::tecnica_controller::{
+    listar_tecnicas
+};
+
+
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 
 // Módulo: Qualidade e Utilitários
@@ -189,6 +235,25 @@ fn main() {
             cadastrar_grupo,
             editar_grupo,
             deletar_grupo,
+            listar_matrizes,
+            cadastrar_matriz,
+            editar_matriz,
+            deletar_matriz,
+            listar_unidades,
+            cadastrar_unidade,
+            editar_unidade,
+            deletar_unidade,
+            listar_parametros,
+            cadastrar_parametro,
+            editar_parametro,
+            deletar_parametro,
+            buscar_pg_ativo,
+            criar_nova_versao_pg,
+            listar_pops,
+            cadastrar_pop,
+            editar_pop,
+            deletar_pop,
+            listar_tecnicas,
 
             // Comandos de Laboratório
             buscar_checagem, 
