@@ -20,8 +20,14 @@ import { Planilha } from '../view/laboratorio/Planilha';
 import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
+import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
 
 
+import VisualizarConsultor from '../view/geral/VisualizarConsultor';
+import VisualizarTipos from '../view/geral/VisualizarTipos';
+import VisualizarGrupos from '../view/geral/VisualizarGrupos';
+
+// Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
   hasLayout: boolean; // Add this property
@@ -38,6 +44,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   financeiro: { component: <Financeiro />, hasLayout: true },
   qualidade: { component: <Qualidade />, hasLayout: true },
   frota: { component: <Frota />, hasLayout: true },
+  
 
   'cadastrar-clientes': { component: <CadastrarClientes />, hasLayout: false },
   'visualizar-clientes': { component: <VisualizarClientes />, hasLayout: false },
@@ -45,12 +52,12 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'cadastro-usuario-portal': { component: <UsuarioPortal />, hasLayout: false },
   'gerenciar-setor': { component: <GerenciarSetores />, hasLayout: false },
   'historico-usuario': { component: <HistoricoUsuario />, hasLayout: false },
-  'cadastrar-consultor': { component: <Inicio />, hasLayout: false },
-  'cadastrar-laboratorio-terceirizado': { component: <Inicio />, hasLayout: false },
+  'cadastrar-consultor': { component: <VisualizarConsultor />, hasLayout: false },
+  'cadastrar-laboratorio-terceirizado': { component: <VisualizarLabsTerceirizados />, hasLayout: false },
 
   // SUBROTAS DE ESTRUTURAS
-  'estrutura-tipo': { component: <Inicio />, hasLayout: true },
-  'estrutura-grupo': { component: <Inicio />, hasLayout: true },
+  'estrutura-tipo': { component: <VisualizarTipos />, hasLayout: false },
+  'estrutura-grupo': { component: <VisualizarGrupos />, hasLayout: false },
   'estrutura-matriz': { component: <Inicio />, hasLayout: true },
   'estrutura-unidade': { component: <Inicio />, hasLayout: true },
   'estrutura-parametro': { component: <Inicio />, hasLayout: true },
@@ -75,6 +82,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // SUBROTAS DE CONTAS
   'cadastrar-calculo': { component: <Inicio />, hasLayout: true },
   'visualizar-calculo': { component: <Inicio />, hasLayout: true },
+  
 
   'chat': { component: <ChatContainer />, hasLayout: false }, 
   'criar-planilha': { component: <CriarPlanilha />, hasLayout: false }, 

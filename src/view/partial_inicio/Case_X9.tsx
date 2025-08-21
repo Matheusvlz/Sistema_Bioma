@@ -34,7 +34,7 @@ import { X9Response, UsuarioAtivoComTelas } from '../Main';
 
 import x9ScreenDetailImage from '../../assets/x9.jpg';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.15.26:8082';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8082';
 const USER_PLACEHOLDER_IMAGE = 'https://placehold.co/50x50/d1d5db/4b5563?text=User';
 
 interface X9ScreenProps {

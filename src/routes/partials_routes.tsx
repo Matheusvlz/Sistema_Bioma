@@ -3,6 +3,7 @@ import { Inicio } from '../view/Main';
 import { CadastrarClientes } from '../view/geral/CadastrarCliente';
 
 
+
 export const partialsRoutes = {
 
   'cadastrar-clientes': <CadastrarClientes />,

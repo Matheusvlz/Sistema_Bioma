@@ -435,7 +435,7 @@ export const ChatContainer: React.FC = () => {
                     chatId: chat.id,
                     name: chatName,
                     avatar: chatAvatar
-                        ? `http://192.168.15.26:8082${chatAvatar}`
+                        ? `http://127.0.0.1:8082${chatAvatar}`
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(chatName)}&background=random`,
                     lastMessage: chat.last_message?.content || 'Nenhuma mensagem',
                     lastMessageTime: chat.last_message ? new Date(chat.last_message.timestamp) : new Date(0),
@@ -486,7 +486,7 @@ export const ChatContainer: React.FC = () => {
                     chatId: newChatInfo.id,
                     name: targetUser.nome,
                     avatar: targetUser.profile_photo_path
-                        ? `http://192.168.15.26:8082${targetUser.profile_photo_path}`
+                        ? `http://127.0.0.1:8082${targetUser.profile_photo_path}`
                         : `https://ui-avatars.com/api/?name=${encodeURIComponent(targetUser.nome)}&background=random`,
                     lastMessage: 'Nenhuma mensagem',
                     lastMessageTime: new Date(0),
@@ -1065,7 +1065,7 @@ export const ChatContainer: React.FC = () => {
                                     <div className="avatar-container">
                                         <img
                                             src={user.profile_photo_path
-                                                ? `http://192.168.15.26:8082${user.profile_photo_path}`
+                                                ? `http://127.0.0.1:8082${user.profile_photo_path}`
                                                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(user.nome)}&background=random`
                                             }
                                             alt={user.nome}

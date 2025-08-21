@@ -9,3 +9,8 @@ pub mod x9;
 pub mod kanban_card;
 pub mod notification_task;
 pub mod usuarios_todos;
+pub mod consultor;
+pub mod api_response;
+pub mod lab_terceirizado;
+pub mod tipo;
+pub mod grupo;
