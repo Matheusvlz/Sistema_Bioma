@@ -52,6 +52,38 @@ use controller::geral::grupo_controller::{
     editar_grupo,
     deletar_grupo
 };
+use controller::geral::matriz_controller::{
+    listar_matrizes,
+    cadastrar_matriz,
+    editar_matriz,
+    deletar_matriz
+};
+use controller::geral::unidade_controller::{
+    listar_unidades,
+    cadastrar_unidade,
+    editar_unidade,
+    deletar_unidade
+};
+use controller::geral::parametro_controller::{
+    listar_parametros,
+    cadastrar_parametro,
+    editar_parametro,
+    deletar_parametro
+};
+use controller::geral::pop_controller::{
+    listar_pops,
+    cadastrar_pop,
+    editar_pop,
+    deletar_pop
+};
+use controller::geral::tecnica_controller::{
+    listar_tecnicas
+};
+use controller::geral::pg_controller::{
+    buscar_pg_ativo,
+    criar_nova_versao_pg
+};
+
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -66,59 +98,11 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_dados_cliente, 
     buscar_parametros, 
     buscar_orcamentos, 
-    cadastrar_amostra_completa,
-    buscar_certificado,
-    buscar_pg
+    cadastrar_amostra_completa
 };
 use controller::laboratorio::visualizar_amostra::{
-    buscar_amostras,
+    buscar_amostras
 };
-
-use controller::geral::matriz_controller::{
-    listar_matrizes,
-    cadastrar_matriz,
-    editar_matriz,
-    deletar_matriz
-};
-
-// Adicione a importação para o novo controller de unidades
-use controller::geral::unidade_controller::{
-    listar_unidades,
-    cadastrar_unidade,
-    editar_unidade,
-    deletar_unidade
-};
-
-// Adicione a importação para o novo controller de parâmetros
-use controller::geral::parametro_controller::{
-    listar_parametros,
-    cadastrar_parametro,
-    editar_parametro,
-    deletar_parametro
-};
-
-// Adicione a importação para o novo controller de PG de Coleta
-use controller::geral::pg_controller::{
-    buscar_pg_ativo,
-    criar_nova_versao_pg
-};
-
-// Adição do controller do POP
-
-use controller::geral::pop_controller::{
-    listar_pops,
-    cadastrar_pop,
-    editar_pop,
-    deletar_pop
-};
-
-// Tecnica
-
-use controller::geral::tecnica_controller::{
-    listar_tecnicas
-};
-
-
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 
 // Módulo: Qualidade e Utilitários
@@ -164,7 +148,7 @@ fn main() {
             let app_handle = app.handle();
 
             tauri::async_runtime::spawn({
-                let app_handle_clone = app_handle.clone();
+                let app_handle_clone = app.handle();
                 async move {
                     let ws_url = get_ws_url(&app_handle_clone);
                     socket_listener::iniciar_socket(&ws_url, app_handle_clone).await;
@@ -249,13 +233,13 @@ fn main() {
             cadastrar_parametro,
             editar_parametro,
             deletar_parametro,
-            buscar_pg_ativo,
-            criar_nova_versao_pg,
             listar_pops,
             cadastrar_pop,
             editar_pop,
             deletar_pop,
             listar_tecnicas,
+            buscar_pg_ativo,
+            criar_nova_versao_pg,
 
             // Comandos de Laboratório
             buscar_checagem, 
@@ -272,9 +256,9 @@ fn main() {
             buscar_acreditacao, 
             buscar_categoria_amostra, 
             consultar_consultores,
-            buscar_dados_cliente,
-            buscar_parametros,
-            buscar_orcamentos,
+            buscar_dados_cliente, 
+            buscar_parametros, 
+            buscar_orcamentos, 
             cadastrar_amostra_completa,
             buscar_amostras,
             consultar_amostras_por_planilha,
@@ -329,9 +313,7 @@ fn main() {
             create_direct_chat,
             send_file_message,
             download_file_to_downloads,
-            download_file_bytes,
-            buscar_pg,
-            buscar_certificado
+            download_file_bytes
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
