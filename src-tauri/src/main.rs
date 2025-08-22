@@ -14,7 +14,7 @@ use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
 use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed};
 
-// Módulo: Geral (Clientes, Consultores, Laboratórios, etc.)
+// Módulo: Geral (Clientes, Consultores, Estruturas, etc.)
 use controller::geral_controller::{
     buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas, buscar_coletas_portal, buscar_solicitacoes_usuarios
 };
@@ -84,7 +84,6 @@ use controller::geral::pg_controller::{
     criar_nova_versao_pg
 };
 
-
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 use controller::laboratorio::cadastrar_amostra_controller::{
@@ -98,7 +97,9 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_dados_cliente, 
     buscar_parametros, 
     buscar_orcamentos, 
-    cadastrar_amostra_completa
+    cadastrar_amostra_completa,
+    buscar_pg,
+    buscar_certificado
 };
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
@@ -148,7 +149,7 @@ fn main() {
             let app_handle = app.handle();
 
             tauri::async_runtime::spawn({
-                let app_handle_clone = app.handle();
+                let app_handle_clone = app_handle.clone();
                 async move {
                     let ws_url = get_ws_url(&app_handle_clone);
                     socket_listener::iniciar_socket(&ws_url, app_handle_clone).await;
@@ -168,7 +169,7 @@ fn main() {
             finalizar_notificacao,
             mark_kanban_card_as_completed,
 
-            // Comandos Gerais (Clientes, Consultores, etc.)
+            // Comandos Gerais (Clientes, Estruturas, etc.)
             buscar_amostras_pre_cadastradas,
             buscar_clientes_sem_cadastro,
             buscar_coletas,
@@ -264,6 +265,8 @@ fn main() {
             consultar_amostras_por_planilha,
             consultar_intervalos_planilhas,
             gerar_nova_planilha,
+            buscar_pg,
+            buscar_certificado,
 
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,
