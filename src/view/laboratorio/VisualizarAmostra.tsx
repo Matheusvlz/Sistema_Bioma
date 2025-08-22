@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, Filter, Calendar, MapPin, FileText, User, Hash, Beaker, RotateCcw, Printer, Download, Eye, Loader, AlertCircle, Edit, ExternalLink, ChevronLeft, ChevronRight, Mail, MoreHorizontal } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Search, Filter, Calendar, MapPin, FileText, User, Hash, Beaker, RotateCcw, Printer, Download, Eye, Loader, AlertCircle, Edit, ExternalLink, ChevronLeft, ChevronRight, Mail, MoreHorizontal, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import './styles/VisualizarStyle.css';
 
@@ -26,6 +26,33 @@ interface AmostraResult {
   ano: string;
   mes: string;
   terceirizada_emitido?: boolean;
+}
+
+interface Cliente {
+  id: number;
+  fantasia?: string;
+  razao?: string;
+  documento?: string;
+  cidade?: string;
+  uf?: string;
+  categoria?: string;
+  consultor?: string;
+  telefone?: string;
+  email?: string;
+  endereco?: string;
+}
+
+interface ClienteResponse {
+  success: boolean;
+  data?: Cliente[];
+  message?: string;
+  total?: number;
+}
+
+interface DadosClienteResponse {
+  solicitantes: any[];
+  orcamentos: any[];
+  setor_portal: any[];
 }
 
 // Interface dos filtros do frontend
@@ -72,6 +99,10 @@ interface FiltrosAmostraPayload {
   coletado_por: string | null;
 }
 
+// Tipos para ordenação
+type SortColumn = 'amostra' | 'cliente' | 'status' | 'datalab' | 'identificacao';
+type SortDirection = 'asc' | 'desc';
+
 export const VisualizarAmostra = () => {
   const [searchMode, setSearchMode] = useState<'simples' | 'avancado'>('simples');
   const [filters, setFilters] = useState<Filters>({
@@ -96,6 +127,24 @@ export const VisualizarAmostra = () => {
     laboratorio: ''
   });
 
+  // Estados para ordenação
+  const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
+  const [selectedClient, setSelectedClient] = useState<string>('');
+  const [selectedClienteObj, setSelectedClienteObj] = useState<Cliente | null>(null);
+  const [searchResults, setSearchResults] = useState<Cliente[]>([]);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [solicitantes, setSolicitantes] = useState<any[]>([]);
+  const [orcamentos, setOrcamentos] = useState<any[]>([]);
+  const [setores, setSetores] = useState<any[]>([]);
+  const [anoFiltro, setAnoFiltro] = useState<string>('');
+
+  // Refs para controle do dropdown
+  const searchRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+
   // Estados para gerenciar o resultado da busca
   const [results, setResults] = useState<AmostraResult[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -112,6 +161,63 @@ export const VisualizarAmostra = () => {
       ...prev,
       [field]: value
     }));
+  };
+
+  // Função para lidar com ordenação
+  const handleSort = (column: SortColumn): void => {
+    if (sortColumn === column) {
+      // Se já está ordenando por esta coluna, inverte a direção
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Se é uma nova coluna, define como ascendente
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Função para ordenar os resultados
+  const sortResults = (data: AmostraResult[]): AmostraResult[] => {
+    if (!sortColumn) return data;
+
+    return [...data].sort((a, b) => {
+      let valueA: string | number;
+      let valueB: string | number;
+
+      switch (sortColumn) {
+        case 'amostra':
+          valueA = `${a.sigla}${a.numero}`;
+          valueB = `${b.sigla}${b.numero}`;
+          break;
+        case 'cliente':
+          valueA = a.fantasia || '';
+          valueB = b.fantasia || '';
+          break;
+        case 'status':
+          valueA = a.numero_amostras != null ? 'Emitido' : '';
+          valueB = b.numero_amostras != null ? 'Emitido' : '';
+          break;
+        case 'datalab':
+          // Para datas, convertemos para timestamp para comparação numérica
+          valueA = a.datalab ? new Date(a.datalab).getTime() : 0;
+          valueB = b.datalab ? new Date(b.datalab).getTime() : 0;
+          break;
+        case 'identificacao':
+          valueA = a.identificacao || '';
+          valueB = b.identificacao || '';
+          break;
+        default:
+          return 0;
+      }
+
+      // Comparação
+      if (typeof valueA === 'string' && typeof valueB === 'string') {
+        const comparison = valueA.localeCompare(valueB);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      } else {
+        const comparison = (valueA as number) - (valueB as number);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      }
+    });
   };
 
   const handleSearch = async (): Promise<void> => {
@@ -170,6 +276,135 @@ export const VisualizarAmostra = () => {
     }
   };
 
+  const formatDocument = (doc: string): string => {
+    if (!doc) return '';
+    const cleanDoc = doc.replace(/\D/g, '');
+    
+    if (cleanDoc.length === 11) {
+      // CPF
+      return cleanDoc.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    } else if (cleanDoc.length === 14) {
+      // CNPJ
+      return cleanDoc.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+    }
+    
+    return doc;
+  };
+
+  // Função para buscar clientes no dropdown
+  const buscarClientesDropdown = async (query: string): Promise<Cliente[]> => {
+    try {
+      const response: ClienteResponse = await invoke('buscar_clientes_dropdown', {
+        query: query.trim()
+      });
+
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (error) {
+      console.error('Erro na busca dropdown:', error);
+      return [];
+    }
+  };
+
+  // Handler para mudanças na busca de cliente
+  const handleClientSearchChange = async (value: string) => {
+    setSelectedClient(value);
+    
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    if (value.trim().length >= 2) {
+      setIsSearching(true);
+      setShowDropdown(true);
+      
+      searchTimeoutRef.current = setTimeout(async () => {
+        try {
+          const clientes = await buscarClientesDropdown(value);
+          setSearchResults(clientes);
+        } catch (error) {
+          console.error('Erro na busca de clientes:', error);
+          setSearchResults([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300);
+    } else {
+      setShowDropdown(false);
+      setSearchResults([]);
+    }
+  };
+
+  // Handler para seleção de cliente
+  const handleClienteSelect = async (cliente: Cliente) => {
+    try {
+      setSelectedClienteObj(cliente);
+      setSelectedClient(cliente.fantasia || cliente.razao || '');
+      setShowDropdown(false);
+      setSearchResults([]);
+
+      // Atualiza o filtro de cliente
+      setFilters(prev => ({
+        ...prev,
+        cliente: cliente.fantasia || cliente.razao || ''
+      }));
+
+      const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
+        clienteId: cliente.id,
+      });
+
+      setSolicitantes(dadosCliente.solicitantes);
+      setOrcamentos(dadosCliente.orcamentos);
+      setSetores(dadosCliente.setor_portal);
+
+      // Limpar seleções anteriores
+      handleClearSolicitanteSearch();
+      setAnoFiltro('');
+
+    } catch (error) {
+      console.error('Erro ao buscar dados do cliente:', error);
+      setSolicitantes([]);
+      setOrcamentos([]);
+      setSetores([]);
+    }
+  };
+
+  // Handler para limpar busca de cliente
+  const handleClearSearch = () => {
+    setSelectedClient('');
+    setSelectedClienteObj(null);
+    setShowDropdown(false);
+    setSearchResults([]);
+    setFilters(prev => ({
+      ...prev,
+      cliente: ''
+    }));
+  };
+
+  // Handler para limpar busca de solicitante (placeholder)
+  const handleClearSolicitanteSearch = () => {
+    // Implementar limpeza de solicitante se necessário
+  };
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleClear = (): void => {
     setFilters({
       cliente: '',
@@ -193,9 +428,13 @@ export const VisualizarAmostra = () => {
       laboratorio: ''
     });
     setResults([]);
+    handleClearSearch();
     setError(null);
     setCurrentPage(0);
     setVisibleTabsStart(0);
+    // Limpar ordenação
+    setSortColumn(null);
+    setSortDirection('asc');
   };
 
   // Funções auxiliares para paginação
@@ -204,9 +443,10 @@ export const VisualizarAmostra = () => {
   };
 
   const getCurrentPageItems = (): AmostraResult[] => {
+    const sortedResults = sortResults(results);
     const startIndex = currentPage * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    return results.slice(startIndex, endIndex);
+    return sortedResults.slice(startIndex, endIndex);
   };
 
   // Função para navegar para uma página específica
@@ -266,6 +506,109 @@ export const VisualizarAmostra = () => {
   const handleEmailSample = (amostra: AmostraResult): void => {
     console.log('Enviar e-mail da amostra:', amostra);
     // Implementar lógica para enviar e-mail
+  };
+
+  // Função para renderizar ícone de ordenação
+  const renderSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return null;
+    }
+    return sortDirection === 'asc' ? 
+      <ChevronUp className="sortIcon" /> : 
+      <ChevronDown className="sortIcon" />;
+  };
+
+  const dropdownStyles = {
+    flexRow: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px',
+      width: '100%'
+    },
+    searchContainer: {
+      position: 'relative' as const,
+      flex: 1
+    },
+    searchInputWrapper: {
+      position: 'relative' as const,
+      display: 'flex',
+      alignItems: 'center',
+      width: '100%'
+    },
+    searchInput: {
+      width: '100%',
+      padding: '8px 12px 8px 36px',
+      border: '1px solid #d1d5db',
+      borderRadius: '6px',
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'border-color 0.2s',
+      backgroundColor: 'white'
+    },
+    searchInputIcon: {
+      position: 'absolute' as const,
+      left: '12px',
+      zIndex: 1,
+      color: '#6b7280',
+      width: '16px',
+      height: '16px'
+    },
+    clearButton: {
+      position: 'absolute' as const,
+      right: '8px',
+      padding: '4px',
+      border: 'none',
+      background: 'none',
+      cursor: 'pointer',
+      color: '#6b7280',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '4px',
+      transition: 'color 0.2s'
+    },
+    iconButton: {
+      padding: '8px',
+      border: '1px solid #d1d5db',
+      borderRadius: '6px',
+      background: 'white',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      transition: 'all 0.2s'
+    },
+    dropdown: {
+      position: 'absolute' as const,
+      top: '100%',
+      left: 0,
+      right: 0,
+      backgroundColor: 'white',
+      border: '1px solid #d1d5db',
+      borderRadius: '6px',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      maxHeight: '300px',
+      overflowY: 'auto' as const,
+      zIndex: 1000,
+      marginTop: '2px'
+    },
+    dropdownItem: {
+      padding: '12px',
+      cursor: 'pointer',
+      borderBottom: '1px solid #f3f4f6',
+      transition: 'background-color 0.2s'
+    },
+    clienteName: {
+      fontWeight: '500',
+      color: '#111827',
+      marginBottom: '4px'
+    },
+    clienteDetails: {
+      fontSize: '12px',
+      color: '#6b7280',
+      display: 'flex',
+      gap: '12px'
+    }
   };
 
   const renderResults = () => {
@@ -357,11 +700,46 @@ export const VisualizarAmostra = () => {
         <div className="resultsTableContainer">
           <div className="resultsTable">
             <div className="tableHeader">
-              <div className="tableHeaderCell">Amostra</div>
-              <div className="tableHeaderCell">Cliente</div>
-              <div className="tableHeaderCell">Status</div>
-              <div className="tableHeaderCell">Data Lab</div>
-              <div className="tableHeaderCell">Identificação</div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('amostra')}
+                title="Clique para ordenar por amostra"
+              >
+                Amostra
+                {renderSortIcon('amostra')}
+              </div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('cliente')}
+                title="Clique para ordenar por cliente"
+              >
+                Cliente
+                {renderSortIcon('cliente')}
+              </div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('status')}
+                title="Clique para ordenar por status"
+              >
+                Status
+                {renderSortIcon('status')}
+              </div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('datalab')}
+                title="Clique para ordenar por data (mais recente primeiro)"
+              >
+                Data Lab
+                {renderSortIcon('datalab')}
+              </div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('identificacao')}
+                title="Clique para ordenar por identificação"
+              >
+                Identificação
+                {renderSortIcon('identificacao')}
+              </div>
               <div className="tableHeaderCell">Ações</div>
             </div>
             
@@ -492,19 +870,60 @@ export const VisualizarAmostra = () => {
             /* Pesquisa Simples */
             <div className="spacingY4">
               <div className="gridSimples">
-                <div className="fieldGroup">
-                  <label className="fieldLabel">
-                    <User className="fieldIcon" />
-                    Cliente
-                  </label>
-                  <input
-                    type="text"
-                    value={filters.cliente}
-                    onChange={(e) => handleInputChange('cliente', e.target.value)}
-                    className="fieldInput"
-                    placeholder="Nome do cliente"
-                  />
-                </div>
+               <div className="fieldGroup">
+                    <label className="fieldLabel">
+                      <User className="fieldIcon" />
+                      Cliente
+                    </label>
+                    <div style={dropdownStyles.flexRow}>
+                      <div style={dropdownStyles.searchContainer} ref={searchRef}>
+                        <div style={dropdownStyles.searchInputWrapper}>
+                        
+                          <input 
+                            type="text" 
+                            value={selectedClient} 
+                            onChange={(e) => handleClientSearchChange(e.target.value)} 
+                            className="fieldInput"
+                            placeholder="Digite o nome, CNPJ/CPF ou cidade"
+                          />
+                          {selectedClient && (
+                            <button 
+                              style={dropdownStyles.clearButton} 
+                              onClick={handleClearSearch}
+                            >
+                              <X size={16} />
+                            </button>
+                          )}
+                        </div>
+                        {showDropdown && (
+                          <div style={dropdownStyles.dropdown}>
+                            {isSearching ? (
+                              <div style={dropdownStyles.dropdownItem}>Buscando...</div>
+                            ) : (
+                              searchResults.map((cliente) => (
+                                <div 
+                                  key={cliente.id} 
+                                  style={dropdownStyles.dropdownItem} 
+                                  onClick={() => handleClienteSelect(cliente)}
+                                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f9fafb')} 
+                                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'white')}
+                                >
+                                  <div style={dropdownStyles.clienteName}>
+                                    {cliente.fantasia || cliente.razao}
+                                  </div>
+                                  <div style={dropdownStyles.clienteDetails}>
+                                    <span>{formatDocument(cliente.documento || '')}</span>
+                                    <span>{cliente.cidade} / {cliente.uf}</span>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      
+                    </div>
+                  </div>
                 
                 <div className="fieldGroup">
                   <label className="fieldLabel">
@@ -609,61 +1028,50 @@ export const VisualizarAmostra = () => {
                       value={filters.amostraFim}
                       onChange={(e) => handleInputChange('amostraFim', e.target.value)}
                       className="sampleInput"
-                      placeholder="5"
+                      placeholder="999999"
                     />
                   </div>
                 </div>
 
                 <div className="fieldGroup">
                   <label className="fieldLabel">Coletado por</label>
-                  <select
+                  <input
+                    type="text"
                     value={filters.coletadoPor}
                     onChange={(e) => handleInputChange('coletadoPor', e.target.value)}
-                    className="fieldSelect"
-                  >
-                    <option value="">Selecionar...</option>
-                    <option value="cliente">Cliente</option>
-                    <option value="laboratorio">Laboratório</option>
-                    <option value="terceirizado">Terceirizado</option>
-                  </select>
+                    className="fieldInput"
+                    placeholder="Nome do coletor"
+                  />
                 </div>
 
-                <div className="fieldGroup">
-                  <label className="fieldLabel">Total de resultados</label>
-                  <select className="fieldSelect">
-                    <option value="0">0</option>
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                  </select>
+                <div className="complexFieldGroup">
+                  <label className="fieldLabel">Protocolo</label>
+                  <div className="protocolContainer">
+                    <div className="checkboxContainer">
+                      <input
+                        type="checkbox"
+                        checked={filters.protocoloCliente}
+                        onChange={(e) => handleInputChange('protocoloCliente', e.target.checked)}
+                        className="checkbox"
+                        id="protocoloCliente"
+                      />
+                      <label htmlFor="protocoloCliente" className="checkboxLabel">
+                        Cliente
+                      </label>
+                    </div>
+                    <input
+                      type="text"
+                      value={filters.protocolo}
+                      onChange={(e) => handleInputChange('protocolo', e.target.value)}
+                      className="protocolInput"
+                      placeholder="Número do protocolo"
+                    />
+                  </div>
                 </div>
               </div>
 
               {/* Linha 2 */}
               <div className="gridAvancado1">
-                <div className="complexFieldGroup">
-                  <div className="checkboxContainer">
-                    <input
-                      type="checkbox"
-                      checked={filters.protocoloCliente}
-                      onChange={(e) => handleInputChange('protocoloCliente', e.target.checked)}
-                      className="checkbox"
-                      id="protocoloCliente"
-                    />
-                    <label htmlFor="protocoloCliente" className="checkboxLabel">
-                      Mostrar protocolo do cliente
-                    </label>
-                  </div>
-                  <input
-                    type="text"
-                    value={filters.protocolo}
-                    onChange={(e) => handleInputChange('protocolo', e.target.value)}
-                    className="fieldInput"
-                    placeholder="Protocolo"
-                  />
-                </div>
-
                 <div className="fieldGroup">
                   <label className="fieldLabel">Consultor</label>
                   <select
@@ -671,7 +1079,7 @@ export const VisualizarAmostra = () => {
                     onChange={(e) => handleInputChange('consultor', e.target.value)}
                     className="fieldSelect"
                   >
-                    <option value="">Selecionar...</option>
+                    <option value="">Selecionar consultor...</option>
                     <option value="consultor1">João Silva</option>
                     <option value="consultor2">Maria Santos</option>
                   </select>
