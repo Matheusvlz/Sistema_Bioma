@@ -66,10 +66,12 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_dados_cliente, 
     buscar_parametros, 
     buscar_orcamentos, 
-    cadastrar_amostra_completa
+    cadastrar_amostra_completa,
+    buscar_certificado,
+    buscar_pg
 };
 use controller::laboratorio::visualizar_amostra::{
-    buscar_amostras
+    buscar_amostras,
 };
 
 use controller::geral::matriz_controller::{
@@ -327,7 +329,9 @@ fn main() {
             create_direct_chat,
             send_file_message,
             download_file_to_downloads,
-            download_file_bytes
+            download_file_bytes,
+            buscar_pg,
+            buscar_certificado
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
