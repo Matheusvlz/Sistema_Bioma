@@ -13,3 +13,8 @@ pub mod parametro_controller;
 pub mod pg_controller;
 pub mod pop_controller;
 pub mod tecnica_controller;
+pub mod identificacao_controller;
+pub mod metodologia_controller;
+pub mod legislacao_controller;
+pub mod forma_contato_controller;
+pub mod observacao_controller;

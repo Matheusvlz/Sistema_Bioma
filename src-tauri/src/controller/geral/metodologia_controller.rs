@@ -1,22 +1,22 @@
 use tauri::command;
 use reqwest::Client;
 use crate::model::api_response::ApiResponse;
-use crate::model::tecnica::{Tecnica, TecnicaPayload};
+use crate::model::metodologia::{Metodologia, MetodologiaPayload, MetodologiaApiPayload};
 
 // NOTA: Verifique se esta URL corresponde à da sua API REST.
 const API_BASE_URL: &str = "http://127.0.0.1:8082";
 
-/// [GET] Busca todas as Técnicas da API.
+/// [GET] Busca todas as Metodologias da API.
 #[command]
-pub async fn listar_tecnicas() -> Result<ApiResponse<Vec<Tecnica>>, ApiResponse<()>> {
+pub async fn listar_metodologias() -> Result<ApiResponse<Vec<Metodologia>>, ApiResponse<()>> {
     let client = Client::new();
-    let url = format!("{}/tecnicas", API_BASE_URL);
+    let url = format!("{}/metodologias", API_BASE_URL);
     
     match client.get(&url).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                match response.json::<Vec<Tecnica>>().await {
-                    Ok(tecnicas) => Ok(ApiResponse::success("Técnicas carregadas com sucesso".to_string(), Some(tecnicas))),
+                match response.json::<Vec<Metodologia>>().await {
+                    Ok(metodologias) => Ok(ApiResponse::success("Metodologias carregadas com sucesso".to_string(), Some(metodologias))),
                     Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
                 }
             } else {
@@ -29,18 +29,24 @@ pub async fn listar_tecnicas() -> Result<ApiResponse<Vec<Tecnica>>, ApiResponse<
     }
 }
 
-/// [POST] Cadastra uma nova Técnica via API.
+/// [POST] Cadastra uma nova Metodologia via API.
 #[command]
-pub async fn cadastrar_tecnica(tecnica_data: TecnicaPayload) -> Result<ApiResponse<Tecnica>, ApiResponse<()>> {
+pub async fn cadastrar_metodologia(metodologia_data: MetodologiaPayload) -> Result<ApiResponse<Metodologia>, ApiResponse<()>> {
     let client = Client::new();
-    let url = format!("{}/tecnicas", API_BASE_URL);
+    let url = format!("{}/metodologias", API_BASE_URL);
 
-    match client.post(&url).json(&tecnica_data).send().await {
+    // Converte o payload do frontend para o formato que a API REST espera.
+    let api_payload = MetodologiaApiPayload {
+        NOME: metodologia_data.nome,
+        ATIVO: if metodologia_data.ativo { 1 } else { 0 },
+    };
+
+    match client.post(&url).json(&api_payload).send().await {
         Ok(response) => {
             let status = response.status();
             if status.is_success() {
-                match response.json::<Tecnica>().await {
-                    Ok(tecnica) => Ok(ApiResponse::success("Técnica cadastrada com sucesso!".to_string(), Some(tecnica))),
+                match response.json::<Metodologia>().await {
+                    Ok(metodologia) => Ok(ApiResponse::success("Metodologia cadastrada com sucesso!".to_string(), Some(metodologia))),
                     Err(e) => Err(ApiResponse::error(format!("Erro ao processar resposta da API: {}", e))),
                 }
             } else {
@@ -52,23 +58,28 @@ pub async fn cadastrar_tecnica(tecnica_data: TecnicaPayload) -> Result<ApiRespon
     }
 }
 
-/// [PUT] Edita uma Técnica existente.
+/// [PUT] Edita uma Metodologia existente.
 #[command]
-pub async fn editar_tecnica(tecnica_data: TecnicaPayload) -> Result<ApiResponse<Tecnica>, ApiResponse<()>> {
-    let tecnica_id = match tecnica_data.id {
+pub async fn editar_metodologia(metodologia_data: MetodologiaPayload) -> Result<ApiResponse<Metodologia>, ApiResponse<()>> {
+    let metodologia_id = match metodologia_data.id {
         Some(id) => id,
-        None => return Err(ApiResponse::error("ID da técnica é necessário para edição.".to_string())),
+        None => return Err(ApiResponse::error("ID da metodologia é necessário para edição.".to_string())),
     };
 
     let client = Client::new();
-    let url = format!("{}/tecnicas/{}", API_BASE_URL, tecnica_id);
+    let url = format!("{}/metodologias/{}", API_BASE_URL, metodologia_id);
 
-    match client.put(&url).json(&tecnica_data).send().await {
+    let api_payload = MetodologiaApiPayload {
+        NOME: metodologia_data.nome,
+        ATIVO: if metodologia_data.ativo { 1 } else { 0 },
+    };
+
+    match client.put(&url).json(&api_payload).send().await {
         Ok(response) => {
             let status = response.status();
             if status.is_success() {
-                match response.json::<Tecnica>().await {
-                    Ok(tecnica) => Ok(ApiResponse::success("Técnica atualizada com sucesso!".to_string(), Some(tecnica))),
+                match response.json::<Metodologia>().await {
+                    Ok(metodologia) => Ok(ApiResponse::success("Metodologia atualizada com sucesso!".to_string(), Some(metodologia))),
                     Err(e) => Err(ApiResponse::error(format!("Erro ao processar resposta da API: {}", e))),
                 }
             } else {
@@ -80,16 +91,16 @@ pub async fn editar_tecnica(tecnica_data: TecnicaPayload) -> Result<ApiResponse<
     }
 }
 
-/// [DELETE] Deleta uma Técnica existente.
+/// [DELETE] Deleta uma Metodologia existente.
 #[command]
-pub async fn deletar_tecnica(id: u8) -> Result<ApiResponse<()>, ApiResponse<()>> {
+pub async fn deletar_metodologia(id: u32) -> Result<ApiResponse<()>, ApiResponse<()>> {
     let client = Client::new();
-    let url = format!("{}/tecnicas/{}", API_BASE_URL, id);
+    let url = format!("{}/metodologias/{}", API_BASE_URL, id);
 
     match client.delete(&url).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                Ok(ApiResponse::success("Técnica removida com sucesso!".to_string(), None))
+                Ok(ApiResponse::success("Metodologia removida com sucesso!".to_string(), None))
             } else {
                 let status = response.status();
                 let err_body = response.text().await.unwrap_or_default();

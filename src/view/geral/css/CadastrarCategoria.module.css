@@ -1,0 +1,121 @@
+.container {
+    padding: 24px;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  
+  .header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .header h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    color: #166534; /* Verde forte */
+  }
+  
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex-grow: 1;
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #374151;
+  }
+  
+  .input {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  
+  .input:focus {
+    outline: none;
+    border-color: #7c3aed; /* Roxo */
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  }
+  
+  .inputError {
+    border-color: #ef4444;
+  }
+  
+  .inputError:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
+  }
+  
+  .errorText {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 6px;
+  }
+  
+  .buttonGroup {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: auto; /* Empurra para o final */
+    padding-top: 24px;
+  }
+  
+  .buttonPrimary {
+    background-color: #7c3aed; /* Roxo */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .buttonPrimary:hover {
+    background-color: #6d28d9;
+  }
+  .buttonPrimary:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+  
+  .buttonSecondary {
+    background-color: #ffffff;
+    color: #374151;
+    padding: 10px 20px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+  }
+  .buttonSecondary:hover {
+    background-color: #f9fafb;
+  }
+  
+  .message {
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+  }
+  .success {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  .error {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  

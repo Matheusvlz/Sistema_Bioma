@@ -31,6 +31,14 @@ import VisualizarUnidades from '../view/geral/VisualizarUnidades';
 import VisualizarParametros from '../view/geral/VisualizarParametros';
 import VisualizarPGColeta from '../view/geral/VisualizarPGColeta';
 import VisualizarPops from '../view/geral/VisualizarPops';
+import VisualizarTecnicas from '../view/geral/VisualizarTecnicas';
+import VisualizarIdentificacoes from '../view/geral/VisualizarIdentificacoes';
+import VisualizarMetodologias from '../view/geral/VisualizarMetodologias';
+import VisualizarLegislacoes from '../view/geral/VisualizarLegislacoes';
+import VisualizarCategorias from '../view/geral/VisualizarCategorias';
+import VisualizarFormasContato from '../view/geral/VisualizarFormasContato';
+import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -66,13 +74,13 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'estrutura-parametro': { component: <VisualizarParametros />, hasLayout: false },
   'estrutura-pg-coleta': { component: <VisualizarPGColeta />, hasLayout: false },
   'estrutura-pop': { component: <VisualizarPops />, hasLayout: false },
-  'estrutura-tecnica': { component: <Inicio />, hasLayout: true },
-  'estrutura-identificacao': { component: <Inicio />, hasLayout: true },
-  'estrutura-metodologia': { component: <Inicio />, hasLayout: true },
-  'estrutura-legislacao': { component: <Inicio />, hasLayout: true },
-  'estrutura-categoria': { component: <Inicio />, hasLayout: true },
-  'estrutura-forma-contato': { component: <Inicio />, hasLayout: true },
-  'estrutura-observacao': { component: <Inicio />, hasLayout: true },
+  'estrutura-tecnica': { component: <VisualizarTecnicas />, hasLayout: false },
+  'estrutura-identificacao': { component: <VisualizarIdentificacoes />, hasLayout: false },
+  'estrutura-metodologia': { component: <VisualizarMetodologias />, hasLayout: false },
+  'estrutura-legislacao': { component: <VisualizarLegislacoes />, hasLayout: false },
+  'estrutura-categoria': { component: <VisualizarCategorias />, hasLayout: false },
+  'estrutura-forma-contato': { component: <VisualizarFormasContato />, hasLayout: false },
+  'estrutura-observacao': { component: <VisualizarObservacoes />, hasLayout: false },
   'estrutura-matriz': { component: <VisualizarMatrizes />, hasLayout: false },
 
   // SUBROTAS DE RELACIONAMENTOS

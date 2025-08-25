@@ -77,12 +77,51 @@ use controller::geral::pop_controller::{
     deletar_pop
 };
 use controller::geral::tecnica_controller::{
-    listar_tecnicas
+    listar_tecnicas,
+    cadastrar_tecnica,
+    editar_tecnica,
+    deletar_tecnica
 };
 use controller::geral::pg_controller::{
     buscar_pg_ativo,
     criar_nova_versao_pg
 };
+
+use controller::geral::identificacao_controller::{
+    listar_identificacoes,
+    cadastrar_identificacao,
+    editar_identificacao,
+    deletar_identificacao
+};
+
+use controller::geral::metodologia_controller::{
+    listar_metodologias,
+    cadastrar_metodologia,
+    editar_metodologia,
+    deletar_metodologia
+};
+
+use controller::geral::legislacao_controller::{
+    listar_legislacoes,
+    cadastrar_legislacao,
+    editar_legislacao,
+    deletar_legislacao
+};
+
+use controller::geral::forma_contato_controller::{
+    listar_formas_contato,
+    cadastrar_forma_contato,
+    editar_forma_contato,
+    deletar_forma_contato
+};
+
+use controller::geral::observacao_controller::{
+    listar_observacoes,
+    cadastrar_observacao,
+    editar_observacao,
+    deletar_observacao
+};
+
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -239,9 +278,32 @@ fn main() {
             editar_pop,
             deletar_pop,
             listar_tecnicas,
+            cadastrar_tecnica,
+            editar_tecnica,
+            deletar_tecnica,
             buscar_pg_ativo,
             criar_nova_versao_pg,
-
+            listar_identificacoes,
+            cadastrar_identificacao,
+            editar_identificacao,
+            deletar_identificacao,
+            listar_metodologias,
+            cadastrar_metodologia,
+            editar_metodologia,
+            deletar_metodologia,
+            listar_legislacoes,
+            cadastrar_legislacao,
+            editar_legislacao,
+            deletar_legislacao,
+            listar_formas_contato,
+            cadastrar_forma_contato,
+            editar_forma_contato,
+            deletar_forma_contato,
+            listar_observacoes,
+            cadastrar_observacao,
+            editar_observacao,
+            deletar_observacao,
+            
             // Comandos de Laboratório
             buscar_checagem, 
             buscar_nao_iniciada, 

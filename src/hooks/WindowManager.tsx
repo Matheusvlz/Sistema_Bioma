@@ -427,7 +427,94 @@ export class WindowManager {
     });
   }
 
+  // Tecnicas
 
+  static async openGerenciarTecnicas(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-tecnica',
+      title: 'Gerir Técnicas',
+      url: '/#/estrutura-tecnica',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
 
-  
+  // Identificação
+
+  static async openGerenciarIdentificacoes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-identificacao',
+      title: 'Gerir Identificações',
+      url: '/#/estrutura-identificacao',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Metodologias
+
+  static async openGerenciarMetodologias(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-metodologia',
+      title: 'Gerir Metodologias',
+      url: '/#/estrutura-metodologia',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // legislacao
+
+  static async openGerenciarLegislacoes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-legislacao',
+      title: 'Gerir Legislações',
+      url: '/#/estrutura-legislacao',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Categorias
+
+  static async openGerenciarCategorias(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-categoria',
+      title: 'Gerir Categorias',
+      url: '/#/estrutura-categoria',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Formas de Contato
+
+  static async openGerenciarFormasContato(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-forma-contato',
+      title: 'Gerir Formas de Contato',
+      url: '/#/estrutura-forma-contato',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  // Observacaos
+
+  static async openGerenciarObservacoes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-observacao',
+      title: 'Gerir Observações',
+      url: '/#/estrutura-observacao',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
 }

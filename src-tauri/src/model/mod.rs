@@ -20,4 +20,9 @@ pub mod parametro;
 pub mod pg;
 pub mod pop;
 pub mod tecnica;
-                                                                                            
+pub mod identificacao;   
+pub mod metodologia;                                                                     
+pub mod legislacao;
+pub mod categoria;
+pub mod forma_contato;
+pub mod observacao;

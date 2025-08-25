@@ -403,7 +403,30 @@ export const Geral: React.FC = () => {
         case 'estrutura-pop':
           await WindowManager.openGerenciarPops();
           break;
-  
+        case 'estrutura-tecnica':
+          await WindowManager.openGerenciarTecnicas();
+          break;
+        case 'estrutura-tecnica':
+          await WindowManager.openGerenciarTecnicas();
+          break;
+        case 'estrutura-identificacao':
+          await WindowManager.openGerenciarIdentificacoes();
+          break;
+        case 'estrutura-metodologia':
+          await WindowManager.openGerenciarMetodologias();
+          break;
+        case 'estrutura-legislacao':
+          await WindowManager.openGerenciarLegislacoes();
+          break;
+        case 'estrutura-categoria':
+          await WindowManager.openGerenciarCategorias();
+          break;
+        case 'estrutura-forma-contato':
+          await WindowManager.openGerenciarFormasContato();
+          break;
+        case 'estrutura-observacao':
+          await WindowManager.openGerenciarObservacoes();
+          break;  
         // Se não for um caso especial, navega dentro da mesma janela
         default:
           navigate(route as any);
