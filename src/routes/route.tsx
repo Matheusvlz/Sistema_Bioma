@@ -21,6 +21,7 @@ import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
 import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
+import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoParametro';
 
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
@@ -38,6 +39,8 @@ import VisualizarLegislacoes from '../view/geral/VisualizarLegislacoes';
 import VisualizarCategorias from '../view/geral/VisualizarCategorias';
 import VisualizarFormasContato from '../view/geral/VisualizarFormasContato';
 import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
+import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
+import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
 
 // Define a new type for route configurations
 interface RouteConfig {
@@ -82,11 +85,13 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'estrutura-forma-contato': { component: <VisualizarFormasContato />, hasLayout: false },
   'estrutura-observacao': { component: <VisualizarObservacoes />, hasLayout: false },
   'estrutura-matriz': { component: <VisualizarMatrizes />, hasLayout: false },
+  'estrutura-submatriz': { component: <VisualizarSubMatrizes />, hasLayout: false },
+
 
   // SUBROTAS DE RELACIONAMENTOS
-  'rel-parametro-pop': { component: <Inicio />, hasLayout: true },
+  'rel-parametro-pop': { component: <VisualizarParametroPop />, hasLayout: false },
   'rel-limite-quantificacao': { component: <Inicio />, hasLayout: true },
-  'rel-legislacao-parametro': { component: <Inicio />, hasLayout: true },
+  'rel-legislacao-parametro': { component: <VisualizarLegislacaoParametro />, hasLayout: false },
   'rel-pacote-parametro': { component: <Inicio />, hasLayout: true },
   'rel-tecnica-etapa': { component: <Inicio />, hasLayout: true },
 

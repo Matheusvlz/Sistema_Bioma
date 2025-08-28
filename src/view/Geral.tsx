@@ -426,7 +426,16 @@ export const Geral: React.FC = () => {
           break;
         case 'estrutura-observacao':
           await WindowManager.openGerenciarObservacoes();
-          break;  
+          break; 
+        case 'estrutura-submatriz':
+          await WindowManager.openGerenciarSubMatrizes();
+          break; 
+        case 'rel-parametro-pop':
+          await WindowManager.openGerenciarParametroPop();
+          break;
+        case 'rel-legislacao-parametro':
+          await WindowManager.openGerenciarLegislacaoParametro();
+          break;
         // Se não for um caso especial, navega dentro da mesma janela
         default:
           navigate(route as any);

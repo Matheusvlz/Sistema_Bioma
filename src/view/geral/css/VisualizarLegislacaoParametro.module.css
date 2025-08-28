@@ -1,4 +1,5 @@
-/* Container principal */
+/* 🎨 CSS VisualizarLegislacaoParametro - Padrão Híbrido */
+
 .container {
     padding: 32px;
     background-color: #f8fffe;
@@ -11,7 +12,6 @@
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
-  /* Cabeçalho */
   .header {
     display: flex;
     justify-content: space-between;
@@ -29,7 +29,6 @@
     letter-spacing: -0.5px;
   }
   
-  /* Área de filtros */
   .filters {
     margin-bottom: 24px;
   }
@@ -45,6 +44,7 @@
     color: #1f2937;
     transition: all 0.3s ease;
     font-family: inherit;
+    font-weight: 500;
   }
   
   .searchInput:focus {
@@ -58,7 +58,6 @@
     font-weight: 500;
   }
   
-  /* Container da tabela - COM CORREÇÃO DA BARRA DE ROLAGEM */
   .tableContainer {
     flex-grow: 1;
     background: white;
@@ -87,7 +86,7 @@
   
   .tableContainer::-webkit-scrollbar-thumb {
     background: #21af56;
-    border-radius: 4px 0 0 4px;
+    border-radius: 4px 0 0 4px; /* Arredonda apenas o lado esquerdo */
     border: none;
   }
   
@@ -99,7 +98,6 @@
     background: white;
   }
   
-  /* Tabela */
   .table {
     width: 100%;
     border-collapse: collapse;
@@ -109,7 +107,7 @@
   /* CORREÇÃO: Garante que a tabela preencha todo o espaço */
   .table th:last-child,
   .table td:last-child {
-    padding-right: 24px;
+    padding-right: 24px; /* Espaço extra no último elemento para compensar a scrollbar */
   }
   
   .table th {
@@ -162,19 +160,6 @@
     border-bottom: none;
   }
   
-  /* Célula de código */
-  .codeCell {
-    font-family: 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
-    font-size: 13px;
-    color: #475569;
-    background: #f1f5f9;
-    padding: 6px 10px;
-    border-radius: 6px;
-    display: inline-block;
-    font-weight: 600;
-  }
-  
-  /* Ações */
   .actions {
     display: flex;
     gap: 8px;
@@ -219,8 +204,8 @@
     border-color: #dc2626;
   }
   
-  /* Estados de carregamento */
-  .loading {
+  .loading, 
+  .empty {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -232,6 +217,13 @@
     border: 2px solid #f0fdf4;
     margin: 20px 0;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  .empty p {
+    font-size: 15px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: #374151;
   }
   
   .spinner {
@@ -249,7 +241,6 @@
     100% { transform: rotate(360deg); }
   }
   
-  /* Botão primário */
   .buttonPrimary {
     background: #22c55e;
     color: white;
@@ -276,7 +267,6 @@
     cursor: not-allowed;
   }
   
-  /* Mensagens */
   .message {
     padding: 16px 20px;
     border-radius: 12px;
@@ -322,28 +312,6 @@
     background-color: rgba(0, 0, 0, 0.05);
   }
   
-  /* Estado vazio */
-  .empty {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    color: #6b7280;
-    background: white;
-    border-radius: 16px;
-    border: 2px solid #f0fdf4;
-    margin: 20px 0;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  }
-  
-  .empty p {
-    font-size: 15px;
-    margin-bottom: 20px;
-    line-height: 1.5;
-    color: #374151;
-  }
-  
   @keyframes slideInDown {
     from {
       opacity: 0;
@@ -355,119 +323,127 @@
     }
   }
   
+  /* Focus accessibility */
+  .buttonPrimary:focus,
+  .searchInput:focus,
+  .buttonEdit:focus,
+  .buttonDelete:focus {
+    outline: 3px solid #21af56;
+    outline-offset: 2px;
+  }
+  
+  /* Redução de movimento */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
   /* Responsividade */
   @media (max-width: 1024px) {
     .container {
-      padding: 24px;
-      max-width: none;
+        padding: 24px;
+        max-width: none;
     }
     
     .header h2 {
-      font-size: 28px;
+        font-size: 28px;
     }
     
     .tableContainer {
-      max-height: calc(100vh - 260px);
+        max-height: calc(100vh - 260px);
     }
   }
   
   @media (max-width: 768px) {
     .container {
-      padding: 16px;
+        padding: 16px;
     }
     
     .header {
-      flex-direction: column;
-      gap: 16px;
-      align-items: stretch;
-      text-align: center;
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+        text-align: center;
     }
     
     .header h2 {
-      font-size: 24px;
+        font-size: 24px;
     }
     
     .filters {
-      flex-direction: column;
-      align-items: stretch;
+        flex-direction: column;
+        align-items: stretch;
     }
     
     .searchInput {
-      max-width: none;
+        max-width: none;
     }
     
     .tableContainer {
-      overflow-x: auto;
-      max-height: calc(100vh - 240px);
+        overflow-x: auto;
+        max-height: calc(100vh - 240px);
     }
     
     .table {
-      min-width: 700px;
+        min-width: 700px;
     }
     
     .table th,
     .table td {
-      padding: 12px 8px;
-      font-size: 13px;
+        padding: 12px 8px;
+        font-size: 13px;
     }
     
     .table th:last-child,
     .table td:last-child {
-      padding-right: 16px;
+        padding-right: 16px; /* Ajuste para mobile */
     }
   }
   
   @media (max-width: 480px) {
     .container {
-      padding: 12px;
+        padding: 12px;
     }
     
     .header h2 {
-      font-size: 20px;
+        font-size: 20px;
     }
     
     .actions {
-      flex-direction: column;
-      gap: 4px;
+        flex-direction: column;
+        gap: 4px;
     }
     
     .buttonEdit,
     .buttonDelete {
-      width: 28px;
-      height: 28px;
-      font-size: 12px;
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
     }
     
     .tableContainer {
-      max-height: calc(100vh - 220px);
+        max-height: calc(100vh - 220px);
     }
     
     .table th,
     .table td {
-      padding: 10px 6px;
-      font-size: 12px;
+        padding: 10px 6px;
+        font-size: 12px;
     }
     
     .table th:last-child,
     .table td:last-child {
-      padding-right: 12px;
+        padding-right: 12px; /* Ajuste para mobile pequeno */
     }
-  }
-  
-  /* Acessibilidade */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+    
+    .message {
+        padding: 10px 12px;
+        font-size: 13px;
     }
-  }
-  
-  /* Estados de foco */
-  .buttonPrimary:focus,
-  .buttonEdit:focus,
-  .buttonDelete:focus,
-  .searchInput:focus {
-    outline: 3px solid #21af56;
-    outline-offset: 2px;
+    
+    .closeMessage {
+        font-size: 16px;
+    }
   }

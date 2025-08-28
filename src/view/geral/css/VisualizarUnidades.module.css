@@ -1,3 +1,5 @@
+/* 🎨 Tabela de Unidades - Estilo Padronizado */
+
 .container {
   padding: 32px;
   background-color: #f8fffe;
@@ -7,7 +9,7 @@
   color: #1f2937;
   max-width: 1400px;
   margin: 0 auto;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .header {
@@ -16,15 +18,15 @@
   align-items: center;
   margin-bottom: 32px;
   padding-bottom: 24px;
-  border-bottom: 1px solid #d1fae5;
+  border-bottom: 3px solid #21af56;
 }
 
 .header h2 {
-  color: #22c55e;
+  color: #0f172a;
   font-size: 32px;
-  font-weight: 600;
+  font-weight: 700;
   margin: 0;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.5px;
 }
 
 .filters {
@@ -39,26 +41,27 @@
   flex: 1;
   min-width: 300px;
   max-width: 500px;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 16px 20px;
+  border: 2px solid #374151;
+  border-radius: 12px;
+  font-size: 16px;
   background-color: white;
-  transition: all 0.15s ease;
+  color: #1f2937;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+  border-color: #21af56;
+  box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
 }
 
 .searchInput::placeholder {
-  color: #9ca3af;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* Filtros adicionais para unidades */
 .filterGroup {
   display: flex;
   gap: 12px;
@@ -66,56 +69,67 @@
 }
 
 .filterSelect {
-  padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 14px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 16px;
   background-color: white;
-  transition: all 0.15s ease;
+  transition: all 0.3s ease;
   font-family: inherit;
   cursor: pointer;
-  min-width: 140px;
+  min-width: 160px;
   background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 14px;
-  padding-right: 36px;
+  background-position: right 16px center;
+  background-size: 16px;
+  padding-right: 44px;
   appearance: none;
   -webkit-appearance: none;
 }
 
 .filterSelect:focus {
   outline: none;
-  border-color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.08);
+  border-color: #21af56;
+  box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
 }
 
 .tableContainer {
   flex-grow: 1;
   background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  border: 2px solid #f0fdf4;
   overflow: hidden;
-  max-height: calc(100vh - 320px);
+  max-height: calc(100vh - 280px);
   overflow-y: auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  position: relative;
 }
 
-/* Estilização da barra de rolagem */
+.tableContainer.has-scrollbar {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .tableContainer::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .tableContainer::-webkit-scrollbar-track {
-  background: #f9fafb;
+  background: white;
 }
 
 .tableContainer::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 3px;
+  background: #21af56;
+  border-radius: 4px 0 0 4px;
+  border: none;
 }
 
 .tableContainer::-webkit-scrollbar-thumb:hover {
-  background: #22c55e;
+  background: #1ea34a;
+}
+
+.tableContainer::-webkit-scrollbar-corner {
+  background: white;
 }
 
 .table {
@@ -124,18 +138,23 @@
   margin: 0;
 }
 
+.table th:last-child,
+.table td:last-child {
+  padding-right: 24px;
+}
+
 .table th {
-  background: #22c55e;
+  background: #21af56;
   color: white;
-  font-weight: 500;
-  padding: 16px;
+  font-weight: 700;
+  padding: 20px 16px;
   text-align: left;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.01em;
   position: sticky;
   top: 0;
   z-index: 10;
-  border-bottom: 1px solid #16a34a;
+  border-bottom: 2px solid #1ea34a;
 }
 
 .table th:not(:last-child) {
@@ -144,25 +163,36 @@
 
 .table td {
   padding: 16px;
-  border-bottom: 1px solid #f3f4f6;
-  font-size: 14px;
-  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+  color: #1f2937;
   vertical-align: middle;
+  font-weight: 500;
 }
 
 .table tbody tr {
-  transition: background-color 0.1s ease;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
 }
 
 .table tbody tr:hover {
-  background-color: #f0fdf4;
+  background-color: #f0fdf4 !important;
+  transform: translateX(4px);
+  box-shadow: 4px 0 12px rgba(33, 175, 86, 0.15);
+}
+
+.table tbody tr:hover td {
+  color: #0f172a;
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* Status das unidades */
 .unidadeStatus {
   display: inline-flex;
   align-items: center;
@@ -217,13 +247,12 @@
   background-color: #f59e0b;
 }
 
-/* Badges de tipo de unidade */
 .unidadeTipo {
   display: inline-flex;
   align-items: center;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 11px;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -247,31 +276,29 @@
   border: 1px solid #d8b4fe;
 }
 
-/* Código da unidade */
 .unidadeCodigo {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
   background-color: #f9fafb;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
   color: #047857;
   display: inline-block;
-  min-width: 70px;
+  min-width: 80px;
   text-align: center;
   border: 1px solid #e5e7eb;
-  font-size: 13px;
+  font-size: 14px;
 }
 
-/* Ações com design moderno */
 .actions {
   display: flex;
   gap: 8px;
   justify-content: center;
 }
 
+.buttonView,
 .buttonEdit,
-.buttonDelete,
-.buttonView {
+.buttonDelete {
   background: none;
   border: 1px solid;
   padding: 8px;
@@ -319,7 +346,6 @@
   border-color: #dc2626;
 }
 
-/* Estados de carregamento e vazio */
 .loading,
 .empty {
   display: flex;
@@ -329,9 +355,10 @@
   padding: 80px 20px;
   color: #6b7280;
   background: white;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  border: 2px solid #f0fdf4;
   margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .empty p {
@@ -339,13 +366,14 @@
   margin-bottom: 20px;
   line-height: 1.5;
   text-align: center;
+  color: #374151;
 }
 
 .spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #f3f4f6;
-  border-top: 3px solid #22c55e;
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e7eb;
+  border-top: 4px solid #21af56;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 16px;
@@ -356,219 +384,258 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Botão primário */
 .buttonPrimary {
-  background: #22c55e;
+  background: #21af56;
   color: white;
   border: none;
   padding: 12px 24px;
-  border-radius: 6px;
-  font-weight: 500;
+  border-radius: 8px;
+  font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 0.3s ease;
   letter-spacing: 0.01em;
 }
 
 .buttonPrimary:hover:not(:disabled) {
-  background: #16a34a;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(34, 197, 94, 0.2);
+  background: #1ea34a;
 }
 
 .buttonPrimary:active:not(:disabled) {
   background: #15803d;
-  transform: translateY(0);
 }
 
 .buttonPrimary:disabled {
   background: #9ca3af;
   cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
 }
 
-/* Mensagens de feedback */
 .message {
-  padding: 12px 16px;
-  border-radius: 6px;
+  padding: 16px 20px;
+  border-radius: 12px;
   margin-bottom: 24px;
-  font-weight: 400;
+  font-weight: 600;
   font-size: 14px;
-  border-left: 3px solid;
+  border-left: 5px solid;
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .success {
-  background-color: #f0fdf4;
-  border-color: #22c55e;
-  color: #15803d;
+  background-color: #ecfdf5;
+  border-color: #21af56;
+  color: #064e3b;
+  box-shadow: 0 4px 12px rgba(33, 175, 86, 0.2);
 }
 
 .error {
   background-color: #fef2f2;
-  border-color: #dc2626;
-  color: #991b1b;
+  border-color: #ef4444;
+  color: #7f1d1d;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
-/* Estatísticas rápidas */
 .statsContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
   margin-bottom: 24px;
 }
 
 .statCard {
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
   text-align: center;
-  transition: all 0.15s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .statCard:hover {
-  border-color: #22c55e;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+  border-color: #21af56;
+  box-shadow: 0 8px 20px rgba(33, 175, 86, 0.15);
 }
 
 .statCard h3 {
   color: #6b7280;
   font-size: 14px;
-  font-weight: 500;
-  margin: 0 0 8px 0;
+  font-weight: 600;
+  margin: 0 0 12px 0;
   text-transform: uppercase;
   letter-spacing: 0.025em;
 }
 
 .statCard .number {
-  color: #22c55e;
-  font-size: 24px;
-  font-weight: 600;
+  color: #21af56;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0;
 }
 
-/* Responsividade */
+.buttonPrimary:focus,
+.searchInput:focus,
+.filterSelect:focus,
+.buttonView:focus,
+.buttonEdit:focus,
+.buttonDelete:focus {
+  outline: 3px solid #21af56;
+  outline-offset: 2px;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 @media (max-width: 1024px) {
   .container {
-      padding: 24px;
-      max-width: none;
+    padding: 24px;
+    max-width: none;
   }
   
   .header h2 {
-      font-size: 28px;
+    font-size: 28px;
   }
   
   .tableContainer {
-      max-height: calc(100vh - 300px);
+    max-height: calc(100vh - 260px);
   }
 }
 
 @media (max-width: 768px) {
   .container {
-      padding: 16px;
+    padding: 16px;
   }
   
   .header {
-      flex-direction: column;
-      gap: 16px;
-      align-items: stretch;
-      text-align: center;
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+    text-align: center;
   }
   
   .header h2 {
-      font-size: 24px;
+    font-size: 24px;
   }
   
   .filters {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   
   .searchInput {
-      min-width: auto;
-      max-width: none;
+    min-width: auto;
+    max-width: none;
   }
   
   .filterGroup {
-      justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
   }
   
   .filterSelect {
-      min-width: auto;
-      flex: 1;
+    min-width: auto;
+    width: 100%;
   }
   
   .tableContainer {
-      overflow-x: auto;
-      max-height: calc(100vh - 280px);
+    overflow-x: auto;
+    max-height: calc(100vh - 240px);
   }
   
   .table {
-      min-width: 800px;
+    min-width: 800px;
   }
   
   .table th,
   .table td {
-      padding: 12px 8px;
-      font-size: 13px;
+    padding: 12px 8px;
+    font-size: 13px;
+  }
+  
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 16px;
   }
   
   .statsContainer {
-      grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 480px) {
   .container {
-      padding: 12px;
+    padding: 12px;
   }
   
   .header h2 {
-      font-size: 20px;
+    font-size: 20px;
   }
   
   .actions {
-      flex-direction: column;
-      gap: 4px;
+    flex-direction: column;
+    gap: 4px;
   }
   
+  .buttonView,
   .buttonEdit,
-  .buttonDelete,
-  .buttonView {
-      width: 28px;
-      height: 28px;
-      font-size: 12px;
+  .buttonDelete {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
   
   .tableContainer {
-      max-height: calc(100vh - 260px);
+    max-height: calc(100vh - 220px);
   }
   
   .table th,
   .table td {
-      padding: 10px 6px;
-      font-size: 12px;
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+  
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 12px;
   }
   
   .unidadeCodigo {
-      padding: 4px 6px;
-      font-size: 12px;
-      min-width: 60px;
+    padding: 6px 8px;
+    font-size: 12px;
+    min-width: 70px;
   }
   
   .unidadeStatus,
   .unidadeTipo {
-      font-size: 10px;
-      padding: 4px 6px;
+    font-size: 11px;
+    padding: 4px 8px;
   }
   
   .statsContainer {
-      grid-template-columns: 1fr;
+    grid-template-columns: 1fr;
   }
   
   .statCard {
-      padding: 12px;
+    padding: 16px;
+  }
+  
+  .statCard .number {
+    font-size: 24px;
   }
 }

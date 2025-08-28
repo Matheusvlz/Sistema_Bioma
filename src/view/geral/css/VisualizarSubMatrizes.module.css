@@ -1,4 +1,4 @@
-/* 🎨 CSS Migrado para Padrão Estabelecido */
+/* 🎨 CSS Híbrido - Melhor dos Dois Mundos - PADRONIZADO */
 
 .container {
   padding: 32px;
@@ -33,7 +33,7 @@
   margin-bottom: 24px;
 }
 
-.searchInput {
+.selectInput {
   width: 100%;
   max-width: 500px;
   padding: 16px 20px;
@@ -46,15 +46,10 @@
   font-family: inherit;
 }
 
-.searchInput:focus {
+.selectInput:focus {
   outline: none;
   border-color: #21af56;
   box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
-}
-
-.searchInput::placeholder {
-  color: #6b7280;
-  font-weight: 500;
 }
 
 .tableContainer {
@@ -69,7 +64,7 @@
   position: relative;
 }
 
-/* Correção para border-radius quando tem scrollbar */
+/* CORREÇÃO: Remove border-radius quando tem scrollbar */
 .tableContainer.has-scrollbar {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
@@ -204,8 +199,7 @@
   transform: scale(1.05);
 }
 
-.loading, 
-.empty {
+.loading {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -217,13 +211,6 @@
   border: 2px solid #f0fdf4;
   margin: 20px 0;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.empty p {
-  font-size: 15px;
-  margin-bottom: 20px;
-  line-height: 1.5;
-  color: #374151;
 }
 
 .spinner {
@@ -323,8 +310,48 @@
   }
 }
 
+.status {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.ativo {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.ativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #22c55e;
+}
+
+.inativo {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.inativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #dc2626;
+}
+
 .buttonPrimary:focus,
-.searchInput:focus,
+.selectInput:focus,
 .buttonEdit:focus,
 .buttonDelete:focus {
   outline: 3px solid #21af56;
@@ -374,7 +401,7 @@
       align-items: stretch;
   }
   
-  .searchInput {
+  .selectInput {
       max-width: none;
   }
   
@@ -396,6 +423,11 @@
   .table th:last-child,
   .table td:last-child {
       padding-right: 16px;
+  }
+  
+  .status {
+      font-size: 11px;
+      padding: 4px 8px;
   }
 }
 
