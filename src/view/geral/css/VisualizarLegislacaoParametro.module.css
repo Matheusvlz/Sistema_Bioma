@@ -447,3 +447,50 @@
         font-size: 16px;
     }
   }
+
+  /* ✅ PONTO 2: Estilos para o Autocomplete de Legislação */
+.autocompleteContainer {
+    position: relative; /* Essencial para o posicionamento da lista */
+    width: 100%;
+    max-width: 500px;
+    margin-right: 16px; /* Espaço entre os inputs */
+}
+
+.suggestionsList {
+    position: absolute;
+    top: 100%; /* Posiciona a lista logo abaixo do input */
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #d1d5db; /* Borda sutil */
+    border-top: none;
+    border-radius: 0 0 12px 12px; /* Cantos arredondados apenas na parte inferior */
+    list-style: none;
+    margin: -2px 0 0 0; /* Pequeno ajuste para alinhar com o input */
+    padding: 0;
+    max-height: 250px; /* ✅ A MÁGICA: Altura máxima fixa */
+    overflow-y: auto; /* ✅ A MÁGICA: Adiciona a barra de rolagem */
+    z-index: 100; /* Garante que a lista fique sobre outros elementos */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.suggestionsList li {
+    padding: 12px 20px;
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 15px;
+    transition: background-color 0.2s ease;
+}
+
+.suggestionsList li:hover {
+    background-color: #f0fdf4; /* Cor de hover suave */
+    color: #0f172a;
+}
+
+/* Ajustes Finais para o Layout dos Filtros */
+.filters {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 24px;
+}
+

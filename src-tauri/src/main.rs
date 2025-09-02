@@ -40,6 +40,7 @@ use controller::geral::lab_terceirizado_controller::{
     editar_lab_terceirizado,
     deletar_lab_terceirizado
 };
+// ✅ CORREÇÃO: Usamos os nomes de importação que já existiam, sem o sufixo _tauri.
 use controller::geral::tipo_controller::{
     listar_tipos,
     cadastrar_tipo,
@@ -133,16 +134,20 @@ use controller::geral::parametro_pop_controller::{
     listar_parametros_pops,
     cadastrar_parametro_pop,
     editar_parametro_pop,
-    deletar_parametro_pop
+    deletar_parametro_pop,
+    listar_parametros_pops_por_grupo,
+    atualizar_lq_incerteza_tauri
 };
 
 use controller::geral::legislacao_parametro_controller::{
-    listar_legislacao_parametro,
-    cadastrar_legislacao_parametro,
-    editar_legislacao_parametro,
-    deletar_legislacao_parametro
+    listar_legislacao_parametro_tauri,
+    cadastrar_legislacao_parametro_tauri,
+    editar_legislacao_parametro_tauri,
+    deletar_legislacao_parametro_tauri,
+    listar_legislacoes_ativas_tauri,
+    listar_parametros_simples_tauri,
+    listar_pops_por_parametro_tauri
 };
-
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -274,6 +279,7 @@ fn main() {
             cadastrar_lab_terceirizado,
             editar_lab_terceirizado,
             deletar_lab_terceirizado,
+            // ✅ CORREÇÃO: Usamos os comandos que já existiam, sem o sufixo.
             listar_tipos,
             cadastrar_tipo,
             editar_tipo,
@@ -332,11 +338,15 @@ fn main() {
             cadastrar_parametro_pop,
             editar_parametro_pop,
             deletar_parametro_pop,
-            listar_legislacao_parametro,
-            cadastrar_legislacao_parametro,
-            editar_legislacao_parametro,
-            deletar_legislacao_parametro,
+            listar_parametros_pops_por_grupo,
+            atualizar_lq_incerteza_tauri,
             
+            
+            listar_legislacao_parametro_tauri,
+            cadastrar_legislacao_parametro_tauri,
+            editar_legislacao_parametro_tauri,
+            deletar_legislacao_parametro_tauri,
+            listar_legislacoes_ativas_tauri,
             
             // Comandos de Laboratório
             buscar_checagem, 
@@ -417,3 +427,4 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
 }
+

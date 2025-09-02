@@ -41,7 +41,7 @@ import VisualizarFormasContato from '../view/geral/VisualizarFormasContato';
 import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
 import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
 import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
-
+import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -90,7 +90,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   // SUBROTAS DE RELACIONAMENTOS
   'rel-parametro-pop': { component: <VisualizarParametroPop />, hasLayout: false },
-  'rel-limite-quantificacao': { component: <Inicio />, hasLayout: true },
+  'rel-limite-quantificacao': { component: <VisualizarLqIncerteza />, hasLayout: false },
   'rel-legislacao-parametro': { component: <VisualizarLegislacaoParametro />, hasLayout: false },
   'rel-pacote-parametro': { component: <Inicio />, hasLayout: true },
   'rel-tecnica-etapa': { component: <Inicio />, hasLayout: true },

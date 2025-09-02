@@ -372,6 +372,9 @@ export const Geral: React.FC = () => {
         case 'cadastrar-laboratorio-terceirizado':
           await WindowManager.openCadastrarLabTerceirizado();
           break;
+
+
+
         
         // Casos da categoria 'estruturas'
         case 'estrutura-tipo':
@@ -437,6 +440,10 @@ export const Geral: React.FC = () => {
           await WindowManager.openGerenciarLegislacaoParametro();
           break;
         // Se não for um caso especial, navega dentro da mesma janela
+        case 'rel-limite-quantificacao':
+          await WindowManager.openGerenciarLqIncerteza();
+          break;
+
         default:
           navigate(route as any);
           break;

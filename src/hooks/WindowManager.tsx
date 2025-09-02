@@ -546,15 +546,30 @@ export class WindowManager {
 
   // Legislação Parametro x POP
 
-  static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
-    return this.openWindow({
-      label: 'rel-legislacao-parametro',
-      title: 'Gerir Legislação x Parâmetro',
-      url: '/#/rel-legislacao-parametro',
-      width: 1400, // Tela maior para a tabela complexa
-      height: 900,
-      allowMultiple: false,
-    });
-  }
+ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'rel-legislacao-parametro',
+            title: 'Gerir Legislação x Parâmetro',
+            url: '/#/rel-legislacao-parametro',
+            // ✅ CORREÇÃO: Tamanho mais adequado e centralizado.
+            width: 1280,
+            height: 800,
+            center: true, // Garante que a janela abre no centro
+            allowMultiple: false,
+        });
+    }
+
+    // Gerir LQ e Incerteza
+    static async openGerenciarLqIncerteza(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'rel-limite-quantificacao', // O 'label' deve corresponder à chave da rota
+            title: 'Gerir Limite de Quantificação e Incerteza', // O título que aparecerá na janela
+            url: '/#/rel-limite-quantificacao', // A URL interna para a nova tela
+            width: 1280,
+            height: 800,
+            center: true, // Garante que a janela abre no centro
+            allowMultiple: false, // Impede que múltiplas janelas iguais sejam abertas
+        });
+    }
 
 }

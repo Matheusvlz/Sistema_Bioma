@@ -1,176 +1,295 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import CadastrarLegislacaoParametro from './CadastrarLegislacaoParametro';
 import styles from './css/VisualizarLegislacaoParametro.module.css';
 
-// Interfaces para os dados
-interface LegislacaoParametroDetalhado {
-  id: number;
-  legislacao: number;
-  nome_legislacao?: string;
-  tipo?: string;
-  matriz?: string;
-  parametro_pop: number;
-  nome_parametro?: string;
-  nome_tecnica?: string;
-  pop_codigo?: string;
-  pop_numero?: string;
-  pop_revisao?: string;
-  unidade?: string;
-  limite_min?: string;
-  limite_simbolo?: string;
-  limite_max?: string;
-  valor?: number;
-  ativo: boolean;
+// --- Interfaces para os dados ---
+interface DropdownOption {
+    id: number;
+    nome: string;
 }
 
-interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
+interface LegislacaoParametroDetalhado {
+    id: number;
+    nome_legislacao?: string;
+    tipo?: string;
+    matriz?: string;
+    nome_parametro?: string;
+    grupo?: string;
+    nome_tecnica?: string;
+    pop_codigo?: string;
+    pop_numero?: string;
+    pop_revisao?: string;
+    objetivo?: string;
+    incerteza?: string;
+    lqi?: string;
+    lqs?: string;
+    unidade?: string;
+    limite_min?: string;
+    limite_simbolo?: string;
+    limite_max?: string;
+    valor?: string;
+    ativo: boolean;
 }
+
+interface PaginatedResponse {
+    items: LegislacaoParametroDetalhado[];
+    total: number;
+    page: number;
+    per_page: number;
+}
+
+// ✅ CORREÇÃO: Adicionamos a interface para a "encomenda grande"
+interface ApiResponse<T> {
+    success: boolean;
+    data?: T;
+    message?: string;
+}
+
+const ITENS_POR_PAGINA = 15;
 
 const VisualizarLegislacaoParametro: React.FC = () => {
-  const [relacionamentos, setRelacionamentos] = useState<LegislacaoParametroDetalhado[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [itemEmEdicao, setItemEmEdicao] = useState<LegislacaoParametroDetalhado | null>(null);
-  const [mostrarFormulario, setMostrarFormulario] = useState(false);
-  const [filtro, setFiltro] = useState('');
+    // --- Estados do Componente ---
+    const [legislacoes, setLegislacoes] = useState<DropdownOption[]>([]);
+    const [legislacaoSelecionada, setLegislacaoSelecionada] = useState<number | null>(null);
+    const [nomeLegislacaoSelecionada, setNomeLegislacaoSelecionada] = useState('');
+    
+    const [dados, setDados] = useState<LegislacaoParametroDetalhado[]>([]);
+    const [paginaAtual, setPaginaAtual] = useState(1);
+    const [totalPaginas, setTotalPaginas] = useState(1);
+    
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const carregarDados = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response: ApiResponse<LegislacaoParametroDetalhado[]> = await invoke('listar_legislacao_parametro');
-      if (response.success && response.data) {
-        setRelacionamentos(response.data);
-      } else {
-        setMessage({ text: response.message || 'Erro ao carregar dados', type: 'error' });
-      }
-    } catch (error: any) {
-      setMessage({ text: error?.message || 'Erro de comunicação com o backend', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    const [mostrarFormulario, setMostrarFormulario] = useState(false);
+    const [itemEmEdicao, setItemEmEdicao] = useState<LegislacaoParametroDetalhado | null>(null);
+    
+    const [filtroLegislacao, setFiltroLegislacao] = useState('');
+    const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
+    const autocompleteRef = useRef<HTMLDivElement>(null);
+    const [filtroTabela, setFiltroTabela] = useState('');
 
-  useEffect(() => {
-    carregarDados();
-  }, [carregarDados]);
+    // --- Carregamento de Dados ---
+    useEffect(() => {
+        const carregarLegislacoes = async () => {
+            try {
+                // ✅ CORREÇÃO: O invoke agora espera a "encomenda grande"
+                const res: ApiResponse<DropdownOption[]> = await invoke("listar_legislacoes_ativas_tauri");
+                // ✅ CORREÇÃO: Abrimos a "encomenda" e usamos os dados de dentro
+                if (res.success && Array.isArray(res.data)) {
+                    setLegislacoes(res.data);
+                } else {
+                    setError(res.message || "Falha ao carregar a lista de legislações.");
+                }
+            } catch (err) {
+                setError("Falha grave ao carregar a lista de legislações.");
+            } finally {
+                setLoading(false);
+            }
+        };
+        carregarLegislacoes();
+    }, []);
 
-  const handleEditar = (item: LegislacaoParametroDetalhado) => {
-    setItemEmEdicao(item);
-    setMostrarFormulario(true);
-  };
+    const carregarDados = useCallback(async () => {
+        if (!legislacaoSelecionada) {
+            setDados([]);
+            setTotalPaginas(1);
+            return;
+        }
+        setLoading(true);
+        setError(null);
+        try {
+            // ✅ CORREÇÃO: O invoke para os dados principais também espera a "encomenda grande"
+            const res: ApiResponse<PaginatedResponse> = await invoke("listar_legislacao_parametro_tauri", {
+                legislacaoId: legislacaoSelecionada,
+                page: paginaAtual,
+                perPage: ITENS_POR_PAGINA,
+            });
 
-  const handleRemover = async (item: LegislacaoParametroDetalhado) => {
-    if (!window.confirm(`Tem certeza que deseja remover o relacionamento "${item.nome_parametro} x ${item.nome_legislacao}"?`)) {
-      return;
-    }
-    try {
-      const response: ApiResponse<void> = await invoke('deletar_legislacao_parametro', { id: item.id });
-      if (response.success) {
-        setMessage({ text: response.message, type: 'success' });
+            if (res.success && res.data) {
+                setDados(res.data.items);
+                setTotalPaginas(Math.ceil(res.data.total / res.data.per_page) || 1);
+            } else {
+                 setError(res.message || "Erro ao carregar os dados da tabela.");
+            }
+        } catch (err: any) {
+            setError(`Erro grave ao carregar dados: ${err.toString()}`);
+        } finally {
+            setLoading(false);
+        }
+    }, [legislacaoSelecionada, paginaAtual]);
+
+    useEffect(() => {
+        if(legislacaoSelecionada) {
+            carregarDados();
+        }
+    }, [carregarDados, legislacaoSelecionada]);
+
+    // --- Lógica do Autocomplete de Legislação ---
+    const legislacoesFiltradas = filtroLegislacao
+        ? legislacoes.filter(l => l.nome.toLowerCase().includes(filtroLegislacao.toLowerCase()))
+        : legislacoes;
+
+    const handleSelecionarLegislacao = (leg: DropdownOption) => {
+        setLegislacaoSelecionada(leg.id);
+        setNomeLegislacaoSelecionada(leg.nome);
+        setFiltroLegislacao(leg.nome);
+        setMostrarSugestoes(false);
+        setPaginaAtual(1);
+        setFiltroTabela('');
+    };
+
+    const handleFiltroChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFiltroLegislacao(value);
+        setMostrarSugestoes(true);
+        
+        if (legislacaoSelecionada !== null || nomeLegislacaoSelecionada !== value) {
+            setLegislacaoSelecionada(null);
+            setNomeLegislacaoSelecionada('');
+        }
+    };
+    
+    useEffect(() => {
+        const handleClickFora = (event: MouseEvent) => {
+            if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
+                setMostrarSugestoes(false);
+                if (!legislacaoSelecionada) {
+                    setFiltroLegislacao('');
+                } else {
+                    setFiltroLegislacao(nomeLegislacaoSelecionada);
+                }
+            }
+        };
+        document.addEventListener("mousedown", handleClickFora);
+        return () => document.removeEventListener("mousedown", handleClickFora);
+    }, [legislacaoSelecionada, nomeLegislacaoSelecionada]);
+
+    // --- Lógica da Busca na Tabela ---
+    const dadosFiltrados = dados.filter(item => {
+        const searchTerm = filtroTabela.toLowerCase();
+        if (!searchTerm) return true;
+        return Object.values(item).some(value =>
+            String(value).toLowerCase().includes(searchTerm)
+        );
+    });
+    
+    // --- Handlers de Ações ---
+    const handleSalvar = () => {
+        setMostrarFormulario(false);
+        setSuccessMessage("Operação realizada com sucesso!");
+        setTimeout(() => setSuccessMessage(null), 3000);
         carregarDados();
-      } else {
-        setMessage({ text: response.message, type: 'error' });
-      }
-    } catch (error: any) {
-      setMessage({ text: error?.message || 'Erro ao remover relacionamento', type: 'error' });
+    };
+
+    const handleRemover = async (item: LegislacaoParametroDetalhado) => {
+        if (!window.confirm(`Tem certeza que deseja remover o relacionamento para "${item.nome_parametro}"?`)) return;
+        try {
+            await invoke("deletar_legislacao_parametro_tauri", { id: item.id });
+            setSuccessMessage("Relacionamento removido com sucesso!");
+            setTimeout(() => setSuccessMessage(null), 3000);
+            carregarDados();
+        } catch (err: any) {
+            setError(`Erro ao remover: ${err.toString()}`);
+        }
+    };
+
+    if (mostrarFormulario) {
+        return <CadastrarLegislacaoParametro legislacaoIdSelecionada={legislacaoSelecionada!} onSalvar={handleSalvar} onCancelar={() => setMostrarFormulario(false)} />;
     }
-  };
-
-  const handleSalvar = () => {
-    setMostrarFormulario(false);
-    setItemEmEdicao(null);
-    carregarDados();
-  };
-
-  const handleCancelar = () => {
-    setMostrarFormulario(false);
-    setItemEmEdicao(null);
-  };
-
-  const handleNovoCadastro = () => {
-    setItemEmEdicao(null);
-    setMostrarFormulario(true);
-  };
-
-  const dadosFiltrados = relacionamentos.filter(item =>
-    item.nome_legislacao?.toLowerCase().includes(filtro.toLowerCase()) ||
-    item.nome_parametro?.toLowerCase().includes(filtro.toLowerCase()) ||
-    item.tipo?.toLowerCase().includes(filtro.toLowerCase()) ||
-    item.matriz?.toLowerCase().includes(filtro.toLowerCase())
-  );
-
-  if (mostrarFormulario) {
+    
     return (
-      <CadastrarLegislacaoParametro
-        itemParaEdicao={itemEmEdicao || undefined}
-        onSalvar={handleSalvar}
-        onCancelar={handleCancelar}
-      />
-    );
-  }
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h2>Gerir Legislação x Parâmetro</h2>
+                <button onClick={() => setMostrarFormulario(true)} className={styles.buttonPrimary} disabled={!legislacaoSelecionada} title={!legislacaoSelecionada ? "Selecione uma legislação para cadastrar" : "Novo Relacionamento"}>
+                    Novo Relacionamento
+                </button>
+            </div>
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>Gerir Legislação x Parâmetro</h2>
-        <button onClick={handleNovoCadastro} className={styles.buttonPrimary}>
-          Novo Relacionamento
-        </button>
-      </div>
+            {error && <div className={styles.error}>{error}</div>}
+            {successMessage && <div className={styles.success}>{successMessage}</div>}
 
-      {message && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
+            <div className={styles.filters}>
+                <div className={styles.autocompleteContainer} ref={autocompleteRef}>
+                    <input
+                        type="text"
+                        placeholder="Digite para buscar uma legislação..."
+                        value={filtroLegislacao}
+                        onChange={handleFiltroChange}
+                        onFocus={() => setMostrarSugestoes(true)}
+                        className={styles.searchInput}
+                    />
+                    {mostrarSugestoes && (
+                        <ul className={styles.suggestionsList}>
+                            {legislacoesFiltradas.length > 0 ? legislacoesFiltradas.map(leg => (
+                                <li key={leg.id} onClick={() => handleSelecionarLegislacao(leg)}>{leg.nome}</li>
+                            )) : <li>Nenhuma legislação encontrada.</li>}
+                        </ul>
+                    )}
+                </div>
+                
+                <input
+                    type="text"
+                    placeholder="Buscar na tabela atual..."
+                    value={filtroTabela}
+                    onChange={(e) => setFiltroTabela(e.target.value)}
+                    className={styles.searchInput}
+                    disabled={!legislacaoSelecionada || dados.length === 0}
+                />
+            </div>
+            
+            <div className={styles.tableContainer}>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th>Parâmetro</th>
+                            <th>Grupo</th>
+                            <th>Técnica</th>
+                            <th>Limite</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {loading && dados.length === 0 ? (
+                            <tr><td colSpan={5} className={styles.loadingCell}><div className={styles.spinner}></div></td></tr>
+                        ) : dadosFiltrados.length > 0 ? (
+                            dadosFiltrados.map((item) => (
+                                <tr key={item.id}>
+                                    <td><strong>{item.nome_parametro}</strong><br/><small>{`Objetivo: ${item.objetivo || '-'}`}</small></td>
+                                    <td>{item.grupo}</td>
+                                    <td>{item.nome_tecnica}</td>
+                                    <td>{`${item.limite_min || ''} ${item.limite_simbolo || ''} ${item.limite_max || ''}`.trim()}</td>
+                                    <td>
+                                        <div className={styles.actions}>
+                                            <button onClick={() => { setItemEmEdicao(item); setMostrarFormulario(true); }} className={styles.buttonEdit} title="Editar">✏️</button>
+                                            <button onClick={() => handleRemover(item)} className={styles.buttonDelete} title="Remover">🗑️</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={5} className={styles.empty}>
+                                    {!legislacaoSelecionada ? "Selecione uma legislação acima para começar." : "Nenhum parâmetro encontrado para esta legislação."}
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
 
-      <div className={styles.filters}>
-        <input
-          type="text"
-          placeholder="Buscar por legislação, parâmetro, tipo ou matriz..."
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className={styles.searchInput}
-        />
-      </div>
-
-      {loading ? (
-        <div className={styles.loading}><div className={styles.spinner}></div><p>A carregar...</p></div>
-      ) : (
-        <div className={styles.tableContainer}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>Legislação</th>
-                <th>Parâmetro</th>
-                <th>Tipo</th>
-                <th>Matriz</th>
-                <th>Limite</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dadosFiltrados.map((item) => (
-                <tr key={item.id}>
-                  <td>{item.nome_legislacao}</td>
-                  <td><strong>{item.nome_parametro}</strong></td>
-                  <td>{item.tipo}</td>
-                  <td>{item.matriz}</td>
-                  <td>{`${item.limite_min || ''} ${item.limite_simbolo || ''} ${item.limite_max || ''}`}</td>
-                  <td>
-                    <div className={styles.actions}>
-                      <button onClick={() => handleEditar(item)} className={styles.buttonEdit} title="Editar">✏️</button>
-                      <button onClick={() => handleRemover(item)} className={styles.buttonDelete} title="Remover">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            {dados.length > 0 && totalPaginas > 1 && (
+                 <div className={styles.pagination}>
+                    <button onClick={() => setPaginaAtual(p => p - 1)} disabled={paginaAtual <= 1 || loading} className={styles.buttonPrimary}>Anterior</button>
+                    <span>Página {paginaAtual} de {totalPaginas}</span>
+                    <button onClick={() => setPaginaAtual(p => p + 1)} disabled={paginaAtual >= totalPaginas || loading} className={styles.buttonPrimary}>Próxima</button>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default VisualizarLegislacaoParametro;
+
