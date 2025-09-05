@@ -1,8 +1,12 @@
-use serde::{Serialize, Deserialize};
-use sqlx::FromRow;
-use bigdecimal::BigDecimal;
+// src-tauri/src/model/legislacao_parametro.rs
 
-#[derive(Debug, Serialize, Deserialize, FromRow)]
+use serde::{Serialize, Deserialize};
+use bigdecimal::BigDecimal;
+// --- ADICIONADO ---
+use serde_with::{serde_as, DisplayFromStr};
+
+#[serde_as] // <-- ADICIONADO
+#[derive(Debug, Serialize, Deserialize)] // FromRow não é necessário aqui
 #[allow(non_snake_case)]
 pub struct LegislacaoParametroDetalhado {
     pub id: u32,
@@ -18,7 +22,6 @@ pub struct LegislacaoParametroDetalhado {
     pub pop_numero: Option<String>,
     pub pop_revisao: Option<String>,
     pub objetivo: Option<String>,
-    // ✅ CORREÇÃO FINAL: Revertido para String para corresponder 100% ao tipo VARCHAR do banco.
     pub incerteza: Option<String>,
     pub lqi: Option<String>,
     pub lqs: Option<String>,
@@ -26,6 +29,9 @@ pub struct LegislacaoParametroDetalhado {
     pub limite_min: Option<String>,
     pub limite_simbolo: Option<String>,
     pub limite_max: Option<String>,
+    // --- CAMPO CORRIGIDO ---
+    // Esta anotação "ensina" o serde a converter o texto da API para BigDecimal
+    #[serde_as(as = "Option<DisplayFromStr>")]
     pub valor: Option<BigDecimal>,
     pub ativo: bool,
 }

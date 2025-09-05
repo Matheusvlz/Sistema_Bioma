@@ -42,6 +42,10 @@ import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
 import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
 import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
 import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
+
+import { VisualizarPacotes } from '../view/geral/VisualizarPacotes'; // ✅ NOVO
+import { CadastrarPacote } from '../view/geral/CadastrarPacote'; 
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -92,7 +96,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'rel-parametro-pop': { component: <VisualizarParametroPop />, hasLayout: false },
   'rel-limite-quantificacao': { component: <VisualizarLqIncerteza />, hasLayout: false },
   'rel-legislacao-parametro': { component: <VisualizarLegislacaoParametro />, hasLayout: false },
-  'rel-pacote-parametro': { component: <Inicio />, hasLayout: true },
+  'rel-pacote-parametro': { component: <VisualizarPacotes />, hasLayout: false },
+  'cadastrar-pacote': { component: <CadastrarPacote />, hasLayout: false },
   'rel-tecnica-etapa': { component: <Inicio />, hasLayout: true },
 
   // SUBROTAS DE CONTAS

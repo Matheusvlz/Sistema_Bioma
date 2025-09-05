@@ -149,6 +149,15 @@ use controller::geral::legislacao_parametro_controller::{
     listar_pops_por_parametro_tauri
 };
 
+use controller::geral::pacote_controller::{
+    listar_pacotes_tauri,
+    buscar_pacote_por_id_tauri,
+    criar_pacote_tauri,
+    editar_pacote_tauri,
+    deletar_pacote_tauri
+};
+
+
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 use controller::laboratorio::cadastrar_amostra_controller::{
@@ -347,6 +356,12 @@ fn main() {
             editar_legislacao_parametro_tauri,
             deletar_legislacao_parametro_tauri,
             listar_legislacoes_ativas_tauri,
+
+            listar_pacotes_tauri,
+            buscar_pacote_por_id_tauri,
+            criar_pacote_tauri,
+            editar_pacote_tauri,
+            deletar_pacote_tauri, 
             
             // Comandos de Laboratório
             buscar_checagem, 

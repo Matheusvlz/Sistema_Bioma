@@ -1,0 +1,486 @@
+/* src/view/geral/css/CadastrarPacote.module.css */
+
+.container {
+    padding: 32px;
+    background-color: #f8fffe;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    color: #1f2937;
+    max-width: 1400px;
+    margin: 0 auto;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 24px;
+    border-bottom: 3px solid #21af56;
+    flex-shrink: 0;
+}
+
+header h2 {
+    color: #0f172a;
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.packageId {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 600;
+    background-color: #f0fdf4;
+    padding: 8px 16px;
+    border-radius: 12px;
+    border: 2px solid #bbf7d0;
+    box-shadow: 0 2px 4px rgba(33, 175, 86, 0.1);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    flex-shrink: 0;
+}
+
+.formGroup label {
+    display: block;
+    color: #0f172a;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+}
+
+.input {
+    width: 100%;
+    padding: 16px 20px;
+    border: 2px solid #374151;
+    border-radius: 12px;
+    font-size: 16px;
+    background-color: white;
+    color: #1f2937;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    font-family: inherit;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.input:focus {
+    outline: none;
+    border-color: #21af56;
+    box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2), 0 4px 12px rgba(33, 175, 86, 0.1);
+    transform: translateY(-1px);
+}
+
+.input::placeholder {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.input:disabled {
+    background-color: #f9fafb;
+    cursor: not-allowed;
+    color: #6b7280;
+    border-color: #e5e7eb;
+}
+
+/* --- Autocomplete --- */
+.autocompleteContainer {
+    position: relative;
+}
+
+.autocompleteDropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0; /* Garante que o dropdown tenha a mesma largura do input */
+    background: white;
+    border: 2px solid #21af56;
+    border-top: none;
+    border-radius: 0 0 12px 12px;
+    max-height: 280px; /* Altura para ~7 opções */
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.autocompleteOption {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 15px;
+    color: #1f2937;
+    transition: all 0.15s ease;
+}
+
+.autocompleteOption:hover {
+    background-color: #f0fdf4;
+    color: #0f172a;
+}
+
+.autocompleteOption:last-child {
+    border-bottom: none;
+}
+
+/* --- Shuttle (Seleção de Itens) --- */
+.shuttleContainer {
+    display: flex;
+    flex-grow: 1;
+    gap: 24px;
+    min-height: 450px;
+}
+
+.listContainer {
+    flex: 1;
+    border: 2px solid #f0fdf4;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    overflow: hidden;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.listContainer h3 {
+    margin: 0;
+    padding: 20px 16px;
+    background: #21af56;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    border-bottom: 2px solid #1ea34a;
+    flex-shrink: 0;
+    letter-spacing: 0.01em;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.listSearchInput {
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 2px solid #e5e7eb;
+    font-size: 15px;
+    flex-shrink: 0;
+    background-color: #fafafa;
+    color: #1f2937;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.listSearchInput:focus {
+    outline: none;
+    border-bottom-color: #21af56;
+    background-color: white;
+    box-shadow: inset 0 -2px 4px rgba(33, 175, 86, 0.1);
+}
+
+.listSearchInput::placeholder {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.listSearchInput:disabled {
+    background-color: #f9fafb;
+    color: #9ca3af;
+}
+
+.list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.list::-webkit-scrollbar-track {
+    background: white;
+}
+
+.list::-webkit-scrollbar-thumb {
+    background: #21af56;
+    border-radius: 4px;
+    border: none;
+}
+
+.list::-webkit-scrollbar-thumb:hover {
+    background: #1ea34a;
+}
+
+.list li {
+    padding: 16px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #1f2937;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: #fafafa;
+    border-bottom: 1px solid #e5e7eb;
+    user-select: none;
+}
+
+.list li:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.list li:hover {
+    background-color: #f0fdf4 !important;
+    transform: translateX(4px);
+    box-shadow: 4px 0 12px rgba(33, 175, 86, 0.15);
+    color: #0f172a;
+}
+
+.list li:active {
+    background-color: #dcfce7;
+    transform: translateX(2px);
+}
+
+.list li:last-child {
+    border-bottom: none;
+}
+
+.noResults {
+    padding: 20px;
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    font-size: 14px;
+}
+
+.shuttleControls {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 16px;
+    padding: 0 8px;
+}
+
+.shuttleControls button {
+    background-color: white;
+    border: 2px solid #374151;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #4b5563;
+    transition: all 0.3s ease;
+    font-size: 18px;
+    min-width: 48px;
+    min-height: 48px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.shuttleControls button:hover {
+    background-color: #f0fdf4;
+    color: #21af56;
+    border-color: #21af56;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 175, 86, 0.2);
+}
+
+.shuttleControls button:active {
+    transform: translateY(0);
+}
+
+.shuttleControls button:disabled {
+    background-color: #f9fafb;
+    color: #d1d5db;
+    border-color: #e5e7eb;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- RODAPÉ E BOTÕES DE AÇÃO --- */
+footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    padding-top: 24px;
+    border-top: 3px solid #21af56;
+    flex-shrink: 0;
+}
+
+.buttonPrimary, .buttonSecondary {
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-width: 120px;
+    letter-spacing: 0.01em;
+}
+
+.buttonPrimary {
+    background: #22c55e;
+    color: white;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.buttonPrimary:hover:not(:disabled) {
+    background: #16a34a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+}
+
+.buttonPrimary:active:not(:disabled) {
+    background: #15803d;
+    transform: translateY(0);
+}
+
+.buttonSecondary {
+    background: white;
+    color: #374151;
+    border: 2px solid #374151;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.buttonSecondary:hover:not(:disabled) {
+    background: #f8f9fa;
+    border-color: #21af56;
+    color: #21af56;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(33, 175, 86, 0.15);
+}
+
+.buttonPrimary:disabled, .buttonSecondary:disabled {
+    background: #9ca3af;
+    color: white;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    border-color: #9ca3af;
+}
+
+.buttonPrimary:focus,
+.buttonSecondary:focus {
+    outline: 3px solid #21af56;
+    outline-offset: 2px;
+}
+
+/* --- ESTADOS GLOBAIS --- */
+.message {
+    padding: 16px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    flex-shrink: 0;
+    border-left: 5px solid;
+    animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.success {
+    background-color: #ecfdf5;
+    border-color: #21af56;
+    color: #064e3b;
+    box-shadow: 0 4px 12px rgba(33, 175, 86, 0.2);
+}
+
+.error {
+    background-color: #fef2f2;
+    border-color: #ef4444;
+    color: #7f1d1d;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.closeMessage {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px;
+    color: inherit;
+    opacity: 0.7;
+    border-radius: 2px;
+    transition: all 0.15s ease;
+}
+
+.closeMessage:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.actionSpinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .container { padding: 24px; max-width: none; }
+    header h2 { font-size: 28px; }
+    .shuttleContainer { gap: 16px; min-height: 400px; }
+}
+
+@media (max-width: 768px) {
+    .container { padding: 16px; gap: 20px; }
+    header h2 { font-size: 24px; }
+    .formGrid { grid-template-columns: 1fr; gap: 20px; }
+    .shuttleContainer { flex-direction: column; gap: 16px; min-height: 600px; }
+    .shuttleControls { flex-direction: row; justify-content: center; padding: 8px 0; }
+    .listContainer { min-height: 250px; }
+    .input { padding: 14px 16px; font-size: 15px; }
+    .list li { padding: 14px; font-size: 14px; }
+    .listContainer h3 { padding: 16px; font-size: 15px; }
+}
+
+@media (max-width: 480px) {
+    .container { padding: 12px; gap: 16px; }
+    header h2 { font-size: 20px; }
+    footer { flex-direction: column-reverse; gap: 12px; }
+    .buttonPrimary, .buttonSecondary { width: 100%; min-width: auto; }
+    .input { padding: 12px 14px; font-size: 14px; }
+    .list li { padding: 12px; font-size: 13px; }
+    .listContainer h3 { padding: 14px; font-size: 14px; }
+    .shuttleControls button { min-width: 40px; min-height: 40px; font-size: 16px; }
+}

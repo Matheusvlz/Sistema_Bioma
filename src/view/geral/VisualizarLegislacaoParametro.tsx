@@ -1,3 +1,5 @@
+// src/view/geral/VisualizarLegislacaoParametro.tsx
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import CadastrarLegislacaoParametro from './CadastrarLegislacaoParametro';
@@ -5,8 +7,14 @@ import styles from './css/VisualizarLegislacaoParametro.module.css';
 
 // --- Interfaces para os dados ---
 interface DropdownOption {
-    id: number;
+    id: number | string; // Permitindo ID como texto para se adaptar à API
     nome: string;
+}
+
+// ✅ NOVO: Interface para os dados que vêm da API de Tipos (com 'codigo')
+interface TipoFromApi {
+    nome: string;
+    codigo: string;
 }
 
 interface LegislacaoParametroDetalhado {
@@ -39,7 +47,6 @@ interface PaginatedResponse {
     per_page: number;
 }
 
-// ✅ CORREÇÃO: Adicionamos a interface para a "encomenda grande"
 interface ApiResponse<T> {
     success: boolean;
     data?: T;
@@ -49,46 +56,59 @@ interface ApiResponse<T> {
 const ITENS_POR_PAGINA = 15;
 
 const VisualizarLegislacaoParametro: React.FC = () => {
-    // --- Estados do Componente ---
     const [legislacoes, setLegislacoes] = useState<DropdownOption[]>([]);
     const [legislacaoSelecionada, setLegislacaoSelecionada] = useState<number | null>(null);
     const [nomeLegislacaoSelecionada, setNomeLegislacaoSelecionada] = useState('');
-    
     const [dados, setDados] = useState<LegislacaoParametroDetalhado[]>([]);
     const [paginaAtual, setPaginaAtual] = useState(1);
     const [totalPaginas, setTotalPaginas] = useState(1);
-    
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
     const [mostrarFormulario, setMostrarFormulario] = useState(false);
     const [itemEmEdicao, setItemEmEdicao] = useState<LegislacaoParametroDetalhado | null>(null);
-    
     const [filtroLegislacao, setFiltroLegislacao] = useState('');
     const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
     const autocompleteRef = useRef<HTMLDivElement>(null);
     const [filtroTabela, setFiltroTabela] = useState('');
 
-    // --- Carregamento de Dados ---
+    // ✅ NOVO: Estados para guardar as listas de "lookup" (nossas "agendas de contatos")
+    const [listaTipos, setListaTipos] = useState<TipoFromApi[]>([]);
+    const [listaMatrizes, setListaMatrizes] = useState<DropdownOption[]>([]);
+
+
     useEffect(() => {
-        const carregarLegislacoes = async () => {
+        const carregarDadosIniciais = async () => {
+            setLoading(true); // Inicia o loading geral
             try {
-                // ✅ CORREÇÃO: O invoke agora espera a "encomenda grande"
-                const res: ApiResponse<DropdownOption[]> = await invoke("listar_legislacoes_ativas_tauri");
-                // ✅ CORREÇÃO: Abrimos a "encomenda" e usamos os dados de dentro
-                if (res.success && Array.isArray(res.data)) {
-                    setLegislacoes(res.data);
+                // Carrega tudo em paralelo para mais performance
+                const [legislacoesRes, tiposRes, matrizesRes]: [ApiResponse<DropdownOption[]>, ApiResponse<TipoFromApi[]>, ApiResponse<DropdownOption[]>] = await Promise.all([
+                    invoke("listar_legislacoes_ativas_tauri"),
+                    invoke("listar_tipos"),       // ✅ NOVO: Carrega a lista de tipos
+                    invoke("listar_matrizes")     // ✅ NOVO: Carrega a lista de matrizes
+                ]);
+
+                if (legislacoesRes.success && Array.isArray(legislacoesRes.data)) {
+                    setLegislacoes(legislacoesRes.data);
                 } else {
-                    setError(res.message || "Falha ao carregar a lista de legislações.");
+                    setError(legislacoesRes.message || "Falha ao carregar a lista de legislações.");
                 }
+                
+                // ✅ NOVO: Guarda as listas carregadas nos novos estados
+                if (tiposRes.success && Array.isArray(tiposRes.data)) {
+                    setListaTipos(tiposRes.data);
+                }
+                if (matrizesRes.success && Array.isArray(matrizesRes.data)) {
+                    setListaMatrizes(matrizesRes.data);
+                }
+
             } catch (err) {
-                setError("Falha grave ao carregar a lista de legislações.");
+                setError("Falha grave ao carregar dados iniciais da página.");
             } finally {
-                setLoading(false);
+                setLoading(false); // Finaliza o loading geral
             }
         };
-        carregarLegislacoes();
+        carregarDadosIniciais();
     }, []);
 
     const carregarDados = useCallback(async () => {
@@ -100,7 +120,6 @@ const VisualizarLegislacaoParametro: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            // ✅ CORREÇÃO: O invoke para os dados principais também espera a "encomenda grande"
             const res: ApiResponse<PaginatedResponse> = await invoke("listar_legislacao_parametro_tauri", {
                 legislacaoId: legislacaoSelecionada,
                 page: paginaAtual,
@@ -120,19 +139,30 @@ const VisualizarLegislacaoParametro: React.FC = () => {
         }
     }, [legislacaoSelecionada, paginaAtual]);
 
+    // ✅ NOVO: Funções "tradutoras" que convertem ID/código em Nome.
+    const getNomeTipo = useCallback((codigo: string) => {
+        const tipoEncontrado = listaTipos.find(t => t.codigo === codigo);
+        return tipoEncontrado ? tipoEncontrado.nome : codigo; // Se não achar, mostra o código original
+    }, [listaTipos]);
+
+    const getNomeMatriz = useCallback((id: string) => {
+        const matrizEncontrada = listaMatrizes.find(m => String(m.id) === id);
+        return matrizEncontrada ? matrizEncontrada.nome : id; // Se não achar, mostra o ID original
+    }, [listaMatrizes]);
+
+
     useEffect(() => {
         if(legislacaoSelecionada) {
             carregarDados();
         }
     }, [carregarDados, legislacaoSelecionada]);
 
-    // --- Lógica do Autocomplete de Legislação ---
     const legislacoesFiltradas = filtroLegislacao
         ? legislacoes.filter(l => l.nome.toLowerCase().includes(filtroLegislacao.toLowerCase()))
         : legislacoes;
 
     const handleSelecionarLegislacao = (leg: DropdownOption) => {
-        setLegislacaoSelecionada(leg.id);
+        setLegislacaoSelecionada(leg.id as number);
         setNomeLegislacaoSelecionada(leg.nome);
         setFiltroLegislacao(leg.nome);
         setMostrarSugestoes(false);
@@ -144,7 +174,6 @@ const VisualizarLegislacaoParametro: React.FC = () => {
         const value = e.target.value;
         setFiltroLegislacao(value);
         setMostrarSugestoes(true);
-        
         if (legislacaoSelecionada !== null || nomeLegislacaoSelecionada !== value) {
             setLegislacaoSelecionada(null);
             setNomeLegislacaoSelecionada('');
@@ -166,18 +195,22 @@ const VisualizarLegislacaoParametro: React.FC = () => {
         return () => document.removeEventListener("mousedown", handleClickFora);
     }, [legislacaoSelecionada, nomeLegislacaoSelecionada]);
 
-    // --- Lógica da Busca na Tabela ---
     const dadosFiltrados = dados.filter(item => {
         const searchTerm = filtroTabela.toLowerCase();
         if (!searchTerm) return true;
-        return Object.values(item).some(value =>
+        // ✅ ALTERADO: Busca também pelos nomes traduzidos
+        const nomeTipo = getNomeTipo(item.tipo || '');
+        const nomeMatriz = getNomeMatriz(item.matriz || '');
+        const itemComNomes = {...item, tipo: nomeTipo, matriz: nomeMatriz};
+
+        return Object.values(itemComNomes).some(value =>
             String(value).toLowerCase().includes(searchTerm)
         );
     });
     
-    // --- Handlers de Ações ---
     const handleSalvar = () => {
         setMostrarFormulario(false);
+        setItemEmEdicao(null);
         setSuccessMessage("Operação realizada com sucesso!");
         setTimeout(() => setSuccessMessage(null), 3000);
         carregarDados();
@@ -194,16 +227,34 @@ const VisualizarLegislacaoParametro: React.FC = () => {
             setError(`Erro ao remover: ${err.toString()}`);
         }
     };
+    
+    const handleAbrirFormulario = (item: LegislacaoParametroDetalhado | null) => {
+        setItemEmEdicao(item);
+        setMostrarFormulario(true);
+    };
 
     if (mostrarFormulario) {
-        return <CadastrarLegislacaoParametro legislacaoIdSelecionada={legislacaoSelecionada!} onSalvar={handleSalvar} onCancelar={() => setMostrarFormulario(false)} />;
+        return <CadastrarLegislacaoParametro 
+            legislacaoIdSelecionada={legislacaoSelecionada!} 
+            itemParaEdicao={itemEmEdicao} // Corrigido de itemParaEditar para itemParaEdicao
+            onSalvar={handleSalvar} 
+            onCancelar={() => {
+                setMostrarFormulario(false);
+                setItemEmEdicao(null);
+            }} 
+        />;
     }
     
     return (
         <div className={styles.container}>
             <div className={styles.header}>
                 <h2>Gerir Legislação x Parâmetro</h2>
-                <button onClick={() => setMostrarFormulario(true)} className={styles.buttonPrimary} disabled={!legislacaoSelecionada} title={!legislacaoSelecionada ? "Selecione uma legislação para cadastrar" : "Novo Relacionamento"}>
+                <button 
+                    onClick={() => handleAbrirFormulario(null)} 
+                    className={styles.buttonPrimary} 
+                    disabled={!legislacaoSelecionada} 
+                    title={!legislacaoSelecionada ? "Selecione uma legislação para cadastrar" : "Novo Relacionamento"}
+                >
                     Novo Relacionamento
                 </button>
             </div>
@@ -213,14 +264,7 @@ const VisualizarLegislacaoParametro: React.FC = () => {
 
             <div className={styles.filters}>
                 <div className={styles.autocompleteContainer} ref={autocompleteRef}>
-                    <input
-                        type="text"
-                        placeholder="Digite para buscar uma legislação..."
-                        value={filtroLegislacao}
-                        onChange={handleFiltroChange}
-                        onFocus={() => setMostrarSugestoes(true)}
-                        className={styles.searchInput}
-                    />
+                    <input type="text" placeholder="Digite para buscar uma legislação..." value={filtroLegislacao} onChange={handleFiltroChange} onFocus={() => setMostrarSugestoes(true)} className={styles.searchInput} />
                     {mostrarSugestoes && (
                         <ul className={styles.suggestionsList}>
                             {legislacoesFiltradas.length > 0 ? legislacoesFiltradas.map(leg => (
@@ -229,41 +273,44 @@ const VisualizarLegislacaoParametro: React.FC = () => {
                         </ul>
                     )}
                 </div>
-                
-                <input
-                    type="text"
-                    placeholder="Buscar na tabela atual..."
-                    value={filtroTabela}
-                    onChange={(e) => setFiltroTabela(e.target.value)}
-                    className={styles.searchInput}
-                    disabled={!legislacaoSelecionada || dados.length === 0}
-                />
+                <input type="text" placeholder="Buscar na tabela atual..." value={filtroTabela} onChange={(e) => setFiltroTabela(e.target.value)} className={styles.searchInput} disabled={!legislacaoSelecionada || dados.length === 0} />
             </div>
             
             <div className={styles.tableContainer}>
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Parâmetro</th>
-                            <th>Grupo</th>
-                            <th>Técnica</th>
-                            <th>Limite</th>
+                            <th>ID</th>
+                            <th>Parâmetro / Grupo</th>
+                            <th>Tipo / Matriz</th>
+                            <th>POP / Técnica</th>
+                            <th>Unidade</th>
+                            <th>LQ Inferior / Superior</th>
+                            <th>Incerteza</th>
+                            <th>Limite Legislação</th>
+                            <th>Valor</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading && dados.length === 0 ? (
-                            <tr><td colSpan={5} className={styles.loadingCell}><div className={styles.spinner}></div></td></tr>
+                            <tr><td colSpan={10} className={styles.loadingCell}><div className={styles.spinner}></div></td></tr>
                         ) : dadosFiltrados.length > 0 ? (
                             dadosFiltrados.map((item) => (
                                 <tr key={item.id}>
-                                    <td><strong>{item.nome_parametro}</strong><br/><small>{`Objetivo: ${item.objetivo || '-'}`}</small></td>
-                                    <td>{item.grupo}</td>
-                                    <td>{item.nome_tecnica}</td>
-                                    <td>{`${item.limite_min || ''} ${item.limite_simbolo || ''} ${item.limite_max || ''}`.trim()}</td>
+                                    <td>{item.id}</td>
+                                    <td><strong>{item.nome_parametro || '-'}</strong><br/><small>Grupo: {item.grupo || '-'}</small></td>
+                                    {/* ✅ ALTERADO: Usando as funções "tradutoras" para exibir os nomes */}
+                                    <td><strong>{getNomeTipo(item.tipo || '-')}</strong><br/><small>Matriz: {getNomeMatriz(item.matriz || '-')}</small></td>
+                                    <td><strong>{item.pop_numero ? `${item.pop_codigo}/${item.pop_numero}` : '-'}</strong><br/><small>Téc: {item.nome_tecnica || '-'}</small></td>
+                                    <td>{item.unidade || '-'}</td>
+                                    <td>{`Inf: ${item.lqi || '-'} | Sup: ${item.lqs || '-'}`}</td>
+                                    <td>{item.incerteza || '-'}</td>
+                                    <td>{`${item.limite_min || ''} ${item.limite_simbolo || ''} ${item.limite_max || ''}`.trim() || 'N.A.'}</td>
+                                    <td>{item.valor || '-'}</td>
                                     <td>
                                         <div className={styles.actions}>
-                                            <button onClick={() => { setItemEmEdicao(item); setMostrarFormulario(true); }} className={styles.buttonEdit} title="Editar">✏️</button>
+                                            <button onClick={() => handleAbrirFormulario(item)} className={styles.buttonEdit} title="Editar">✏️</button>
                                             <button onClick={() => handleRemover(item)} className={styles.buttonDelete} title="Remover">🗑️</button>
                                         </div>
                                     </td>
@@ -271,7 +318,7 @@ const VisualizarLegislacaoParametro: React.FC = () => {
                             ))
                         ) : (
                             <tr>
-                                <td colSpan={5} className={styles.empty}>
+                                <td colSpan={10} className={styles.empty}>
                                     {!legislacaoSelecionada ? "Selecione uma legislação acima para começar." : "Nenhum parâmetro encontrado para esta legislação."}
                                 </td>
                             </tr>
@@ -281,15 +328,14 @@ const VisualizarLegislacaoParametro: React.FC = () => {
             </div>
 
             {dados.length > 0 && totalPaginas > 1 && (
-                 <div className={styles.pagination}>
-                    <button onClick={() => setPaginaAtual(p => p - 1)} disabled={paginaAtual <= 1 || loading} className={styles.buttonPrimary}>Anterior</button>
-                    <span>Página {paginaAtual} de {totalPaginas}</span>
-                    <button onClick={() => setPaginaAtual(p => p + 1)} disabled={paginaAtual >= totalPaginas || loading} className={styles.buttonPrimary}>Próxima</button>
-                </div>
+                   <div className={styles.pagination}>
+                       <button onClick={() => setPaginaAtual(p => p - 1)} disabled={paginaAtual <= 1 || loading} className={styles.buttonPrimary}>Anterior</button>
+                       <span>Página {paginaAtual} de {totalPaginas}</span>
+                       <button onClick={() => setPaginaAtual(p => p + 1)} disabled={paginaAtual >= totalPaginas || loading} className={styles.buttonPrimary}>Próxima</button>
+                   </div>
             )}
         </div>
     );
 };
 
 export default VisualizarLegislacaoParametro;
-

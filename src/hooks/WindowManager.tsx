@@ -572,4 +572,32 @@ export class WindowManager {
         });
     }
 
+
+       static async openGerenciarPacotes(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'rel-pacote-parametro',
+            title: 'Gerir Pacotes de Parâmetros',
+            url: '/#/rel-pacote-parametro',
+            width: 1024,
+            height: 768,
+            center: true,
+            allowMultiple: false,
+        });
+    }
+
+    static async openCadastrarPacote(pacoteId?: number): Promise<WebviewWindow> {
+        const url = pacoteId 
+            ? `/#/cadastrar-pacote?id=${pacoteId}` 
+            : '/#/cadastrar-pacote';
+        
+        return this.openWindow({
+            label: `cadastrar-pacote-${pacoteId || 'novo'}`,
+            title: pacoteId ? 'Editar Pacote de Parâmetros' : 'Novo Pacote de Parâmetros',
+            url: url,
+            width: 1280,
+            height: 800,
+            center: true,
+            allowMultiple: true, // Permite abrir múltiplos cadastros
+        });
+    }
 }

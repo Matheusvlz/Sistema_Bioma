@@ -443,6 +443,9 @@ export const Geral: React.FC = () => {
         case 'rel-limite-quantificacao':
           await WindowManager.openGerenciarLqIncerteza();
           break;
+        case 'rel-pacote-parametro':
+         await WindowManager.openGerenciarPacotes();
+         break;
 
         default:
           navigate(route as any);

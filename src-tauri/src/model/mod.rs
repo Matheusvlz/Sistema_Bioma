@@ -30,4 +30,5 @@ pub mod sub_matriz;
 pub mod parametro_pop;
 pub mod legislacao_parametro;
 pub mod dropdown_options;
+pub mod pacote;
 
