@@ -122,6 +122,27 @@ use controller::geral::observacao_controller::{
     deletar_observacao
 };
 
+use controller::geral::sub_matriz_controller::{
+    listar_sub_matrizes,
+    cadastrar_sub_matriz,
+    editar_sub_matriz,
+    deletar_sub_matriz
+};
+
+use controller::geral::parametro_pop_controller::{
+    listar_parametros_pops,
+    cadastrar_parametro_pop,
+    editar_parametro_pop,
+    deletar_parametro_pop
+};
+
+use controller::geral::legislacao_parametro_controller::{
+    listar_legislacao_parametro,
+    cadastrar_legislacao_parametro,
+    editar_legislacao_parametro,
+    deletar_legislacao_parametro
+};
+
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -308,6 +329,19 @@ fn main() {
             cadastrar_observacao,
             editar_observacao,
             deletar_observacao,
+            listar_sub_matrizes,
+            cadastrar_sub_matriz,
+            editar_sub_matriz,
+            deletar_sub_matriz,
+            listar_parametros_pops,
+            cadastrar_parametro_pop,
+            editar_parametro_pop,
+            deletar_parametro_pop,
+            listar_legislacao_parametro,
+            cadastrar_legislacao_parametro,
+            editar_legislacao_parametro,
+            deletar_legislacao_parametro,
+            
             
             // Comandos de Laboratório
             buscar_checagem, 

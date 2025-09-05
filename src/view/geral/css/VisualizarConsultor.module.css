@@ -1,105 +1,159 @@
-/* Container principal com fundo verde muito claro */
+/* VisualizarConsultor.module.css - Padrão Estabelecido */
+
 .container {
-  padding: 32px;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 32px;
   background: #f8fffe;
   min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* Cabeçalho com separação visual */
+/* Header */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 2px solid #22c55e;
+  padding-bottom: 24px;
+  border-bottom: 3px solid #21af56;
 }
 
 .header h2 {
-  color: #15803d;
+  color: #0f172a;
   font-size: 32px;
   font-weight: 700;
   margin: 0;
   letter-spacing: -0.5px;
 }
 
-/* Mensagens de feedback */
-.message {
-  padding: 14px 18px;
-  border-radius: 8px;
-  margin-bottom: 24px;
+/* Botões no padrão estabelecido */
+.buttonPrimary {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
   font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.buttonPrimary:active:not(:disabled) {
+  background: #15803d;
+}
+
+.buttonPrimary:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.buttonSecondary {
+  background: white;
+  color: #1f2937;
+  border: 2px solid #374151;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.buttonSecondary:hover:not(:disabled) {
+  border-color: #21af56;
+  background: #f0fdf4;
+  color: #21af56;
+}
+
+.buttonSecondary:disabled {
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  cursor: not-allowed;
+}
+
+/* Mensagens */
+.message {
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-weight: 600;
   font-size: 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-left: 4px solid;
+  border-left: 5px solid;
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.message.success {
-  background-color: #f0fdf4;
-  border-color: #22c55e;
-  color: #15803d;
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
+.success {
+  background-color: #ecfdf5;
+  border-color: #21af56;
+  color: #064e3b;
+  box-shadow: 0 4px 12px rgba(33, 175, 86, 0.2);
 }
 
-.message.error {
+.error {
   background-color: #fef2f2;
   border-color: #ef4444;
-  color: #dc2626;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  color: #7f1d1d;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
 }
 
 .closeMessage {
   background: none;
   border: none;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
   cursor: pointer;
+  line-height: 1;
+  padding: 4px;
   color: inherit;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
+  opacity: 0.7;
+  border-radius: 2px;
+  transition: all 0.15s ease;
 }
 
 .closeMessage:hover {
-  background-color: rgba(0, 0, 0, 0.1);
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-/* Área de filtros */
+/* Filtros */
 .filters {
   margin-bottom: 24px;
-  display: flex;
-  gap: 16px;
-  align-items: center;
 }
 
 .searchInput {
-  flex: 1;
+  width: 100%;
   max-width: 500px;
-  padding: 14px 18px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 16px 20px;
+  border: 2px solid #374151;
+  border-radius: 12px;
+  font-size: 16px;
   background-color: white;
-  transition: all 0.2s ease-in-out;
+  color: #1f2937;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
-  background-color: #fefffe;
+  border-color: #21af56;
+  box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
 }
 
 .searchInput::placeholder {
-  color: #9ca3af;
+  color: #6b7280;
+  font-weight: 500;
 }
 
-/* Estados de carregamento */
+/* Loading */
 .loading {
   display: flex;
   flex-direction: column;
@@ -107,68 +161,91 @@
   justify-content: center;
   padding: 80px 20px;
   color: #6b7280;
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #f0fdf4;
+  margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .spinner {
   width: 48px;
   height: 48px;
   border: 4px solid #e5e7eb;
-  border-top: 4px solid #22c55e;
+  border-top: 4px solid #21af56;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+.loading p {
+  font-size: 15px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  color: #374151;
 }
 
 /* Estado vazio */
 .empty {
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: 80px 20px;
   color: #6b7280;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e6f7ff;
+  border-radius: 16px;
+  border: 2px solid #f0fdf4;
+  margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .empty p {
-  font-size: 16px;
-  margin-bottom: 24px;
-  line-height: 1.6;
+  font-size: 15px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+  color: #374151;
 }
 
-/* Container da tabela com scroll - FUNCIONALIDADE PRINCIPAL */
+/* Container da tabela - COM CORREÇÃO DA BARRA DE ROLAGEM */
 .tableContainer {
+  flex-grow: 1;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  border: 2px solid #f0fdf4;
   overflow: hidden;
-  border: 1px solid #e6f7ff;
-  max-height: 600px; /* Altura máxima para ativar scroll */
-  overflow-y: auto; /* Barra de rolagem vertical */
+  max-height: 600px;
+  overflow-y: auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  position: relative;
 }
 
-/* Estilização da barra de rolagem */
+/* CORREÇÃO: Remove border-radius quando tem scrollbar */
+.tableContainer.has-scrollbar {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .tableContainer::-webkit-scrollbar {
   width: 8px;
 }
 
 .tableContainer::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 4px;
+  background: white;
 }
 
 .tableContainer::-webkit-scrollbar-thumb {
-  background: #22c55e;
-  border-radius: 4px;
+  background: #21af56;
+  border-radius: 4px 0 0 4px;
+  border: none;
 }
 
 .tableContainer::-webkit-scrollbar-thumb:hover {
-  background: #15803d;
+  background: #1ea34a;
+}
+
+.tableContainer::-webkit-scrollbar-corner {
+  background: white;
 }
 
 /* Tabela */
@@ -178,41 +255,56 @@
   margin: 0;
 }
 
+/* CORREÇÃO: Garante que a tabela preencha todo o espaço */
+.table th:last-child,
+.table td:last-child {
+  padding-right: 24px;
+}
+
 .table th {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
+  background: #21af56;
   color: white;
-  font-weight: 600;
-  padding: 18px 16px;
+  font-weight: 700;
+  padding: 20px 16px;
   text-align: left;
-  font-size: 14px;
-  letter-spacing: 0.025em;
+  font-size: 15px;
+  letter-spacing: 0.01em;
   position: sticky;
   top: 0;
   z-index: 10;
+  border-bottom: 2px solid #1ea34a;
 }
 
-.table th:first-child {
-  border-top-left-radius: 0;
-}
-
-.table th:last-child {
-  border-top-right-radius: 0;
+.table th:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .table td {
   padding: 16px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 14px;
-  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 15px;
+  color: #1f2937;
   vertical-align: middle;
+  font-weight: 500;
 }
 
 .table tbody tr {
-  transition: background-color 0.2s ease;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
 }
 
 .table tbody tr:hover {
-  background-color: #f8fffe;
+  background-color: #f0fdf4 !important;
+  transform: translateX(4px);
+  box-shadow: 4px 0 12px rgba(33, 175, 86, 0.15);
+}
+
+.table tbody tr:hover td {
+  color: #0f172a;
 }
 
 .table tbody tr:last-child td {
@@ -221,22 +313,19 @@
 
 /* Células específicas */
 .nameCell {
-  font-weight: 600;
-  color: #15803d;
-}
-
-.nameCell strong {
-  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .documentCell {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: 'JetBrains Mono', 'Monaco', 'Menlo', monospace;
   font-size: 13px;
-  color: #6b7280;
-  background-color: #f8fafc;
-  padding: 4px 8px;
-  border-radius: 4px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 6px 10px;
+  border-radius: 6px;
   display: inline-block;
+  font-weight: 600;
 }
 
 /* Status badges */
@@ -244,27 +333,43 @@
   padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: inline-block;
-  min-width: 60px;
-  text-align: center;
+  letter-spacing: 0.025em;
 }
 
-.status.ativo {
-  background: linear-gradient(135deg, #22c55e, #16a34a);
-  color: white;
-  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+.ativo {
+  background-color: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
 }
 
-.status.inativo {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  color: white;
-  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+.ativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #22c55e;
 }
 
-/* Ações */
+.inativo {
+  background-color: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.inativo::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #dc2626;
+}
+
+/* Botões de ação */
 .actions {
   display: flex;
   gap: 8px;
@@ -274,107 +379,39 @@
 .buttonEdit,
 .buttonDelete {
   background: none;
-  border: 2px solid transparent;
-  padding: 8px 10px;
-  border-radius: 6px;
+  border: 1px solid;
+  padding: 8px;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
 }
 
 .buttonEdit {
-  color: #6366f1;
+  color: #4f46e5;
   border-color: #e0e7ff;
-  background-color: #f8faff;
+  background-color: #fafbff;
 }
 
 .buttonEdit:hover {
   background-color: #e0e7ff;
-  border-color: #6366f1;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  border-color: #4f46e5;
 }
 
 .buttonDelete {
-  color: #ef4444;
+  color: #dc2626;
   border-color: #fecaca;
   background-color: #fef2f2;
 }
 
 .buttonDelete:hover {
   background-color: #fecaca;
-  border-color: #ef4444;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
-}
-
-/* Botões principais */
-.buttonPrimary {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
-  border: none;
-  padding: 14px 28px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  letter-spacing: 0.025em;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
-}
-
-.buttonPrimary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.buttonPrimary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.buttonPrimary:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.buttonSecondary {
-  background-color: white;
-  color: #374151;
-  border: 2px solid #d1d5db;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  letter-spacing: 0.025em;
-}
-
-.buttonSecondary:hover:not(:disabled) {
-  border-color: #22c55e;
-  background-color: #f0fdf4;
-  color: #15803d;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.1);
-}
-
-.buttonSecondary:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.buttonSecondary:disabled {
-  color: #9ca3af;
-  border-color: #e5e7eb;
-  cursor: not-allowed;
-  transform: none;
+  border-color: #dc2626;
 }
 
 /* Rodapé */
@@ -382,12 +419,29 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 24px;
+  margin-top: 32px;
   padding-top: 20px;
-  border-top: 1px solid #e5e7eb;
-  color: #6b7280;
+  border-top: 2px solid #e5e7eb;
+  color: #374151;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+}
+
+/* Animações */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Responsividade */
@@ -433,7 +487,7 @@
   
   .tableContainer {
     overflow-x: auto;
-    max-height: 400px;
+    max-height: 450px;
   }
   
   .table {
@@ -446,6 +500,11 @@
     font-size: 13px;
   }
   
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 16px;
+  }
+  
   .footer {
     flex-direction: column;
     gap: 16px;
@@ -453,13 +512,54 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .container {
     padding: 12px;
   }
   
+  .tableContainer {
+    max-height: 400px;
+  }
+  
+  .actions {
+    gap: 6px;
+  }
+  
+  .buttonEdit,
+  .buttonDelete {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .status {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+@media (max-width: 480px) {
   .header h2 {
     font-size: 20px;
+  }
+  
+  .tableContainer {
+    max-height: 350px;
+  }
+  
+  .table {
+    min-width: 600px;
+  }
+  
+  .table th,
+  .table td {
+    padding: 10px 6px;
+    font-size: 12px;
+  }
+  
+  .table th:last-child,
+  .table td:last-child {
+    padding-right: 12px;
   }
   
   .actions {
@@ -469,24 +569,27 @@
   
   .buttonEdit,
   .buttonDelete {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-  
-  .tableContainer {
-    max-height: 350px;
-  }
-  
-  .table th,
-  .table td {
-    padding: 10px 6px;
+    width: 28px;
+    height: 28px;
     font-size: 12px;
   }
-  
-  .status {
-    padding: 4px 8px;
-    font-size: 10px;
-    min-width: 50px;
+}
+
+/* Acessibilidade */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+}
+
+/* Estados de foco */
+.buttonPrimary:focus,
+.buttonSecondary:focus,
+.buttonEdit:focus,
+.buttonDelete:focus,
+.searchInput:focus {
+  outline: 3px solid #21af56;
+  outline-offset: 2px;
 }

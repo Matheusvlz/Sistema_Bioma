@@ -26,3 +26,7 @@ pub mod legislacao;
 pub mod categoria;
 pub mod forma_contato;
 pub mod observacao;
+pub mod sub_matriz;
+pub mod parametro_pop;
+pub mod legislacao_parametro;
+

@@ -274,7 +274,11 @@ const VisualizarConsultor: React.FC = () => {
         </button>
       </div>
     </div>
+    
   );
+  
 };
+
+
 
 export default VisualizarConsultor;

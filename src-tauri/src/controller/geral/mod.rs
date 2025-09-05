@@ -18,3 +18,6 @@ pub mod metodologia_controller;
 pub mod legislacao_controller;
 pub mod forma_contato_controller;
 pub mod observacao_controller;
+pub mod sub_matriz_controller;
+pub mod parametro_pop_controller;
+pub mod legislacao_parametro_controller;

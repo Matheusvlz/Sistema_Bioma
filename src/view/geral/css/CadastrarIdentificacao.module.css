@@ -1,121 +1,240 @@
 .container {
-    padding: 24px;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8fffe 0%, #f0fff8 50%, #f5fff5 100%);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: #2d5a2d;
+}
+
+.header {
+  margin-bottom: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+}
+
+.header h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d5a2d;
+  margin: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  flex-grow: 1;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #2d5a2d;
+  font-size: 1rem;
+}
+
+.input {
+  padding: 1rem 1.25rem;
+  border: 2px solid #e0f0e0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: white;
+  transition: all 0.3s ease;
+  color: #2d5a2d;
+}
+
+.input:focus {
+  outline: none;
+  border-color: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.15);
+  transform: translateY(-1px);
+}
+
+.input::placeholder {
+  color: #9ca3af;
+  font-weight: 400;
+}
+
+.inputError {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+}
+
+.inputError:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.errorText {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: auto;
+  padding-top: 2rem;
+}
+
+.buttonPrimary {
+  background: linear-gradient(45deg, #22c55e, #15803d);
+  color: white;
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+}
+
+.buttonPrimary:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(45deg, #16a34a, #14532d);
+}
+
+.buttonPrimary:active {
+  transform: translateY(0);
+}
+
+.buttonPrimary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.buttonSecondary {
+  background: white;
+  color: #2d5a2d;
+  padding: 0.75rem 2rem;
+  border: 2px solid #e0f0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+}
+
+.buttonSecondary:hover {
+  background: linear-gradient(135deg, #f0fff8 0%, #ffffff 100%);
+  border-color: #22c55e;
+  transform: translateY(-1px);
+}
+
+.buttonSecondary:active {
+  transform: translateY(0);
+}
+
+.message {
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
   }
-  
-  .header {
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #e5e7eb;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .header h2 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #166534; /* Verde forte */
+}
+
+.success {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fef2f2 50%, #fef2f2 100%);
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Estados de interação aprimorados */
+.input:hover {
+  border-color: #bbf7d0;
+}
+
+.formGroup:focus-within .label {
+  color: #16a34a;
+  transform: translateX(2px);
+  transition: all 0.3s ease;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
   }
   
   .form {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
-    flex-grow: 1;
+    padding: 1.5rem;
   }
   
-  .formGroup {
-    display: flex;
-    flex-direction: column;
+  .header {
+    padding: 1rem;
   }
   
-  .label {
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  .input {
-    padding: 10px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  
-  .input:focus {
-    outline: none;
-    border-color: #7c3aed; /* Roxo */
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
-  }
-  
-  .inputError {
-    border-color: #ef4444;
-  }
-  
-  .inputError:focus {
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.4);
-  }
-  
-  .errorText {
-    color: #ef4444;
-    font-size: 0.875rem;
-    margin-top: 6px;
+  .header h2 {
+    font-size: 1.5rem;
   }
   
   .buttonGroup {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: auto; /* Empurra para o final */
-    padding-top: 24px;
+    flex-direction: column;
+    gap: 0.75rem;
   }
   
-  .buttonPrimary {
-    background-color: #7c3aed; /* Roxo */
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  .buttonPrimary:hover {
-    background-color: #6d28d9;
-  }
-  .buttonPrimary:disabled {
-    background-color: #9ca3af;
-    cursor: not-allowed;
-  }
-  
+  .buttonPrimary,
   .buttonSecondary {
-    background-color: #ffffff;
-    color: #374151;
-    padding: 10px 20px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s;
+    width: 100%;
+    justify-content: center;
   }
-  .buttonSecondary:hover {
-    background-color: #f9fafb;
-  }
-  
-  .message {
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
-  }
-  .success {
-    background-color: #dcfce7;
-    color: #166534;
-  }
-  .error {
-    background-color: #fee2e2;
-    color: #b91c1c;
-  }
-  
+}
+
+/* Melhorias de UX */
+.input:valid {
+  border-color: #bbf7d0;
+}
+
+.input:invalid:not(:placeholder-shown) {
+  border-color: #fca5a5;
+}
+
+/* Animação para labels quando focused */
+.formGroup {
+  position: relative;
+}
+
+.formGroup:focus-within {
+  transform: translateY(-1px);
+  transition: transform 0.3s ease;
+}

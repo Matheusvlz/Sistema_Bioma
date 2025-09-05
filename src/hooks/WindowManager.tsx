@@ -544,6 +544,17 @@ export class WindowManager {
       label: 'cadastrar-posto',
       title: 'Cadastrar posto',
       url: '/#/cadastrar-posto',
+         width: 1400, // Tela maior para a tabela complexa
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+  static async openGerenciarSubMatrizes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'estrutura-submatriz',
+      title: 'Gerir Submatrizes',
+      url: '/#/estrutura-submatriz',
       width: 900,
       height: 700,
       allowMultiple: false,
@@ -557,6 +568,17 @@ export class WindowManager {
       url: '/#/cadastrar-viagem',
       width: 900,
       height: 700,
+  // Parametro X POP
+    });
+  }
+
+  static async openGerenciarParametroPop(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'rel-parametro-pop',
+      title: 'Gerir Parâmetro x POP',
+      url: '/#/rel-parametro-pop',
+      width: 1300, // Tela maior para a tabela complexa
+      height: 800,
       allowMultiple: false,
     });
   }
@@ -592,7 +614,19 @@ export class WindowManager {
       label: 'cadastrar_abastecimento',
       title: 'Cadastrar Abastecimento',
       url: '/#/cadastrar_abastecimento',
-      width: 1200,
+         width: 1400, // Tela maior para a tabela complexa
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+
+  static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'rel-legislacao-parametro',
+      title: 'Gerir Legislação x Parâmetro',
+      url: '/#/rel-legislacao-parametro',
+      width: 1400, // Tela maior para a tabela complexa
       height: 900,
       allowMultiple: false,
     });
