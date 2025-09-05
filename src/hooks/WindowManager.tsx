@@ -362,6 +362,18 @@ export class WindowManager {
     });
   }
 
+    static async openCastrarCondutor(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-motorista',
+      title: 'Cadastrar Motorista',
+      url: '/#/cadastrar-motorista',
+      width: 900,
+      height: 700,
+      allowMultiple: false, 
+    });
+  }
+
+
   // Matriz
 
   static async openGerenciarMatrizes(): Promise<WebviewWindow> {
@@ -505,7 +517,16 @@ export class WindowManager {
     });
   }
 
-  // Observacaos
+    static async openGerenciarVeiculos(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-veiculo',
+      title: 'Cadastrar Veículo',
+      url: '/#/cadastrar-veiculo',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
 
   static async openGerenciarObservacoes(): Promise<WebviewWindow> {
     return this.openWindow({
@@ -517,4 +538,65 @@ export class WindowManager {
       allowMultiple: false,
     });
   }
+
+    static async openCadastrarPosto(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-posto',
+      title: 'Cadastrar posto',
+      url: '/#/cadastrar-posto',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+     static async openCadastrarViagem(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-viagem',
+      title: 'Cadastrar viagem',
+      url: '/#/cadastrar-viagem',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+     static async openVisualizarViagem(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-viagem',
+      title: 'Visualizar viagem',
+      url: '/#/visualizar-viagem',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+
+       static async openVisualizarAbastecimento(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-abastecimento',
+      title: 'Visualizar abastecimento',
+      url: '/#/visualizar-abastecimento',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  
+
+
+      static async openCadastrarAbastecimento(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar_abastecimento',
+      title: 'Cadastrar Abastecimento',
+      url: '/#/cadastrar_abastecimento',
+      width: 1200,
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+  
+
 }

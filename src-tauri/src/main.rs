@@ -171,8 +171,13 @@ use controller::chat::chat_controller::{
     get_chat_messages, create_direct_chat, send_file_message
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
-
+use controller::frota::frota_controller::{buscar_agendamentos_hoje};
+use controller::frota::motoristas_controller::{buscar_motoristas, criar_motorista, atualizar_motorista, deletar_motorista};
+use controller::frota::veiculo_controller::{buscar_marcas, deletar_veiculo, atualizar_veiculo, criar_veiculo, buscar_veiculos_e_marcas};
+use controller::frota::posto_controller::{buscar_postos, criar_posto, atualizar_posto, deletar_posto};
+use controller::frota::viagem_controller::{criar_frota_viagem, buscar_viagens, deletar_frota_viagem, atualizar_frota_viagem};
 // --- Importações do Sistema ---
+use controller::frota::abastecimento_controller::{deletar_frota_abastecimento, criar_frota_abastecimento, atualizar_frota_abastecimento, buscar_abastecimento, buscar_abastecimento_filtrado};
 use std::env;
 use crate::config::get_ws_url;
 
@@ -378,7 +383,32 @@ fn main() {
             create_direct_chat,
             send_file_message,
             download_file_to_downloads,
-            download_file_bytes
+            download_file_bytes,
+            buscar_agendamentos_hoje,
+            buscar_motoristas,
+            criar_motorista,
+            atualizar_motorista,
+            deletar_motorista,
+            buscar_marcas,
+            deletar_veiculo,
+            atualizar_veiculo,
+            criar_veiculo,
+            buscar_veiculos_e_marcas,
+            deletar_posto,
+            atualizar_posto,
+            criar_posto,
+            buscar_postos,
+            criar_frota_viagem,
+            buscar_viagens,
+            atualizar_frota_viagem,
+            deletar_frota_viagem,
+            deletar_frota_abastecimento,
+            atualizar_frota_abastecimento,
+            criar_frota_abastecimento,
+            buscar_abastecimento,
+            buscar_abastecimento_filtrado
+
+
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

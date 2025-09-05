@@ -38,7 +38,13 @@ import VisualizarLegislacoes from '../view/geral/VisualizarLegislacoes';
 import VisualizarCategorias from '../view/geral/VisualizarCategorias';
 import VisualizarFormasContato from '../view/geral/VisualizarFormasContato';
 import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
-
+import Cadastrar_Motorista from '../view/frota/Cadastrar_Motorista';
+import Cadastrar_Veiculo from '../view/frota/Cadastrar_Veiculo';
+import Cadastrar_Posto from '../view/frota/Cadastrar_Posto';
+import Cadastrar_Viagem from '../view/frota/Cadastrar_Viagem';
+import Visualizar_Viagem from '../view/frota/Visualizar_Viagem';
+import Cadatrar_Abastecimento from '../view/frota/Cadastrar_Abastecimento';
+import VisualizarAbastecimentos from '../view/frota/VisualizarAbastecimentos';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -102,7 +108,22 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // LAB
   'planilha-laboratorio': {component: <Planilha />, hasLayout: false},
   'cadastrar-amostra': {component: <CadastrarAmostra />, hasLayout: false},
-  'visualizar-amostras': {component: <VisualizarAmostra />, hasLayout: false}
+  'visualizar-amostras': {component: <VisualizarAmostra />, hasLayout: false},
+
+  'cadastrar-motorista': {component: <Cadastrar_Motorista />, hasLayout: false},
+
+  'cadastrar-veiculo': {component: <Cadastrar_Veiculo />, hasLayout: false},
+
+  'cadastrar-posto': {component: <Cadastrar_Posto />, hasLayout: false},
+
+  'cadastrar-viagem': {component: <Cadastrar_Viagem />, hasLayout: false},
+
+  'visualizar-viagem': {component: <Visualizar_Viagem />, hasLayout: false},
+
+  'cadastrar_abastecimento': {component: <Cadatrar_Abastecimento />, hasLayout: false},
+
+  'visualizar-abastecimento': {component: <VisualizarAbastecimentos />, hasLayout: false}
+
 
 };
 
