@@ -169,39 +169,24 @@ const VisualizarAbastecimentos: React.FC = () => {
 
   const carregarDadosRelacionados = async () => {
     try {
-      const veiculosData = await invoke<Veiculo[]>('buscar_veiculos');
+      const veiculosData = await invoke<Veiculo[]>('buscar_veiculos_e_marcas');
       setVeiculos(veiculosData);
     } catch {
-      // Mock data para veículos
-      setVeiculos([
-        { id: 1, nome: 'Civic', marca: 'Honda', placa: 'ABC-1234' },
-        { id: 2, nome: 'Corolla', marca: 'Toyota', placa: 'DEF-5678' },
-        { id: 3, nome: 'Onix', marca: 'Chevrolet', placa: 'GHI-9012' }
-      ]);
+   
     }
 
     try {
       const motoristasData = await invoke<Motorista[]>('buscar_motoristas');
       setMotoristas(motoristasData);
     } catch {
-      // Mock data para motoristas
-      setMotoristas([
-        { id: 1, nome: 'João Silva', cnh: '12345678901' },
-        { id: 2, nome: 'Maria Santos', cnh: '98765432109' },
-        { id: 3, nome: 'Pedro Oliveira', cnh: '11223344556' }
-      ]);
+   
     }
 
     try {
       const postosData = await invoke<Posto[]>('buscar_postos');
       setPostos(postosData);
     } catch {
-      // Mock data para postos
-      setPostos([
-        { id: 1, nome: 'Posto Shell', endereco: 'Av. Principal, 123' },
-        { id: 2, nome: 'Posto Petrobras', endereco: 'Rua Central, 456' },
-        { id: 3, nome: 'Posto Ipiranga', endereco: 'Av. Secundária, 789' }
-      ]);
+
     }
 
     try {

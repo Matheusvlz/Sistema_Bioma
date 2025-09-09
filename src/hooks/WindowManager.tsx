@@ -631,6 +631,44 @@ export class WindowManager {
       allowMultiple: false,
     });
   }
+
+    static async openCadastrarManutencao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-manutencao',
+      title: 'Cadastrar Manutenção',
+      url: '/#/cadastrar-manutencao',
+      width: 1000, 
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+     static async openVisualizarManutencao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-manutencao',
+      title: 'Visualizar Manutenção',
+      url: '/#/visualizar-manutencao',
+      width: 1200, 
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+
+       static async openLocalizacao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'localizacao-temporeal',
+      title: 'Localização em Tempo Real',
+      url: '/#/localizacao-temporeal',
+      width: 1200, 
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+
+
+  
   
 
 }
