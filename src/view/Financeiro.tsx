@@ -12,7 +12,6 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
-  PieChart,
   Settings,
   Download,
   Upload,
@@ -21,10 +20,7 @@ import {
   Plus,
   Eye,
   Edit,
-  Trash2,
-  MoreHorizontal,
   Building2,
-  Truck,
   Package2,
   ShoppingBag,
   FileBarChart,
@@ -40,9 +36,7 @@ import {
   Zap,
   Star,
   ChevronDown,
-  ChevronUp,
-  Minimize2,
-  Maximize2
+  ChevronUp
 } from 'lucide-react';
 import styles from './styles/Financeiro.module.css';
 
@@ -171,7 +165,7 @@ export const Financeiro: React.FC = () => {
   ];
 
   const getTabContent = () => {
-    const currentTab = tabItems.find(tab => tab.id === activeTab);
+   
     
     switch (activeTab) {
       case 'pedidos-internos':
