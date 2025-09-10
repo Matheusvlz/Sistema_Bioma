@@ -22,6 +22,7 @@ import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
 import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
 import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoParametro';
+import CalculoIDE from '../view/geral/CalculoIDE';
 
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
@@ -39,9 +40,17 @@ import VisualizarLegislacoes from '../view/geral/VisualizarLegislacoes';
 import VisualizarCategorias from '../view/geral/VisualizarCategorias';
 import VisualizarFormasContato from '../view/geral/VisualizarFormasContato';
 import VisualizarObservacoes from '../view/geral/VisualizarObservacoes';
+import Cadastrar_Motorista from '../view/frota/Cadastrar_Motorista';
+import Cadastrar_Veiculo from '../view/frota/Cadastrar_Veiculo';
+import Cadastrar_Posto from '../view/frota/Cadastrar_Posto';
+import Cadastrar_Viagem from '../view/frota/Cadastrar_Viagem';
+import Visualizar_Viagem from '../view/frota/Visualizar_Viagem';
+import Cadatrar_Abastecimento from '../view/frota/Cadastrar_Abastecimento';
+import VisualizarAbastecimentos from '../view/frota/VisualizarAbastecimentos';
 import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
 import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
 import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
+import GerenciarTecnicaEtapa from '../view/geral/GerenciarTecnicaEtapa';
 
 import { VisualizarPacotes } from '../view/geral/VisualizarPacotes'; // ✅ NOVO
 import { CadastrarPacote } from '../view/geral/CadastrarPacote'; 
@@ -98,10 +107,10 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'rel-legislacao-parametro': { component: <VisualizarLegislacaoParametro />, hasLayout: false },
   'rel-pacote-parametro': { component: <VisualizarPacotes />, hasLayout: false },
   'cadastrar-pacote': { component: <CadastrarPacote />, hasLayout: false },
-  'rel-tecnica-etapa': { component: <Inicio />, hasLayout: true },
+  'rel-tecnica-etapa': { component: <GerenciarTecnicaEtapa />, hasLayout: false },
 
   // SUBROTAS DE CONTAS
-  'cadastrar-calculo': { component: <Inicio />, hasLayout: true },
+  'cadastrar-calculo': { component: <CalculoIDE />, hasLayout: true },
   'visualizar-calculo': { component: <Inicio />, hasLayout: true },
   
 
@@ -112,7 +121,22 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // LAB
   'planilha-laboratorio': {component: <Planilha />, hasLayout: false},
   'cadastrar-amostra': {component: <CadastrarAmostra />, hasLayout: false},
-  'visualizar-amostras': {component: <VisualizarAmostra />, hasLayout: false}
+  'visualizar-amostras': {component: <VisualizarAmostra />, hasLayout: false},
+
+  'cadastrar-motorista': {component: <Cadastrar_Motorista />, hasLayout: false},
+
+  'cadastrar-veiculo': {component: <Cadastrar_Veiculo />, hasLayout: false},
+
+  'cadastrar-posto': {component: <Cadastrar_Posto />, hasLayout: false},
+
+  'cadastrar-viagem': {component: <Cadastrar_Viagem />, hasLayout: false},
+
+  'visualizar-viagem': {component: <Visualizar_Viagem />, hasLayout: false},
+
+  'cadastrar_abastecimento': {component: <Cadatrar_Abastecimento />, hasLayout: false},
+
+  'visualizar-abastecimento': {component: <VisualizarAbastecimentos />, hasLayout: false}
+
 
 };
 

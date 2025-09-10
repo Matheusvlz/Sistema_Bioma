@@ -362,6 +362,18 @@ export class WindowManager {
     });
   }
 
+    static async openCastrarCondutor(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-motorista',
+      title: 'Cadastrar Motorista',
+      url: '/#/cadastrar-motorista',
+      width: 900,
+      height: 700,
+      allowMultiple: false, 
+    });
+  }
+
+
   // Matriz
 
   static async openGerenciarMatrizes(): Promise<WebviewWindow> {
@@ -505,7 +517,16 @@ export class WindowManager {
     });
   }
 
-  // Observacaos
+    static async openGerenciarVeiculos(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-veiculo',
+      title: 'Cadastrar Veículo',
+      url: '/#/cadastrar-veiculo',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
 
   static async openGerenciarObservacoes(): Promise<WebviewWindow> {
     return this.openWindow({
@@ -518,7 +539,16 @@ export class WindowManager {
     });
   }
 
-  // Sub-Matriz
+    static async openCadastrarPosto(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-posto',
+      title: 'Cadastrar posto',
+      url: '/#/cadastrar-posto',
+         width: 1400, // Tela maior para a tabela complexa
+      height: 900,
+      allowMultiple: false,
+    });
+  }
 
   static async openGerenciarSubMatrizes(): Promise<WebviewWindow> {
     return this.openWindow({
@@ -531,7 +561,16 @@ export class WindowManager {
     });
   }
 
+     static async openCadastrarViagem(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-viagem',
+      title: 'Cadastrar viagem',
+      url: '/#/cadastrar-viagem',
+      width: 900,
+      height: 700,
   // Parametro X POP
+    });
+  }
 
   static async openGerenciarParametroPop(): Promise<WebviewWindow> {
     return this.openWindow({
@@ -544,7 +583,43 @@ export class WindowManager {
     });
   }
 
-  // Legislação Parametro x POP
+     static async openVisualizarViagem(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-viagem',
+      title: 'Visualizar viagem',
+      url: '/#/visualizar-viagem',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+
+       static async openVisualizarAbastecimento(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-abastecimento',
+      title: 'Visualizar abastecimento',
+      url: '/#/visualizar-abastecimento',
+      width: 900,
+      height: 700,
+      allowMultiple: false,
+    });
+  }
+
+  
+
+
+      static async openCadastrarAbastecimento(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar_abastecimento',
+      title: 'Cadastrar Abastecimento',
+      url: '/#/cadastrar_abastecimento',
+         width: 1400, // Tela maior para a tabela complexa
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
 
  static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
         return this.openWindow({
@@ -600,4 +675,28 @@ export class WindowManager {
             allowMultiple: true, // Permite abrir múltiplos cadastros
         });
     }
+
+   static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
+    // A API do Tauri para criar uma nova janela
+    const webview = new WebviewWindow('rel-tecnica-etapa', {
+      url: '/#/rel-tecnica-etapa', // A rota do React que a nova janela deve carregar
+      title: 'Gerenciar Técnicas e Etapas',
+      width: 1400,
+      height: 900,
+      minWidth: 900,
+      minHeight: 600,
+    });
+
+    // Essas duas linhas são importantes para garantir que a janela seja criada corretamente
+    webview.once('tauri://created', function () {
+      // A janela foi criada com sucesso
+    });
+    webview.once('tauri://error', function (e) {
+      // Ocorreu um erro ao criar a janela
+      console.error(e);
+    });
+
+    return webview;
+  }
+
 }

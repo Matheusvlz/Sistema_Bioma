@@ -11,3 +11,4 @@ pub mod chat;
 pub mod download_controller;
 pub mod qualidade;
 pub mod laboratorio;
+pub mod frota;

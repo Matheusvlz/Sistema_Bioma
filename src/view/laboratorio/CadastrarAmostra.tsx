@@ -396,7 +396,7 @@ const getCurrentTime = (): string => {
   const [legislacoes, setLegislacoes] = useState<Categoria[]>([]);
   const [identificacoes, setIdentificacoes] = useState<Identificacao[]>([]);
   const [terceirizados, setTerceirizados] = useState<Categoria[]>([]);
-
+  const [searchTerm, setSearchTerm] = useState('');
    const [pgs, setPg] = useState<Categoria[]>([]);
   const [relatorios, setRelatorios] = useState<Categoria[]>([]);
   const [consultores, setConsultores] = useState<Categoria[]>([]);

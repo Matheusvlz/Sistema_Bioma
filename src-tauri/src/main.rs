@@ -157,6 +157,29 @@ use controller::geral::pacote_controller::{
     deletar_pacote_tauri
 };
 
+use crate::controller::geral::etapa_controller::{
+    listar_etapas,
+    cadastrar_etapa,
+    editar_etapa,
+    deletar_etapa,
+};
+use crate::controller::geral::tecnica_etapa_controller::{
+    listar_etapas_por_tecnica,
+    relacionar_etapas_a_tecnica,
+    remover_tecnica_etapa,
+    reordenar_etapas_da_tecnica,
+};
+
+use crate::controller::geral::calculo_controller::{
+    self, 
+    validar_formula, 
+    testar_formula, 
+    salvar_calculo, 
+    listar_calculos, 
+    buscar_calculo_por_id, 
+    editar_calculo, 
+    deletar_calculo
+}; 
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -206,8 +229,13 @@ use controller::chat::chat_controller::{
     get_chat_messages, create_direct_chat, send_file_message
 };
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
-
+use controller::frota::frota_controller::{buscar_agendamentos_hoje};
+use controller::frota::motoristas_controller::{buscar_motoristas, criar_motorista, atualizar_motorista, deletar_motorista};
+use controller::frota::veiculo_controller::{buscar_marcas, deletar_veiculo, atualizar_veiculo, criar_veiculo, buscar_veiculos_e_marcas};
+use controller::frota::posto_controller::{buscar_postos, criar_posto, atualizar_posto, deletar_posto};
+use controller::frota::viagem_controller::{criar_frota_viagem, buscar_viagens, deletar_frota_viagem, atualizar_frota_viagem};
 // --- Importações do Sistema ---
+use controller::frota::abastecimento_controller::{deletar_frota_abastecimento, criar_frota_abastecimento, atualizar_frota_abastecimento, buscar_abastecimento, buscar_abastecimento_filtrado};
 use std::env;
 use crate::config::get_ws_url;
 
@@ -349,7 +377,14 @@ fn main() {
             deletar_parametro_pop,
             listar_parametros_pops_por_grupo,
             atualizar_lq_incerteza_tauri,
-            
+            listar_etapas,
+            cadastrar_etapa,
+            editar_etapa,
+            deletar_etapa,
+            listar_etapas_por_tecnica,
+            relacionar_etapas_a_tecnica,
+            remover_tecnica_etapa,
+            reordenar_etapas_da_tecnica,
             
             listar_legislacao_parametro_tauri,
             cadastrar_legislacao_parametro_tauri,
@@ -362,6 +397,14 @@ fn main() {
             criar_pacote_tauri,
             editar_pacote_tauri,
             deletar_pacote_tauri, 
+
+            validar_formula,
+            testar_formula,
+            salvar_calculo,
+            listar_calculos,
+            buscar_calculo_por_id,
+            editar_calculo,
+            deletar_calculo,
             
             // Comandos de Laboratório
             buscar_checagem, 
@@ -437,7 +480,32 @@ fn main() {
             create_direct_chat,
             send_file_message,
             download_file_to_downloads,
-            download_file_bytes
+            download_file_bytes,
+            buscar_agendamentos_hoje,
+            buscar_motoristas,
+            criar_motorista,
+            atualizar_motorista,
+            deletar_motorista,
+            buscar_marcas,
+            deletar_veiculo,
+            atualizar_veiculo,
+            criar_veiculo,
+            buscar_veiculos_e_marcas,
+            deletar_posto,
+            atualizar_posto,
+            criar_posto,
+            buscar_postos,
+            criar_frota_viagem,
+            buscar_viagens,
+            atualizar_frota_viagem,
+            deletar_frota_viagem,
+            deletar_frota_abastecimento,
+            atualizar_frota_abastecimento,
+            criar_frota_abastecimento,
+            buscar_abastecimento,
+            buscar_abastecimento_filtrado
+
+
         ])
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");

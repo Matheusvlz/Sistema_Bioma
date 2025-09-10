@@ -31,4 +31,6 @@ pub mod parametro_pop;
 pub mod legislacao_parametro;
 pub mod dropdown_options;
 pub mod pacote;
-
+pub mod etapa;
+pub mod tecnica_etapa;
+pub mod calculo;

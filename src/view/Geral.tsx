@@ -372,7 +372,9 @@ export const Geral: React.FC = () => {
         case 'cadastrar-laboratorio-terceirizado':
           await WindowManager.openCadastrarLabTerceirizado();
           break;
-
+        case 'rel-tecnica-etapa':
+          await WindowManager.openGerenciarTecnicaEtapa();
+          break;
 
 
         

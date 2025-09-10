@@ -1,0 +1,423 @@
+/* Viagem.module.css */
+:root {
+  --primary-green: #10B981;
+  --primary-green-hover: #059669;
+  --light-green: #ECFDF5;
+  --medium-green: #A7F3D0;
+  --white: #FFFFFF;
+  --dark-text: #1F2937;
+  --light-gray: #F3F4F6;
+  --gray-border: #E5E7EB;
+  --box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --box-shadow-green: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
+}
+
+.wrapper {
+  background: linear-gradient(135deg, var(--light-green) 0%, #D1FAE5 100%);
+  /* Altera para ocupar 100% da altura da viewport */
+  height: 100vh;
+  padding: 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--white);
+  border-radius: 16px;
+  box-shadow: var(--box-shadow);
+  width: 100%;
+  max-width: 800px;
+  /* Altera para ocupar 100% da altura do wrapper menos o padding */
+  height: calc(100vh - 2rem); /* 1rem de padding em cima e 1rem embaixo */
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--dark-text);
+}
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem 1rem;
+  background: linear-gradient(90deg, var(--primary-green) 0%, #34D399 100%);
+  color: var(--white);
+}
+
+.headerDetail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 60px 60px 0;
+  border-color: transparent #047857 transparent transparent;
+}
+
+.headerIcon {
+  color: var(--white);
+}
+
+.title {
+  color: var(--white);
+  font-weight: 700;
+  font-size: 1.875rem;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.scrollContainer {
+  /* Altera para usar 100% do espaço restante no container */
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem;
+}
+
+.scrollContainer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollContainer::-webkit-scrollbar-track {
+  background: var(--light-gray);
+  border-radius: 4px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb {
+  background: var(--primary-green);
+  border-radius: 4px;
+}
+
+.scrollContainer::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green-hover);
+}
+
+.form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+.card {
+  background-color: var(--white);
+  border-radius: 12px;
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+  border-left: 4px solid var(--primary-green);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: var(--light-green);
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cardHeader:hover {
+  background-color: var(--medium-green);
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--dark-text);
+}
+
+.cardContent {
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+}
+
+.expanded {
+  max-height: 500px;
+  padding: 1.5rem;
+}
+
+.collapsed {
+  max-height: 0;
+  padding: 0 1.5rem;
+}
+
+.headerFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.dateTimeField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dateInputGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  color: var(--dark-text);
+}
+
+.inputWithIcon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--dark-text);
+  background-color: var(--white);
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9CA3AF;
+}
+
+.greenHighlight {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: var(--primary-green);
+  transition: width 0.3s ease;
+}
+
+.input:focus + .greenHighlight {
+  width: 100%;
+}
+
+.textAreaContainer {
+  position: relative;
+}
+
+.textArea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--dark-text);
+  background-color: var(--white);
+  transition: all 0.2s ease;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.textArea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.textArea:focus + .greenHighlight {
+  width: 100%;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.selectGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.selectWrapper {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.selectContainer {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.select {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--dark-text);
+  background-color: var(--white);
+  appearance: none;
+  transition: all 0.2s ease;
+}
+
+.select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+.select:focus + .greenHighlight {
+  width: 100%;
+}
+
+.selectIcon {
+  position: absolute;
+  left: 0.75rem;
+  color: #9CA3AF;
+  z-index: 1;
+}
+
+.selectButtons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 8px;
+  background-color: var(--white);
+  color: var(--dark-text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.iconButton:hover {
+  background-color: var(--light-green);
+  color: var(--primary-green);
+}
+
+.inputGroup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.submitButton {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(90deg, var(--primary-green) 0%, #34D399 100%);
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: var(--box-shadow-green);
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.submitButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.buttonIcon {
+  transition: transform 0.2s ease;
+}
+
+.submitButton:hover .buttonIcon {
+  transform: translateX(3px);
+}
+
+.buttonDetail {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 20px 20px 0;
+  border-color: transparent #047857 transparent transparent;
+}
+
+.footer {
+  position: relative;
+  padding: 1rem 1.5rem;
+  background-color: var(--light-green);
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--dark-text);
+}
+
+.footerDetail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary-green) 0%, #34D399 100%);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .wrapper {
+    padding: 0.5rem;
+  }
+  
+  .headerFields {
+    grid-template-columns: 1fr;
+  }
+  
+  .row {
+    grid-template-columns: 1fr;
+  }
+  
+  .inputGroup {
+    grid-template-columns: 1fr;
+  }
+  
+  .dateInputGroup {
+    grid-template-columns: 1fr;
+  }
+  
+  .scrollContainer {
+    max-height: 65vh;
+  }
+}
+

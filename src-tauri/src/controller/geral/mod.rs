@@ -22,3 +22,6 @@ pub mod sub_matriz_controller;
 pub mod parametro_pop_controller;
 pub mod legislacao_parametro_controller;
 pub mod pacote_controller;
+pub mod etapa_controller;
+pub mod tecnica_etapa_controller;
+pub mod calculo_controller;
