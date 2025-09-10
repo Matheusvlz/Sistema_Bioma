@@ -506,6 +506,16 @@ switch(itemName)
   case "Visualizar abastecimento":
       WindowManager.openVisualizarAbastecimento();
   break;
+  case "Cadastrar manutenção":
+    WindowManager.openCadastrarManutencao();
+    break;
+
+   case "Visualizar manutenção":
+    WindowManager.openVisualizarManutencao();
+    break;
+  case "Localização em Tempo Real":
+    WindowManager.openLocalizacao();
+    break;
 
   default: 
 

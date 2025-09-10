@@ -620,19 +620,52 @@ export class WindowManager {
     });
   }
 
+static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'rel-legislacao-parametro',
+      title: 'Gerir Legislação x Parâmetro',
+      url: '/#/rel-legislacao-parametro',
+      // Combinando as duas versões: tamanho maior + centralizado
+      width: 1400,
+      height: 900,
+      center: true,
+      allowMultiple: false,
+    });
+  }
 
- static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
-        return this.openWindow({
-            label: 'rel-legislacao-parametro',
-            title: 'Gerir Legislação x Parâmetro',
-            url: '/#/rel-legislacao-parametro',
-            // ✅ CORREÇÃO: Tamanho mais adequado e centralizado.
-            width: 1280,
-            height: 800,
-            center: true, // Garante que a janela abre no centro
-            allowMultiple: false,
-        });
-    }
+  // Mantendo as novas funções que seu amigo criou
+  static async openCadastrarManutencao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-manutencao',
+      title: 'Cadastrar Manutenção',
+      url: '/#/cadastrar-manutencao',
+      width: 1000,
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+  static async openVisualizarManutencao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-manutencao',
+      title: 'Visualizar Manutenção',
+      url: '/#/visualizar-manutencao',
+      width: 1200,
+      height: 900,
+      allowMultiple: false,
+    });
+  }
+
+  static async openLocalizacao(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'localizacao-temporeal',
+      title: 'Localização em Tempo Real',
+      url: '/#/localizacao-temporeal',
+      width: 1200,
+      height: 900,
+      allowMultiple: false,
+    });
+  }
 
     // Gerir LQ e Incerteza
     static async openGerenciarLqIncerteza(): Promise<WebviewWindow> {

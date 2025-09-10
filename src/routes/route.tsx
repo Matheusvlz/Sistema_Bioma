@@ -51,10 +51,13 @@ import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
 import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
 import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
 import GerenciarTecnicaEtapa from '../view/geral/GerenciarTecnicaEtapa';
+import { VisualizarPacotes } from '../view/geral/VisualizarPacotes';
+import { CadastrarPacote } from '../view/geral/CadastrarPacote';
 
-import { VisualizarPacotes } from '../view/geral/VisualizarPacotes'; // ✅ NOVO
-import { CadastrarPacote } from '../view/geral/CadastrarPacote'; 
-
+// Imports que seu amigo adicionou
+import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
+import Visualizar_Manutencao from '../view/frota/Visualizar_Manutencao';
+import LocalizacaoTempoReal from '../view/frota/Localizacao_Tempo_Real';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -135,7 +138,13 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'cadastrar_abastecimento': {component: <Cadatrar_Abastecimento />, hasLayout: false},
 
-  'visualizar-abastecimento': {component: <VisualizarAbastecimentos />, hasLayout: false}
+  'visualizar-abastecimento': {component: <VisualizarAbastecimentos />, hasLayout: false},
+  
+  'cadastrar-manutencao': {component: <Cadastrar_Manutencao />, hasLayout: false},
+
+  'visualizar-manutencao': {component: <Visualizar_Manutencao />, hasLayout: false},
+  
+  'localizacao-temporeal': {component: <LocalizacaoTempoReal />, hasLayout: false}
 
 
 };

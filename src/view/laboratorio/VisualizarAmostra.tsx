@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Search, Filter, Calendar, MapPin, FileText, User, Hash, Beaker, RotateCcw, Printer, Download, Eye, Loader, AlertCircle, Edit, ExternalLink, ChevronLeft, ChevronRight, Mail, MoreHorizontal, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import './styles/VisualizarStyle.css';
@@ -48,13 +48,13 @@ interface ClienteResponse {
   message?: string;
   total?: number;
 }
-
+/*
 interface DadosClienteResponse {
   solicitantes: any[];
   orcamentos: any[];
   setor_portal: any[];
 }
-
+*/
 // Interface dos filtros do frontend
 interface Filters {
   cliente: string;
@@ -132,14 +132,14 @@ export const VisualizarAmostra = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [selectedClient, setSelectedClient] = useState<string>('');
-  const [selectedClienteObj, setSelectedClienteObj] = useState<Cliente | null>(null);
+  //const [selectedClienteObj, setSelectedClienteObj] = useState<Cliente | null>(null);
   const [searchResults, setSearchResults] = useState<Cliente[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isSearching, setIsSearching] = useState<boolean>(false);
-  const [solicitantes, setSolicitantes] = useState<any[]>([]);
-  const [orcamentos, setOrcamentos] = useState<any[]>([]);
-  const [setores, setSetores] = useState<any[]>([]);
-  const [anoFiltro, setAnoFiltro] = useState<string>('');
+ // const [solicitantes, setSolicitantes] = useState<any[]>([]);
+ // const [orcamentos, setOrcamentos] = useState<any[]>([]);
+ // const [setores, setSetores] = useState<any[]>([]);
+ // const [anoFiltro, setAnoFiltro] = useState<string>('');
 
   // Refs para controle do dropdown
   const searchRef = useRef<HTMLDivElement>(null);
@@ -340,7 +340,7 @@ export const VisualizarAmostra = () => {
   // Handler para seleção de cliente
   const handleClienteSelect = async (cliente: Cliente) => {
     try {
-      setSelectedClienteObj(cliente);
+      //setSelectedClienteObj(cliente);
       setSelectedClient(cliente.fantasia || cliente.razao || '');
       setShowDropdown(false);
       setSearchResults([]);
@@ -351,30 +351,30 @@ export const VisualizarAmostra = () => {
         cliente: cliente.fantasia || cliente.razao || ''
       }));
 
-      const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
-        clienteId: cliente.id,
-      });
+     // const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
+      //  clienteId: cliente.id,
+      //});
 
-      setSolicitantes(dadosCliente.solicitantes);
-      setOrcamentos(dadosCliente.orcamentos);
-      setSetores(dadosCliente.setor_portal);
+    //  setSolicitantes(dadosCliente.solicitantes);
+    //  setOrcamentos(dadosCliente.orcamentos);
+//setSetores(dadosCliente.setor_portal);
 
       // Limpar seleções anteriores
       handleClearSolicitanteSearch();
-      setAnoFiltro('');
+     // setAnoFiltro('');
 
     } catch (error) {
       console.error('Erro ao buscar dados do cliente:', error);
-      setSolicitantes([]);
-      setOrcamentos([]);
-      setSetores([]);
+    //  setSolicitantes([]);
+    //  setOrcamentos([]);
+    //  setSetores([]);
     }
   };
 
   // Handler para limpar busca de cliente
   const handleClearSearch = () => {
     setSelectedClient('');
-    setSelectedClienteObj(null);
+   // setSelectedClienteObj(null);
     setShowDropdown(false);
     setSearchResults([]);
     setFilters(prev => ({

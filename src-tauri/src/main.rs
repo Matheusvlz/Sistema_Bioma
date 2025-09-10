@@ -235,6 +235,7 @@ use controller::frota::veiculo_controller::{buscar_marcas, deletar_veiculo, atua
 use controller::frota::posto_controller::{buscar_postos, criar_posto, atualizar_posto, deletar_posto};
 use controller::frota::viagem_controller::{criar_frota_viagem, buscar_viagens, deletar_frota_viagem, atualizar_frota_viagem};
 // --- Importações do Sistema ---
+use controller::frota::manutencao_controller::{deletar_tipo_manutencao, buscar_tipos_manutencao, atualizar_frota_manutencao, buscar_manutencoes, criar_frota_manutencao, criar_tipo_manutencao, deletar_frota_manutencao};
 use controller::frota::abastecimento_controller::{deletar_frota_abastecimento, criar_frota_abastecimento, atualizar_frota_abastecimento, buscar_abastecimento, buscar_abastecimento_filtrado};
 use std::env;
 use crate::config::get_ws_url;
@@ -503,8 +504,14 @@ fn main() {
             atualizar_frota_abastecimento,
             criar_frota_abastecimento,
             buscar_abastecimento,
-            buscar_abastecimento_filtrado
-
+            buscar_abastecimento_filtrado,
+            deletar_tipo_manutencao, 
+            buscar_tipos_manutencao, 
+            atualizar_frota_manutencao, 
+            buscar_manutencoes,
+            criar_frota_manutencao,
+            criar_tipo_manutencao,
+            deletar_frota_manutencao
 
         ])
         .run(tauri::generate_context!())

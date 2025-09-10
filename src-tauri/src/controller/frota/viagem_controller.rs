@@ -247,7 +247,6 @@ pub async fn atualizar_frota_viagem(app_handle: AppHandle, id: u32, payload: Upd
     }
 }
 
-/// ## Comando para DELETAR uma viagem (DELETE)
 #[command]
 pub async fn deletar_frota_viagem(app_handle: AppHandle, id: u32) -> Result<String, String> {
     println!("Recebido comando deletar_frota_viagem para o ID: {}", id);

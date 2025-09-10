@@ -4,3 +4,4 @@ pub mod veiculo_controller;
 pub mod posto_controller;
 pub mod viagem_controller;
 pub mod abastecimento_controller;
+pub mod manutencao_controller;
