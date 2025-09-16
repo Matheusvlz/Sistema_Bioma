@@ -35,3 +35,4 @@ pub mod etapa;
 pub mod tecnica_etapa;
 pub mod calculo;
 pub mod analise;
+pub mod usuario_admin;

@@ -25,7 +25,7 @@ import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoPar
 import CalculoIDE from '../view/geral/CalculoIDE';
 
 import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
-
+import { CadastrarUsuario }  from '../view/administracao/CadastrarUsuarios';
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
 import VisualizarTipos from '../view/geral/VisualizarTipos';
@@ -157,7 +157,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   // Administração
   'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
-
+  'cadastrar-usuarios-admin': { component: <CadastrarUsuario />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

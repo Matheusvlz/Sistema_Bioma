@@ -224,6 +224,27 @@ use controller::qualidade::tauri_print_commands_controller::{
 };
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 
+
+
+
+
+
+
+
+
+
+
+
+// Admin
+
+use controller::admin::usuario_controller::{
+    listar_usuarios_admin_command,
+    buscar_usuario_admin_command,
+    criar_usuario_admin_command,
+    atualizar_usuario_admin_command,
+    atualizar_status_usuario_admin_command
+};
+
 // Módulos de Componentes e Outros
 use controller::components::search_controller::{
     buscar_clientes_dropdown, buscar_clientes_filtros, buscar_usuarios_dropdown
@@ -474,6 +495,13 @@ fn main() {
             decode_base64_to_json,
             update_template,
             get_template_by_id,
+
+            // Comandos do Módulo de Administração de Usuários
+            listar_usuarios_admin_command,
+            buscar_usuario_admin_command,
+            criar_usuario_admin_command,
+            atualizar_usuario_admin_command,
+            atualizar_status_usuario_admin_command,
 
             // Comandos de Componentes e Outros
             buscar_clientes_dropdown,

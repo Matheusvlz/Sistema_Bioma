@@ -363,7 +363,11 @@ export const Administracao = memo(() => {
             case 'Relatorio Coletores':
             WindowManager.openAnalisarColetores();
             break;
-                
+
+            case 'Cadastrar Usuário': // Ou o nome exato que você usou no menu
+            WindowManager.openCadastrarUsuarioAdmin();
+            break;
+
   
             // Adicione outros casos aqui...
             default: 

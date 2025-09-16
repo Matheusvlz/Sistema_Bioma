@@ -54,7 +54,7 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="login-form">
             <div className="form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="email">Usuario</label>
               <div className="input-wrapper">
                 <svg className="input-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -65,7 +65,7 @@ const Login = () => {
                   type="text"
                   value={usuario}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu@email.com"
+                  placeholder="digite seu usuario"
                   required
                   autoComplete="off"
                 />
@@ -135,7 +135,7 @@ const Login = () => {
           </form>
 
           <div className="login-footer">
-            <p>Não tem uma conta? <a href="#" className="signup-link">Criar conta</a></p>
+           
           </div>
         </div>
 

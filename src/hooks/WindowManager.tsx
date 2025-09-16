@@ -721,6 +721,23 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
     });
   }
 
+
+
+
+
+
+
+static async openCadastrarUsuarioAdmin(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'cadastrar-usuario-admin',
+    title: 'Cadastrar Novo Usuário',
+    url: '/#/cadastrar-usuarios-admin', // <-- Ponto CRÍTICO a ser verificado
+    width: 550,
+    height: 750,
+    allowMultiple: false,
+  });
+}
+
    static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
     // A API do Tauri para criar uma nova janela
     const webview = new WebviewWindow('rel-tecnica-etapa', {
