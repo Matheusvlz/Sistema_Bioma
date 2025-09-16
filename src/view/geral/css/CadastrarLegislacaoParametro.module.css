@@ -471,3 +471,207 @@
         font-size: 14px;
     }
 }
+
+.limiteRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.limiteRow .input {
+    flex: 1;
+}
+
+.limiteRow .select {
+    flex: 0 0 100px; /* Largura ajustada para o seletor de símbolo */
+}
+
+/* Estilos para o Modal de Feedback */
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modalContent {
+    background-color: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    border-top: 8px solid;
+}
+
+.successModal {
+    border-color: #22c55e;
+}
+
+.errorModal {
+    border-color: #ef4444;
+}
+
+.modalContent h3 {
+    margin-top: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.modalContent p {
+    font-size: 16px;
+    color: #4b5563;
+    margin: 16px 0;
+}
+
+.modalButton {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.errorModal .modalButton {
+    background: #ef4444;
+}
+
+/* Em src/view/geral/css/CadastrarLegislacaoParametro.module.css */
+
+/* ✅ CORREÇÃO: Ajustado para controlar a altura e o scroll */
+.container {
+    padding: 32px;
+    background-color: #f8fffe;
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Define a altura total da janela */
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #1f2937;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-sizing: border-box; /* Garante que o padding não estoure a tela */
+}
+
+.header {
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 3px solid #21af56;
+    flex-shrink: 0; /* Impede que o cabeçalho encolha */
+}
+
+/* ... (o resto das suas classes h2, etc., continuam iguais) ... */
+
+/* ✅ CORREÇÃO: Adicionamos overflow-y para criar a barra de rolagem */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    flex-grow: 1;
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    border: 2px solid #f0fdf4;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    overflow-y: auto; /* A MÁGICA ACONTECE AQUI */
+    min-height: 0; /* Necessário para o scroll em layout flex */
+}
+
+/* ... (o resto do seu CSS permanece o mesmo) ... */
+
+/* Adicione estas classes ao seu ficheiro .css, de preferência no final */
+
+.limiteRow {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.limiteRow .input {
+    flex: 1;
+}
+
+.limiteRow .select {
+    flex: 0 0 100px;
+}
+
+.sugestoesLista {
+    /* ... (seus estilos existentes) ... */
+    max-height: 220px; /* Limita a altura para aprox. 7 itens */
+    overflow-y: auto;  /* Adiciona a barra de rolagem vertical */
+}
+
+/* Estilos para o Modal de Feedback */
+.modalBackdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.modalContent {
+    background-color: white;
+    padding: 32px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    border-top: 8px solid;
+}
+
+.successModal {
+    border-color: #22c55e;
+}
+
+.errorModal {
+    border-color: #ef4444;
+}
+
+.modalContent h3 {
+    margin-top: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.modalContent p {
+    font-size: 16px;
+    color: #4b5563;
+    margin: 16px 0;
+}
+
+.modalButton {
+    background: #22c55e;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    width: 100%;
+    margin-top: 16px;
+}
+
+.errorModal .modalButton {
+    background: #ef4444;
+}

@@ -97,7 +97,7 @@ const Visualizar_Manutencao: React.FC = () => {
   });
 
   // Função para calcular status baseado nas datas
-  const calcularStatus = (dataAgendada: string, dataRealizada?: string, proximaManutencao?: string): string => {
+  const calcularStatus = (dataAgendada: string, dataRealizada?: string, _proximaManutencao?: string): string => {
     try {
       const hoje = new Date();
       const agendada = new Date(dataAgendada);

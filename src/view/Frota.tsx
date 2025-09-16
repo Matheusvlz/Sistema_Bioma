@@ -1,30 +1,26 @@
 import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import { 
-  Truck, 
-  Calendar, 
-  User, 
-  MapPin, 
-  Plus, 
-  Eye, 
-  Settings, 
-  Wrench, 
-  Fuel, 
-  Shield, 
-  FileText, 
-  Clock, 
-  Route, 
-  Users, 
-  AlertTriangle, 
-  CheckCircle, 
-  Search, 
-  Filter, 
-  X, 
-  TrendingUp,
-  BarChart3,
-  Car,
-  Navigation,
-  UserCheck,
-  Gauge
+ Truck, 
+ Calendar, 
+ MapPin, 
+ Plus, 
+ Eye, 
+ Wrench, 
+ Fuel, 
+ Shield, 
+ FileText, 
+ Clock, 
+ Route, 
+ AlertTriangle, 
+ Search, 
+ Filter, 
+ X, 
+ TrendingUp,
+ BarChart3,
+ Car,
+ Navigation,
+ UserCheck,
+Gauge
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 // Componente de Card otimizado com memo
@@ -290,36 +286,27 @@ export const Frota: React.FC = memo(() => {
   const [agendamentos, setAgendamentos] = useState<AgendamentoDia[]>([]);
   
   // Estado para controlar o carregamento dos dados
-  const [loading, setLoading] = useState<boolean>(true);
-  
-  // Estado para armazenar mensagens de erro
-  const [error, setError] = useState<string | null>(null);
+
 
   // useEffect para buscar os dados quando o componente for montado
   useEffect(() => {
     // Definimos uma função assíncrona dentro do useEffect
     const buscarDados = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+        // A linha setLoading(true); foi removida
+        // A linha setError(null); foi removida
 
-        // Chama o comando do backend Rust 'buscar_agendamentos_hoje'
-        // A função invoke retorna uma Promise que resolve com o valor de `Ok`
-        // ou é rejeitada com o valor de `Err` do Result do Rust.
         const resultado = await invoke<AgendamentoDia[]>('buscar_agendamentos_hoje');
         
-        // Atualiza o estado com os dados recebidos
         setAgendamentos(resultado);
 
-      } catch (err) {
-        // Se a Promise for rejeitada, o erro (a String do Rust) é capturado aqui
+    } catch (err) {
         console.error("Erro ao buscar agendamentos:", err);
-        setError(err as string);
-      } finally {
-        // Garante que o estado de loading seja desativado ao final
-        setLoading(false);
-      }
-    };
+        // A linha setError(err as string); foi removida
+    } finally {
+        // A linha setLoading(false); foi removida
+    }
+};
 
     // Chama a função para buscar os dados
     buscarDados();

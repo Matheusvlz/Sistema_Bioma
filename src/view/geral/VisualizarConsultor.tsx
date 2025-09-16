@@ -4,7 +4,7 @@ import CadastrarConsultor from './CadastrarConsultor';
 import styles from './css/VisualizarConsultor.module.css';
 
 interface Consultor {
-  id?: string;
+  id?: number;
   nome: string;
   documento?: string;
   telefone?: string;
@@ -88,7 +88,7 @@ const VisualizarConsultor: React.FC = () => {
     }
   };
 
-  const handleSalvarEdicao = (consultor: Consultor) => {
+  const handleSalvarEdicao = (_consultor: Consultor) => {
     setMessage({ text: 'Consultor editado com sucesso!', type: 'success' });
     setConsultorEdicao(null);
     setMostrarFormulario(false);

@@ -127,11 +127,11 @@ const CadastrarParametroPop: React.FC<CadastrarParametroPopProps> = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [resParametros, resPops, resMetodologias]: [ApiResponse<Parametro[]>, ApiResponse<Pop[]>, ApiResponse<Metodologia[]>] = await Promise.all([
-          invoke('listar_parametros'),
-          invoke('listar_pops'),
-          invoke('listar_metodologias')
-        ]);
+        const [resParametros, resPops, resMetodologias] = await Promise.all([
+        invoke<ApiResponse<Parametro[]>>('listar_parametros'),
+        invoke<ApiResponse<Pop[]>>('listar_pops'),
+        invoke<ApiResponse<Metodologia[]>>('listar_metodologias')
+]);
         if (resParametros.success && resParametros.data) setParametros(resParametros.data);
         if (resPops.success && resPops.data) setPops(resPops.data);
         if (resMetodologias.success && resMetodologias.data) setMetodologias(resMetodologias.data);

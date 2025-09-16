@@ -51,7 +51,6 @@ function CustomSelect<T extends Record<string, any>>({
 }: CustomSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [displayValue, setDisplayValue] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Filtrar opções baseado na busca
@@ -68,12 +67,10 @@ function CustomSelect<T extends Record<string, any>>({
       const selectedOption = options.find(option => 
         String(valueKey ? option[valueKey] : option[displayKey]) === value
       );
-      if (selectedOption) {
-        setDisplayValue(String(selectedOption[displayKey]));
+       if (selectedOption) {
         setSearchQuery(String(selectedOption[displayKey]));
       }
     } else {
-      setDisplayValue('');
       setSearchQuery('');
     }
   }, [value, options, displayKey, valueKey]);
@@ -111,7 +108,6 @@ function CustomSelect<T extends Record<string, any>>({
     onChange(selectedValue, option);
     setIsOpen(false);
     setSearchQuery(String(option[displayKey]));
-    setDisplayValue(String(option[displayKey]));
   };
 
   const handleInputFocus = () => {
@@ -372,7 +368,6 @@ const getCurrentTime = (): string => {
   const [startDate, setStartDate] = useState(getCurrentDate());
   const [collectDate, setCollectDate] = useState(getCurrentDate());
   const [labEntryDate, setLabEntryDate] = useState(getCurrentDate());
-   const [selectedIdentificacao, setSelectedIdentificacao] = useState('');
   const [collector, setCollector] = useState('Cliente');
   const [collectorName, setCollectorName] = useState('');
   const [samplingProcedure, setSamplingProcedure] = useState('');
@@ -385,7 +380,6 @@ const getCurrentTime = (): string => {
   const [flowUnit, setFlowUnit] = useState('m³/hora');
   const [vazaoClient, setVazaoClient] = useState(false);
   const [emailSolicitante, setEmailSolicitante] = useState('');
-  const [methodologies, setMethodologies] = useState('');
   const [searchResults, setSearchResults] = useState<Cliente[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -396,7 +390,6 @@ const getCurrentTime = (): string => {
   const [legislacoes, setLegislacoes] = useState<Categoria[]>([]);
   const [identificacoes, setIdentificacoes] = useState<Identificacao[]>([]);
   const [terceirizados, setTerceirizados] = useState<Categoria[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
    const [pgs, setPg] = useState<Categoria[]>([]);
   const [relatorios, setRelatorios] = useState<Categoria[]>([]);
   const [consultores, setConsultores] = useState<Categoria[]>([]);
@@ -439,10 +432,6 @@ const [areaAmostradaValue, setAreaAmostradaValue] = useState('');
   const [metodologiaSearchQuery, setMetodologiaSearchQuery] = useState('');
   const [selectedAvailable, setSelectedAvailable] = useState<number[]>([]);
   const [selectedChosen, setSelectedChosen] = useState<number[]>([]);
-  const [showSetoresDropdown, setShowSetoresDropdown] = useState(false);
-  const [selectedSetores, setSelectedSetores] = useState<Categoria[]>([]);
-  const [setorSearchQuery, setSetorSearchQuery] = useState('');
-  const setorRef = useRef<HTMLDivElement>(null);
   // Add these to your component's state declarations
   const [startTime, setStartTime] = useState(getCurrentTime());
   const [collectTime, setCollectTime] = useState(getCurrentTime());
@@ -612,34 +601,13 @@ const [remessaCliente, setRemessaCliente] = useState('');
     setSelectedMethodologies(prev => prev.filter(m => m.id !== id));
   };
 
-    const handleAddSetor = (setor: Categoria) => {
-    setSelectedSetores(prev => {
-      const isAlreadySelected = prev.some(s => s.id === setor.id);
-      if (isAlreadySelected) {
-        // Remove se já estiver selecionado
-        return prev.filter(s => s.id !== setor.id);
-      } else {
-        // Adiciona se não estiver selecionado
-        return [...prev, setor];
-      }
-    });
-  };
+    
 
-  const handleClearAllSetores = () => {
-    setSelectedSetores([]);
-    setSetorSearchQuery('');
-  };
-
+  
   // Filtrar setores baseado na busca
-  const filteredSetores = useMemo(() => {
-    return setores.filter(s => 
-      s.nome.toLowerCase().includes(setorSearchQuery.toLowerCase())
-    );
-  }, [setores, setorSearchQuery]);
 
-  const handleRemoveSetor = (id: number) => {
-    setSelectedSetores(prev => prev.filter(s => s.id !== id));
-  };
+
+
 
 const styles: { [key: string]: React.CSSProperties } = {
     // --- Estrutura Principal ---
@@ -1498,9 +1466,7 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
     }
   };
 
-    const handleIdentificacaoChange = (value: string, identificacao?: Identificacao) => {
-    setSelectedIdentificacao(value);
-  };
+
 
 
 
@@ -2685,7 +2651,7 @@ const handleCadastrar = async () => {
     },
     
     // Amostras com todos os campos
-    amostras: amostras.map((amostra, index) => {
+    amostras: amostras.map((amostra, _index) => {
       const baseAmostra = {
         id: amostra.id, 
         numero: amostra.numero,

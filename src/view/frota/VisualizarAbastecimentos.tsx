@@ -860,12 +860,12 @@ const VisualizarAbastecimentos: React.FC = () => {
                     dataKey="value"
                     labelLine={false}
                   >
-                    {dadosPizza.map((entry, index) => (
+                    {dadosPizza.map((_entry, index) => (
                       <Cell key={`cell-${index}`} fill={cores[index % cores.length]} />
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number, name: string, props: any) => [
+                    formatter={(value: number, _name: string, props: any) => [
                       `R$ ${value}`,
                       'Valor Gasto',
                       `${parseFloat(props.payload.litros).toFixed(2)} L`

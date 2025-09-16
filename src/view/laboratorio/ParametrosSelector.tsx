@@ -35,7 +35,6 @@ interface ParametrosSelectorProps {
 }
 
 export const ParametrosSelector: React.FC<ParametrosSelectorProps> = ({ 
-  parametros,
   disponiveis,
   selecionados,
   checkedDisponiveis,

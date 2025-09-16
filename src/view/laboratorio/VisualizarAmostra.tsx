@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Search, Filter, Calendar, MapPin, FileText, User, Hash, Beaker, RotateCcw, Printer, Download, Eye, Loader, AlertCircle, Edit, ExternalLink, ChevronLeft, ChevronRight, Mail, MoreHorizontal, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, FileText, User, Hash, Beaker, RotateCcw, Printer, Download, Eye, Loader, AlertCircle, Edit, ChevronLeft, ChevronRight, Mail, MoreHorizontal, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import './styles/VisualizarStyle.css';
 

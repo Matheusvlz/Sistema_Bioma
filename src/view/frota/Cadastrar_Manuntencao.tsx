@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styles from './css/cadastrar_manutencao.module.css';
 import { invoke } from "@tauri-apps/api/core";
 import { 
-  Plus, RefreshCw, Calendar, Car, User, Wrench, 
-  DollarSign, FileText, Drill, ChevronDown, Check, 
+  Plus, RefreshCw, Calendar, Car,  Wrench, 
+  FileText, Drill, ChevronDown, Check, 
   Save, X, AlertCircle, Clock, Gauge
 } from 'lucide-react';
 import { WindowManager } from "../../hooks/WindowManager";
@@ -20,18 +20,16 @@ interface TipoManutencao {
   nome: string;
 }
 
-interface NovoTipo {
-  nome: string;
-}
+
 
 const Cadastrar_Manutencao: React.FC = () => {
   const [dataManutencao, setDataManutencao] = useState('');
   const [veiculoSelecionado, setVeiculoSelecionado] = useState<number | ''>('');
   const [tipoManutencaoSelecionado, setTipoManutencaoSelecionado] = useState<number | ''>('');
   const [kmAtual, setKmAtual] = useState<number | ''>('');
-  const [valorTotal, setValorTotal] = useState<number | ''>('');
+ 
   const [descricao, setDescricao] = useState('');
-  const [proximaTroca, setProximaTroca] = useState<number | ''>('');
+
   const [horaManutencao, setHoraManutencao] = useState('');
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [tiposManutencao, setTiposManutencao] = useState<TipoManutencao[]>([]);
@@ -101,16 +99,14 @@ const [horaProximaTroca, setHoraProximaTroca] = useState('');
   }, [success]);
 
   const handleLimparFormulario = () => {
-    setDataManutencao('');
-    setVeiculoSelecionado('');
-    setTipoManutencaoSelecionado('');
-    setKmAtual('');
-    setValorTotal('');
-    setDescricao('');
-    setProximaTroca('');
-    setError(null);
-    setSuccess(null);
-  };
+   setDataManutencao('');
+   setVeiculoSelecionado('');
+   setTipoManutencaoSelecionado('');
+   setKmAtual('');
+   setDescricao('');
+   setError(null);
+   setSuccess(null);
+   };
 
   const handleCadastrarNovoTipo = async () => {
     if (!novoTipoNome.trim()) {
@@ -119,10 +115,10 @@ const [horaProximaTroca, setHoraProximaTroca] = useState('');
     }
 
     try {
-          const novoTipo = await invoke('criar_tipo_manutencao', {
-      payload: { nome: novoTipoNome.trim() } 
-    });
-      setSuccess('Tipo de manutenção adicionado com sucesso!');
+      await invoke('criar_tipo_manutencao', {
+         payload: { nome: novoTipoNome.trim() } 
+        });
+         setSuccess('Tipo de manutenção adicionado com sucesso!');
     } catch (err: any) {
       console.error("Erro ao criar tipo de manutenção:", err);
       setError(`Erro ao criar tipo de manutenção: ${err.toString()}`);

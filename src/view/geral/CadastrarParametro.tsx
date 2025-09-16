@@ -31,9 +31,15 @@ interface CadastrarParametroProps {
 const CadastrarParametro: React.FC<CadastrarParametroProps> = ({
   parametroParaEdicao, onSalvar, onCancelar
 }) => {
-  const [parametro, setParametro] = useState({
-    id: undefined, nome: '', grupo: '', obs: '', em_campo: false,
-  });
+ const [parametro, setParametro] = useState<{
+    id: number | undefined;
+    nome: string;
+    grupo: string;
+    obs: string;
+    em_campo: boolean;
+  }>({
+  id: undefined, nome: '', grupo: '', obs: '', em_campo: false,
+});
   const [grupos, setGrupos] = useState<string[]>([]);
   const [sugestoesGrupo, setSugestoesGrupo] = useState<string[]>([]);
   // NOVO ESTADO: Controla se a lista de sugestões está visível

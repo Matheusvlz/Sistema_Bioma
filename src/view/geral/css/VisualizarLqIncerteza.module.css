@@ -1,0 +1,336 @@
+/* 🎨 CSS Padronizado - VisualizarLqIncerteza.module.css */
+
+.container {
+  padding: clamp(12px, 2.5vw, 32px);
+  background-color: #f8fffe;
+  min-height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  color: #1f2937;
+  max-width: 100%;
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+
+.title {
+  color: #0f172a;
+  font-size: clamp(18px, 2.5vw, 32px);
+  font-weight: 700;
+  margin: 0 0 clamp(16px, 2vw, 24px) 0;
+  letter-spacing: -0.5px;
+  padding-bottom: clamp(12px, 1.5vw, 20px);
+  border-bottom: 3px solid #21af56;
+  flex-shrink: 0;
+}
+
+.editingPanel {
+  background-color: white;
+  padding: clamp(12px, 1.5vw, 20px);
+  border-radius: clamp(8px, 1vw, 16px);
+  border: 2px solid #f0fdf4;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 1.5vw, 20px);
+  margin-bottom: clamp(16px, 2vw, 24px);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.infoField, 
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoField label, 
+.inputGroup label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 8px;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+.infoField span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+  min-height: 22px;
+  padding: 8px 0;
+}
+
+.inputGroup input {
+  padding: 12px 16px;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: white;
+  color: #1f2937;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: #21af56;
+  box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
+}
+
+.inputGroup input::placeholder {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.updateButton {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  letter-spacing: 0.01em;
+  align-self: flex-end;
+}
+
+.updateButton:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.updateButton:active:not(:disabled) {
+  background: #15803d;
+}
+
+.updateButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.updateButton:focus {
+  outline: 3px solid #21af56;
+  outline-offset: 2px;
+}
+
+.tabContainer {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 3px solid #21af56;
+  margin-bottom: clamp(16px, 2vw, 24px);
+  background: white;
+  border-radius: clamp(8px, 1vw, 16px) clamp(8px, 1vw, 16px) 0 0;
+  padding: 0 clamp(12px, 1.5vw, 20px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  flex-shrink: 0;
+}
+
+.tabButton {
+  padding: 16px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -3px;
+  transition: all 0.3s ease;
+  letter-spacing: 0.01em;
+}
+
+.tabButton:hover {
+  color: #1f2937;
+  background-color: #f9fafb;
+}
+
+.activeTab {
+  font-weight: 700;
+  color: #0f172a;
+  border-bottom: 3px solid #21af56;
+  background-color: #f0fdf4;
+}
+
+.tableContainer {
+  flex: 1;
+  min-height: 0;
+  background: white;
+  border-radius: clamp(8px, 1vw, 16px);
+  border: 2px solid #f0fdf4;
+  overflow: auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  position: relative;
+}
+
+.tableContainer::-webkit-scrollbar {
+  width: clamp(6px, 0.5vw, 10px);
+  height: clamp(6px, 0.5vw, 10px);
+}
+
+.tableWrapper::-webkit-scrollbar {
+  width: clamp(6px, 0.5vw, 10px);
+  height: clamp(6px, 0.5vw, 10px);
+}
+
+.tableContainer::-webkit-scrollbar-track,
+.tableWrapper::-webkit-scrollbar-track {
+  background: white;
+}
+
+.tableContainer::-webkit-scrollbar-thumb,
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: #21af56;
+  border-radius: 4px;
+  border: none;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover,
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #1ea34a;
+}
+
+.tableContainer::-webkit-scrollbar-corner,
+.tableWrapper::-webkit-scrollbar-corner {
+  background: white;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  height: 100%;
+}
+
+.tableContainer .table {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.tableWrapper {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-right: 24px;
+}
+
+.table th {
+  background: #21af56;
+  color: white;
+  font-weight: 700;
+  padding: clamp(8px, 1.2vw, 16px) clamp(8px, 1vw, 16px);
+  text-align: left;
+  font-size: clamp(12px, 1vw, 15px);
+  letter-spacing: 0.01em;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  border-bottom: 2px solid #1ea34a;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: clamp(6px, 1vw, 12px) clamp(8px, 1vw, 16px);
+  border-bottom: 1px solid #e5e7eb;
+  font-size: clamp(11px, 0.9vw, 14px);
+  color: #1f2937;
+  vertical-align: middle;
+  font-weight: 500;
+}
+
+.table tbody tr {
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.table tbody tr:hover {
+  background-color: #f0fdf4 !important;
+  transform: translateX(4px);
+  box-shadow: 4px 0 12px rgba(33, 175, 86, 0.15);
+}
+
+.table tbody tr:hover td {
+  color: #0f172a;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.selectedRow {
+  background-color: #dcfce7 !important;
+  border-left: 4px solid #21af56;
+}
+
+.selectedRow td {
+  color: #0f172a !important;
+  font-weight: 600;
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #dc2626;
+  background: white;
+  border-radius: 16px;
+  border: 2px solid #fecaca;
+  margin: 20px 0;
+  box-shadow: 0 8px 25px rgba(220, 38, 38, 0.1);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* Removendo todas as media queries e substituindo por design responsivo fluido */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Ajustes específicos apenas para telas muito pequenas */
+@media (max-width: 480px) {
+  .editingPanel {
+      flex-direction: column;
+      align-items: stretch;
+  }
+  
+  .updateButton {
+      align-self: stretch;
+      margin-top: 8px;
+  }
+  
+  .table th,
+  .table td {
+      min-width: 80px;
+  }
+}
+
+.searchContainer {
+    margin-bottom: 20px;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Garante que o padding não aumente a largura total */
+}

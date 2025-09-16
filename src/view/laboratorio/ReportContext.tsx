@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import _React, { createContext, useState, useContext, ReactNode } from 'react';
 
 // Crie uma interface para o estado do contexto
 interface ReportContextType {
