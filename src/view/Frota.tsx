@@ -2,20 +2,16 @@ import React, { useState, useMemo, useCallback, memo, useEffect } from "react";
 import { 
   Truck, 
   Calendar, 
-  User, 
   MapPin, 
   Plus, 
   Eye, 
-  Settings, 
   Wrench, 
   Fuel, 
   Shield, 
   FileText, 
   Clock, 
   Route, 
-  Users, 
   AlertTriangle, 
-  CheckCircle, 
   Search, 
   Filter, 
   X, 
@@ -290,18 +286,18 @@ export const Frota: React.FC = memo(() => {
   const [agendamentos, setAgendamentos] = useState<AgendamentoDia[]>([]);
   
   // Estado para controlar o carregamento dos dados
-  const [loading, setLoading] = useState<boolean>(true);
+  //const [loading, setLoading] = useState<boolean>(true);
   
   // Estado para armazenar mensagens de erro
-  const [error, setError] = useState<string | null>(null);
+  //const [error, setError] = useState<string | null>(null);
 
   // useEffect para buscar os dados quando o componente for montado
   useEffect(() => {
     // Definimos uma função assíncrona dentro do useEffect
     const buscarDados = async () => {
       try {
-        setLoading(true);
-        setError(null);
+     //   setLoading(true);
+     //   setError(null);
 
         // Chama o comando do backend Rust 'buscar_agendamentos_hoje'
         // A função invoke retorna uma Promise que resolve com o valor de `Ok`
@@ -314,10 +310,10 @@ export const Frota: React.FC = memo(() => {
       } catch (err) {
         // Se a Promise for rejeitada, o erro (a String do Rust) é capturado aqui
         console.error("Erro ao buscar agendamentos:", err);
-        setError(err as string);
+        //setError(err as string);
       } finally {
         // Garante que o estado de loading seja desativado ao final
-        setLoading(false);
+      //  setLoading(false);
       }
     };
 

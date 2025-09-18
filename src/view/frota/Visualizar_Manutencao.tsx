@@ -97,7 +97,7 @@ const Visualizar_Manutencao: React.FC = () => {
   });
 
   // Função para calcular status baseado nas datas
-  const calcularStatus = (dataAgendada: string, dataRealizada?: string, proximaManutencao?: string): string => {
+  const calcularStatus = (dataAgendada: string, dataRealizada?: string): string => {
     try {
       const hoje = new Date();
       const agendada = new Date(dataAgendada);
@@ -221,7 +221,7 @@ const Visualizar_Manutencao: React.FC = () => {
         proximaManutencao: manutencao.proxima ? formatarData(manutencao.proxima) : undefined,
         observacao: manutencao.observacao || 'Nenhuma observação',
         km: manutencao.km ? `${manutencao.km.toLocaleString()} km` : 'Não informado',
-        status: calcularStatus(manutencao.data, manutencao.data_realizada, manutencao.proxima)
+        status: calcularStatus(manutencao.data, manutencao.data_realizada)
       }));
       
       console.log("Manutenções processadas:", manutencoesProcessadas);

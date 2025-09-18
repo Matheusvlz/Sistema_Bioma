@@ -667,6 +667,19 @@ export class WindowManager {
   }
 
 
+       static async openCadastrarColeta(coletaid?: number): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cadastrar-coleta',
+      title: 'Cadastrar Coleta',
+      url: '/#/cadastrar-coleta',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: coletaid
+    });
+  }
+
+
 
   
   

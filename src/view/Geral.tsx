@@ -159,9 +159,23 @@ interface ModalProps {
   modalTitle: string;
   clientesSemCadastro: ClienteSemCadastro[];
   openClienteModal: (cliente: ClienteSemCadastro) => void;
+  // Adicionando props para as coletas
+  coletas: ColetaItem[];
+  isColetaModal: boolean;
 }
 
-const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, content, isAmostraModal, modalTitle, clientesSemCadastro, openClienteModal }) => {
+const Modal: React.FC<ModalProps> = React.memo(({
+  isOpen,
+  onClose,
+  title,
+  content,
+  isAmostraModal,
+  modalTitle,
+  clientesSemCadastro,
+  openClienteModal,
+  coletas,
+  isColetaModal
+}) => {
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     onClose();
@@ -172,19 +186,15 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
   }, []);
 
   const handleItemClick = useCallback((item: string | GroupedAmostra, index?: number) => {
-    if (typeof item === 'string') {
-      if (modalTitle.includes('Clientes não Cadastrados') && index !== undefined) {
-        const cliente = clientesSemCadastro[index];
-        if (cliente) {
-          openClienteModal(cliente);
-          return;
-        }
-      }
-      alert(`Detalhes de: ${item}`);
+    if (isColetaModal && typeof index === 'number' && coletas[index]) {
+      const coleta = coletas[index];
+      WindowManager.openCadastrarColeta(coleta.id);
     } else {
-      alert(`Detalhes das amostras da data: ${item.date}`);
+      // Se não for um modal de coleta, ou o índice for inválido, ele abre sem um ID.
+      // Para coletas, o ID deve ser sempre passado.
+      // WindowManager.openCadastrarColeta(); // Esta linha foi removida para garantir que um ID seja sempre passado para coletas.
     }
-  }, [modalTitle, clientesSemCadastro, openClienteModal]);
+  }, [isColetaModal, coletas]);
 
   if (!isOpen) return null;
 
@@ -207,7 +217,8 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
                     </div>
                   ))}
                 </div>
-                <button className={styles["modal-button"]} onClick={() => handleItemClick(group)}>
+                {/* The button for amostras should have its own logic or be disabled if not intended to open a new window */}
+                <button className={styles["modal-button"]} onClick={() => {}}>
                   Abrir
                 </button>
               </li>
@@ -220,6 +231,7 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
                     <p key={`line-${lineIndex}`} className={styles["modal-item-text"]}>{line}</p>
                   ))}
                 </div>
+                {/* This is the corrected line where the index is passed to handleItemClick */}
                 <button className={styles["modal-button"]} onClick={() => handleItemClick(item, index)}>
                   Abrir
                 </button>
@@ -231,7 +243,6 @@ const Modal: React.FC<ModalProps> = React.memo(({ isOpen, onClose, title, conten
     </div>
   );
 });
-
 Modal.displayName = 'Modal';
 
 interface ClienteModalProps {
@@ -303,6 +314,7 @@ export const Geral: React.FC = () => {
   const [modalTitle, setModalTitle] = useState('');
   const [modalContent, setModalContent] = useState<(string | GroupedAmostra)[]>([]);
   const [isAmostraModal, setIsAmostraModal] = useState(false);
+  const [isColetaModal, setIsColetaModal] = useState(false);
 
   const [isClienteModalOpen, setIsClienteModalOpen] = useState(false);
   const [clienteSelecionado, setClienteSelecionado] = useState<ClienteDetalhes | null>(null);
@@ -391,20 +403,11 @@ export const Geral: React.FC = () => {
         case 'estrutura-parametro':
           await WindowManager.openGerenciarParametros();
           break;
-          case 'estrutura-parametro':
-            await WindowManager.openGerenciarParametros();
-            break;
-        case 'estrutura-pg-coleta':
-          await WindowManager.openGerenciarPGColeta();
-          break;
         case 'estrutura-pg-coleta':
           await WindowManager.openGerenciarPGColeta();
           break;
         case 'estrutura-pop':
           await WindowManager.openGerenciarPops();
-          break;
-        case 'estrutura-tecnica':
-          await WindowManager.openGerenciarTecnicas();
           break;
         case 'estrutura-tecnica':
           await WindowManager.openGerenciarTecnicas();
@@ -454,32 +457,23 @@ export const Geral: React.FC = () => {
     setLoadingStates(prev => ({ ...prev, [key]: value }));
   };
 
-  const carregarDados = () => {
-    carregarClientes();
-    carregarAmostras();
-    carregarColetas();
-    carregarSolicitacoes();
-    carregarPortal();
-  };
-
-  const handleReload = async () => {
+  const carregarDados = async () => {
     setIsReloading(true);
-    try {
-      await Promise.all([
-        carregarClientes(),
-        carregarAmostras(),
-        carregarColetas(),
-        carregarSolicitacoes(),
-        carregarPortal()
-      ]);
-    } catch (error) {
-      console.error('Erro ao recarregar dados:', error);
-    } finally {
-      setIsReloading(false);
-    }
+    await Promise.all([
+      carregarClientesSemCadastro(),
+      carregarAmostras(),
+      carregarColetas(),
+      carregarSolicitacoes(),
+      carregarPortal(),
+    ]);
+    setIsReloading(false);
   };
 
-  const carregarClientes = async () => {
+  const handleReload = () => {
+    carregarDados();
+  };
+
+  const carregarClientesSemCadastro = async () => {
     setLoading('clientes', true);
     try {
       const response: GeralResponse = await core.invoke('buscar_clientes_sem_cadastro');
@@ -549,10 +543,11 @@ export const Geral: React.FC = () => {
     }
   };
 
-  const openModal = useCallback((title: string, content: (string | GroupedAmostra)[], isAmostra: boolean = false) => {
+  const openModal = useCallback((title: string, content: (string | GroupedAmostra)[], isAmostra: boolean = false, isColeta: boolean = false) => {
     setModalTitle(title);
     setModalContent(content);
     setIsAmostraModal(isAmostra);
+    setIsColetaModal(isColeta);
     setIsModalOpen(true);
   }, []);
 
@@ -561,6 +556,7 @@ export const Geral: React.FC = () => {
     setModalTitle('');
     setModalContent([]);
     setIsAmostraModal(false);
+    setIsColetaModal(false);
   }, []);
 
   const openClienteModal = useCallback((cliente: ClienteSemCadastro) => {
@@ -677,6 +673,7 @@ export const Geral: React.FC = () => {
       modalContent: formatarClientes(clientesSemCadastro),
       loading: loadingStates.clientes,
       isAmostra: false,
+      isColeta: false,
     },
     {
       title: `Amostras Pré-Cadastradas ${amostrasPreCadastradas.length > 0 ? `(${amostrasPreCadastradas.length})` : ''}`,
@@ -685,6 +682,7 @@ export const Geral: React.FC = () => {
       modalContent: agruparAmostrasPorData(amostrasPreCadastradas),
       loading: loadingStates.amostras,
       isAmostra: true,
+      isColeta: false,
     },
     {
       title: `Coletas para Cadastrar ${coletas.length > 0 ? `(${coletas.length})` : ''}`,
@@ -693,6 +691,7 @@ export const Geral: React.FC = () => {
       modalContent: formatarColetas(coletas),
       loading: loadingStates.coletas,
       isAmostra: false,
+      isColeta: true, // Marcando como modal de coleta
     },
     {
       title: `Solicitação de Cadastro de Usuários ${solicitacoesUsuarios.length > 0 ? `(${solicitacoesUsuarios.length})` : ''}`,
@@ -701,6 +700,7 @@ export const Geral: React.FC = () => {
       modalContent: formatarSolicitacoes(solicitacoesUsuarios),
       loading: loadingStates.solicitacoes,
       isAmostra: false,
+      isColeta: false,
     },
     {
       title: `Solicitações do Portal ${coletasPortal.length > 0 ? `(${coletasPortal.length})` : ''}`,
@@ -709,8 +709,9 @@ export const Geral: React.FC = () => {
       modalContent: formatarColetasPortal(coletasPortal),
       loading: loadingStates.portal,
       isAmostra: false,
+      isColeta: false,
     },
-  ], [clientesSemCadastro, amostrasPreCadastradas, coletas, solicitacoesUsuarios, coletasPortal, loadingStates]);
+  ],[clientesSemCadastro, amostrasPreCadastradas, coletas, solicitacoesUsuarios, coletasPortal, loadingStates]);
 
   const bottomCardsData = useMemo(() => [
     {
@@ -769,7 +770,7 @@ export const Geral: React.FC = () => {
               icon={card.icon}
               bgColor={card.bgColor}
               loading={card.loading}
-              onClick={() => !card.loading && openModal(card.title, card.modalContent, card.isAmostra)}
+              onClick={() => !card.loading && openModal(card.title, card.modalContent, card.isAmostra, card.isColeta)}
             />
           ))}
         </div>
@@ -798,6 +799,8 @@ export const Geral: React.FC = () => {
         modalTitle={modalTitle}
         clientesSemCadastro={clientesSemCadastro}
         openClienteModal={openClienteModal}
+        coletas={coletas}
+        isColetaModal={isColetaModal}
       />
 
       <ClienteModal

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import styles from './css/cadastrar_motorista.module.css'; // Certifique-se de criar este arquivo CSS
 import { invoke } from "@tauri-apps/api/core";
-import { Edit3, Trash2, Plus, X, Save, AlertTriangle, Search, Eye } from 'lucide-react';
+import { Edit3, Trash2, Plus, X, Save, AlertTriangle, Search } from 'lucide-react';
 
 interface Posto {
   id: number;

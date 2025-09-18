@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import styles from './css/cadastrar_manutencao.module.css';
 import { invoke } from "@tauri-apps/api/core";
 import { 
-  Plus, RefreshCw, Calendar, Car, User, Wrench, 
-  DollarSign, FileText, Drill, ChevronDown, Check, 
+  Plus, RefreshCw, Calendar, Car, Wrench, 
+  FileText, Drill, ChevronDown, Check, 
   Save, X, AlertCircle, Clock, Gauge
 } from 'lucide-react';
 import { WindowManager } from "../../hooks/WindowManager";
@@ -19,19 +19,19 @@ interface TipoManutencao {
   id: number;
   nome: string;
 }
-
+/*
 interface NovoTipo {
   nome: string;
-}
+}*/
 
 const Cadastrar_Manutencao: React.FC = () => {
   const [dataManutencao, setDataManutencao] = useState('');
   const [veiculoSelecionado, setVeiculoSelecionado] = useState<number | ''>('');
   const [tipoManutencaoSelecionado, setTipoManutencaoSelecionado] = useState<number | ''>('');
   const [kmAtual, setKmAtual] = useState<number | ''>('');
-  const [valorTotal, setValorTotal] = useState<number | ''>('');
+//  const [valorTotal, setValorTotal] = useState<number | ''>('');
   const [descricao, setDescricao] = useState('');
-  const [proximaTroca, setProximaTroca] = useState<number | ''>('');
+ // const [proximaTroca, setProximaTroca] = useState<number | ''>('');
   const [horaManutencao, setHoraManutencao] = useState('');
   const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
   const [tiposManutencao, setTiposManutencao] = useState<TipoManutencao[]>([]);
@@ -105,9 +105,9 @@ const [horaProximaTroca, setHoraProximaTroca] = useState('');
     setVeiculoSelecionado('');
     setTipoManutencaoSelecionado('');
     setKmAtual('');
-    setValorTotal('');
+  //  setValorTotal('');
     setDescricao('');
-    setProximaTroca('');
+   // setProximaTroca('');
     setError(null);
     setSuccess(null);
   };
@@ -119,7 +119,7 @@ const [horaProximaTroca, setHoraProximaTroca] = useState('');
     }
 
     try {
-          const novoTipo = await invoke('criar_tipo_manutencao', {
+          await invoke('criar_tipo_manutencao', {
       payload: { nome: novoTipoNome.trim() } 
     });
       setSuccess('Tipo de manutenção adicionado com sucesso!');

@@ -22,7 +22,7 @@ import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
 import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
 import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoParametro';
-
+import CadastrarColeta from '../view/geral/CadastrarColeta';
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
 import VisualizarTipos from '../view/geral/VisualizarTipos';
@@ -136,7 +136,9 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'visualizar-manutencao': {component: <Visualizar_Manutencao />, hasLayout: false},
   
-  'localizacao-temporeal': {component: <LocalizacaoTempoReal />, hasLayout: false}
+  'localizacao-temporeal': {component: <LocalizacaoTempoReal />, hasLayout: false},
+
+  'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false}
 
 
 };
