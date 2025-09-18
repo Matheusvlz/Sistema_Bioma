@@ -1,94 +1,134 @@
-// src/controller/admin/usuario_controller.rs
+// ✅ ESTE É O CÓDIGO CORRETO PARA:
+// src-tauri/src/controller/admin/usuario_controller.rs
 
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
+use reqwest::Client;
 use crate::{
-    config,
+    config::get_api_url,
+    model::api_response::ApiResponse,
     model::usuario_admin::{
-        ApiResponse, 
-        UsuarioAdmin, 
-        CriarUsuarioAdminPayload, 
-        AtualizarUsuarioAdminPayload
+        UsuarioAdmin,
+        CriarUsuarioAdminPayload,
+        AtualizarUsuarioAdminPayload,
+        AtualizarStatusPayload,
     },
 };
 
-// ... (as 4 primeiras funções: listar, buscar, criar, atualizar permanecem as mesmas) ...
 const API_RESOURCE: &str = "/admin/usuarios";
 
 #[tauri::command]
-pub async fn listar_usuarios_admin_command(app_handle: AppHandle) -> Result<Vec<UsuarioAdmin>, String> {
-    let api_url = config::get_api_url(&app_handle);
-    let client = reqwest::Client::new();
-    let res = client.get(format!("{}{}", api_url, API_RESOURCE)).send().await.map_err(|e| e.to_string())?;
+pub async fn listar_usuarios_admin_command(app_handle: AppHandle) -> Result<ApiResponse<Vec<UsuarioAdmin>>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}{}", api_url, API_RESOURCE);
 
-    if res.status().is_success() {
-        let api_response = res.json::<ApiResponse<Vec<UsuarioAdmin>>>().await.map_err(|e| e.to_string())?;
-        Ok(api_response.data.unwrap_or_default())
-    } else {
-        Err(format!("Erro da API ao listar usuários: {}", res.status()))
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                // A API de listar retorna o Vec<Usuario> diretamente
+                match response.json::<Vec<UsuarioAdmin>>().await {
+                    Ok(data) => Ok(ApiResponse::success("Usuários carregados.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
+                }
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
 
 #[tauri::command]
-pub async fn buscar_usuario_admin_command(app_handle: AppHandle, id: u32) -> Result<UsuarioAdmin, String> {
-    let api_url = config::get_api_url(&app_handle);
-    let client = reqwest::Client::new();
-    let res = client.get(format!("{}{}/{}", api_url, API_RESOURCE, id)).send().await.map_err(|e| e.to_string())?;
+pub async fn buscar_usuario_admin_command(app_handle: AppHandle, id: u32) -> Result<ApiResponse<UsuarioAdmin>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}{}/{}", api_url, API_RESOURCE, id);
 
-    if res.status().is_success() {
-        let api_response = res.json::<ApiResponse<Vec<UsuarioAdmin>>>().await.map_err(|e| e.to_string())?;
-        api_response.data.and_then(|mut v| v.pop()).ok_or_else(|| "Nenhum usuário retornado.".to_string())
-    } else {
-        Err(format!("Erro da API ao buscar usuário: {}", res.status()))
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                // A API de buscar retorna o objeto Usuario diretamente
+                match response.json::<UsuarioAdmin>().await {
+                    Ok(data) => Ok(ApiResponse::success("Usuário encontrado.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
+                }
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
 
 #[tauri::command]
-pub async fn criar_usuario_admin_command(app_handle: AppHandle, payload: CriarUsuarioAdminPayload) -> Result<UsuarioAdmin, String> {
-    let api_url = config::get_api_url(&app_handle);
-    let client = reqwest::Client::new();
-    let res = client.post(format!("{}{}", api_url, API_RESOURCE)).json(&payload).send().await.map_err(|e| e.to_string())?;
+pub async fn criar_usuario_admin_command(app_handle: AppHandle, payload: CriarUsuarioAdminPayload) -> Result<ApiResponse<UsuarioAdmin>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}{}", api_url, API_RESOURCE);
 
-    if res.status().is_success() {
-        let api_response = res.json::<ApiResponse<Vec<UsuarioAdmin>>>().await.map_err(|e| e.to_string())?;
-        api_response.data.and_then(|mut v| v.pop()).ok_or_else(|| "API não retornou o usuário criado.".to_string())
-    } else {
-        Err(format!("Erro da API ao criar usuário: {}", res.status()))
+    match client.post(&url).json(&payload).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                // A API de criar retorna o objeto Usuario diretamente
+                match response.json::<UsuarioAdmin>().await {
+                    Ok(data) => Ok(ApiResponse::success("Usuário criado com sucesso.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
+                }
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
 
 #[tauri::command]
-pub async fn atualizar_usuario_admin_command(app_handle: AppHandle, id: u32, payload: AtualizarUsuarioAdminPayload) -> Result<UsuarioAdmin, String> {
-    let api_url = config::get_api_url(&app_handle);
-    let client = reqwest::Client::new();
-    let res = client.put(format!("{}{}/{}", api_url, API_RESOURCE, id)).json(&payload).send().await.map_err(|e| e.to_string())?;
+pub async fn atualizar_usuario_admin_command(app_handle: AppHandle, id: u32, payload: AtualizarUsuarioAdminPayload) -> Result<ApiResponse<UsuarioAdmin>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}{}/{}", api_url, API_RESOURCE, id);
 
-    if res.status().is_success() {
-        let api_response = res.json::<ApiResponse<Vec<UsuarioAdmin>>>().await.map_err(|e| e.to_string())?;
-        api_response.data.and_then(|mut v| v.pop()).ok_or_else(|| "API não retornou o usuário atualizado.".to_string())
-    } else {
-        Err(format!("Erro da API ao atualizar usuário: {}", res.status()))
+    match client.put(&url).json(&payload).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                // A API de atualizar retorna o objeto Usuario diretamente
+                match response.json::<UsuarioAdmin>().await {
+                    Ok(data) => Ok(ApiResponse::success("Usuário atualizado com sucesso.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
+                }
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
 
-
 #[tauri::command]
-pub async fn atualizar_status_usuario_admin_command(app_handle: AppHandle, id: u32, ativo: bool) -> Result<String, String> {
-    // CORREÇÃO: Adicionado o `use` para `Deserialize` aqui dentro.
-    use serde::Deserialize;
+pub async fn atualizar_status_usuario_admin_command(app_handle: AppHandle, id: u32, ativo: bool) -> Result<ApiResponse<()>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}{}/{}/status", api_url, API_RESOURCE, id);
+    let payload = AtualizarStatusPayload { ativo };
 
-    let api_url = config::get_api_url(&app_handle);
-    let client = reqwest::Client::new();
-    let res = client.patch(format!("{}{}/{}/status", api_url, API_RESOURCE, id))
-        .json(&serde_json::json!({ "ativo": ativo }))
-        .send().await.map_err(|e| e.to_string())?;
-    
-    if res.status().is_success() {
-        // A struct local precisa do `derive` para desserializar a resposta JSON.
-        #[derive(Deserialize)] 
-        struct StatusResponse { message: String }
-        let status_res = res.json::<StatusResponse>().await.map_err(|e| e.to_string())?;
-        Ok(status_res.message)
-    } else {
-        Err(format!("Erro da API ao atualizar status: {}", res.status()))
+    match client.patch(&url).json(&payload).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                return Ok(ApiResponse::success("Status atualizado com sucesso.".to_string(), None));
+            }
+            
+            let status = response.status();
+            let err_body = response.text().await.unwrap_or_default();
+            Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }

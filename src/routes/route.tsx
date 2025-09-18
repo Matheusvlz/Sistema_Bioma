@@ -1,5 +1,5 @@
 import { Inicio } from '../view/Main';
-import { Reports } from '../view/Reports';
+import { Relatorio } from '../view/Relatorio';
 import { Settings } from '../view/Settings';
 import { Laboratorio } from '../view/Laboratorio';
 import { Administracao } from '../view/Administracao';
@@ -26,6 +26,9 @@ import CalculoIDE from '../view/geral/CalculoIDE';
 
 import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
 import { CadastrarUsuario }  from '../view/administracao/CadastrarUsuarios';
+import { ListarUsuarios } from '../view/administracao/ListarUsuarios';
+import { GerenciarPermissoesSetor } from '../view/administracao/GerenciarPermissoesSetor';
+import { VisualizarHistorico } from '../view/administracao/VisualizarHistorico';
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
 import VisualizarTipos from '../view/geral/VisualizarTipos';
@@ -68,7 +71,7 @@ interface RouteConfig {
 
 export const authenticatedRoutes: Record<string, RouteConfig> = {
   inicio: { component: <Inicio />, hasLayout: true },
-  reports: { component: <Reports />, hasLayout: true },
+  relatorio: { component: <Relatorio />, hasLayout: true },
   settings: { component: <Settings />, hasLayout: true },
   laboratorio: { component: <Laboratorio />, hasLayout: true },
   geral: { component: <Geral />, hasLayout: true },
@@ -158,6 +161,9 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   // Administração
   'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
   'cadastrar-usuarios-admin': { component: <CadastrarUsuario />, hasLayout: false },
+  'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
+  'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
+  'admin-historico': { component: <VisualizarHistorico />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

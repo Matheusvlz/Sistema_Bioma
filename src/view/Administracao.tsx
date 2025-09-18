@@ -237,7 +237,7 @@ export const Administracao = memo(() => {
             items: [
                 { name: "Cadastrar Usuário", icon: UserPlus, description: "Adicionar um novo usuário ao sistema" },
                 { name: "Listar Usuários", icon: List, description: "Visualizar e gerenciar usuários existentes" },
-                { name: "Permissões de Acesso", icon: KeyRound, description: "Definir papéis e permissões de usuários" }
+                { name: "Cadastro de Setor", icon: KeyRound, description: "Definir papéis e permissões de usuários" }
             ]
         },
         {
@@ -368,7 +368,17 @@ export const Administracao = memo(() => {
             WindowManager.openCadastrarUsuarioAdmin();
             break;
 
-  
+            case 'Listar Usuários': // Ou o nome exato que você usou no menu
+            WindowManager.openGerenciarUsuarios();
+            break;
+            
+            case 'Cadastro de Setor':
+            WindowManager.openGerenciarPermissoesSetor();
+            break;
+
+            case 'Histórico de Atividades':
+            WindowManager.openVisualizarHistorico();
+            break;
             // Adicione outros casos aqui...
             default: 
                 break;

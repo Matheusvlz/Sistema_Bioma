@@ -209,6 +209,22 @@ use controller::laboratorio::cadastrar_amostra_controller::{
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
+
+
+
+
+use controller::admin::setor_controller::{
+    listar_setores_command,
+    criar_setor_command,
+    listar_usuarios_por_setor_command,
+    atualizar_usuarios_do_setor_command,
+};
+
+use controller::admin::historico_controller::{
+    listar_historico_command,
+    listar_acoes_historico_command,
+};
+
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 
 // Módulo: Qualidade e Utilitários
@@ -437,9 +453,9 @@ fn main() {
             deletar_calculo,
 
             get_cidades_analise_command,
-          get_atividades_filtradas_command,
-          get_clientes_analise_command, // <-- ADICIONAR
-          get_coletores_analise_command, // <-- ADICIONAR
+            get_atividades_filtradas_command,
+            get_clientes_analise_command, // <-- ADICIONAR
+            get_coletores_analise_command, // <-- ADICIONAR
             
             // Comandos de Laboratório
             buscar_checagem, 
@@ -503,6 +519,14 @@ fn main() {
             atualizar_usuario_admin_command,
             atualizar_status_usuario_admin_command,
 
+            listar_setores_command,
+            criar_setor_command,
+            listar_usuarios_por_setor_command,
+            atualizar_usuarios_do_setor_command,
+
+            listar_historico_command,
+            listar_acoes_historico_command,
+            
             // Comandos de Componentes e Outros
             buscar_clientes_dropdown,
             buscar_clientes_filtros,

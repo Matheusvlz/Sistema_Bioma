@@ -731,10 +731,10 @@ useEffect(() => {
               <span>Início</span>
             </button>
             <button
-              className={`nav-item ${currentRoute === 'reports' ? 'active' : ''}`}
-              onClick={() => navigate('reports')}
+              className={`nav-item ${currentRoute === 'relatorio' ? 'active' : ''}`}
+              onClick={() => navigate('relatorio')}
             >
-              {getRouteIcon('reports')}
+              {getRouteIcon('relatorio')}
               <span>Relatórios</span>
             </button>
             <button

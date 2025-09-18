@@ -1,34 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import styles from './css/CadastrarUsuario.module.css';
+import { UsuarioAdmin } from './ListarUsuarios';
 
-// Interface sem o campo "empresa"
+interface CadastrarUsuarioProps {
+  itemParaEdicao: UsuarioAdmin | null;
+  onSalvar: () => void;
+  onCancelar: () => void;
+}
+
 interface CriarUsuarioPayload {
   nome: string;
   nome_completo: string;
-  senha: string;
+  senha?: string; // Senha opcional para o payload de criação
   privilegio: string;
-  cargo: string;
+  cargo: string | null;
+  empresa: number | null;
 }
 
-export const CadastrarUsuario: React.FC = () => {
-  const [formData, setFormData] = useState<CriarUsuarioPayload>({
+interface AtualizarUsuarioPayload {
+  nome: string;
+  nome_completo: string;
+  privilegio: string;
+  cargo: string | null;
+  empresa: number | null;
+  ativo: boolean;
+}
+
+export const CadastrarUsuario: React.FC<CadastrarUsuarioProps> = ({ itemParaEdicao, onSalvar, onCancelar }) => {
+  const [formData, setFormData] = useState({
     nome: '',
     nome_completo: '',
     senha: '',
     privilegio: 'USER',
     cargo: '',
+    empresa: null as number | null,
+    ativo: true,
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  
+  const isEditing = itemParaEdicao !== null;
+
+  useEffect(() => {
+    if (isEditing) {
+      setFormData({
+        nome: itemParaEdicao.nome || '',
+        nome_completo: itemParaEdicao.nome_completo || '',
+        senha: '',
+        privilegio: itemParaEdicao.privilegio || 'USER',
+        cargo: itemParaEdicao.cargo || '',
+        empresa: itemParaEdicao.empresa || null,
+        ativo: itemParaEdicao.ativo ?? true,
+      });
+    }
+  }, [itemParaEdicao, isEditing]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value,
-    }));
+    
+    if (name === 'empresa') {
+      const numValue = value === '' ? null : Number(value);
+      setFormData(prevState => ({ ...prevState, [name]: numValue }));
+    } else {
+      setFormData(prevState => ({ ...prevState, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,48 +73,47 @@ export const CadastrarUsuario: React.FC = () => {
     setLoading(true);
     setMessage(null);
 
-    if (!formData.nome || !formData.nome_completo || !formData.senha) {
-      setMessage({ type: 'error', text: 'Nome de usuário, nome completo e senha são obrigatórios.' });
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Chamada real ao backend Tauri
-      const newUser = await invoke('criar_usuario_admin_command', { payload: formData });
+      if (isEditing && itemParaEdicao) {
+        const payload: AtualizarUsuarioPayload = {
+            nome: formData.nome,
+            nome_completo: formData.nome_completo,
+            privilegio: formData.privilegio,
+            cargo: formData.cargo || null,
+            empresa: formData.empresa,
+            ativo: formData.ativo,
+        };
+        // Lógica futura para alterar senha, se necessário
+        // if (formData.senha) {
+        //   await invoke('alterar_senha_usuario_command', { id: itemParaEdicao.id, novaSenha: formData.senha });
+        // }
+        await invoke('atualizar_usuario_admin_command', { id: itemParaEdicao.id, payload });
+      } else {
+        const payload: CriarUsuarioPayload = { ...formData };
+        if (!payload.senha) {
+            setMessage({ type: 'error', text: 'Senha é obrigatória para novos usuários.' });
+            setLoading(false);
+            return;
+        }
+        await invoke('criar_usuario_admin_command', { payload });
+      }
       
-      // Assumindo que newUser tem a propriedade nome_completo, como definido no backend
-      const nomeCriado = (newUser as any)?.nome_completo || formData.nome_completo;
+      onSalvar();
 
-      setMessage({ type: 'success', text: `Usuário "${nomeCriado}" criado com sucesso!` });
-      
-      // Limpar o formulário após o sucesso
-      setFormData({
-        nome: '',
-        nome_completo: '',
-        senha: '',
-        privilegio: 'USER',
-        cargo: '',
-      });
-    } catch (error) {
-      // Exibe o erro retornado pelo backend Tauri
-      setMessage({ type: 'error', text: `Erro ao criar usuário: ${error}` });
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Ocorreu um erro desconhecido.';
+      setMessage({ type: 'error', text: `Erro: ${errorMessage}` });
     } finally {
       setLoading(false);
     }
-  };
-  
-  const handleCancel = () => {
-    console.log("Operação cancelada");
   };
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h2>Cadastrar Usuário do Sistema</h2>
+        <h2>{isEditing ? `Editando Usuário: ${itemParaEdicao?.nome_completo}` : 'Cadastrar Usuário do Sistema'}</h2>
       </header>
       
-      {/* A área de main agora engloba a mensagem e o formulário */}
       <main className={styles.main}>
         {message && (
           <div className={`${styles.message} ${styles[message.type]}`}>
@@ -87,8 +123,9 @@ export const CadastrarUsuario: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          <div className={styles.formContent}> {/* Novo wrapper para os inputs */}
-            <div className={styles.formGroup}>
+          <div className={styles.formContent}>
+            
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
               <label className={styles.label} htmlFor="nome_completo">Nome Completo *</label>
               <input
                 className={styles.input}
@@ -119,7 +156,7 @@ export const CadastrarUsuario: React.FC = () => {
             </div>
 
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="senha">Senha *</label>
+              <label className={styles.label} htmlFor="senha">Senha</label>
               <input
                 className={styles.input}
                 type="password"
@@ -127,9 +164,9 @@ export const CadastrarUsuario: React.FC = () => {
                 name="senha"
                 value={formData.senha}
                 onChange={handleChange}
-                placeholder="••••••••"
+                placeholder={isEditing ? "Deixe em branco para não alterar" : "••••••••"}
                 disabled={loading}
-                required
+                required={!isEditing}
               />
             </div>
 
@@ -140,14 +177,28 @@ export const CadastrarUsuario: React.FC = () => {
                 type="text"
                 id="cargo"
                 name="cargo"
-                value={formData.cargo}
+                value={formData.cargo || ''}
                 onChange={handleChange}
                 placeholder="Ex: Analista de Laboratório"
                 disabled={loading}
               />
             </div>
-
+            
             <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="empresa">Empresa (ID, Opcional)</label>
+              <input
+                className={styles.input}
+                type="number"
+                id="empresa"
+                name="empresa"
+                value={formData.empresa || ''}
+                onChange={handleChange}
+                placeholder="Deixe em branco se for interno"
+                disabled={loading}
+              />
+            </div>
+            
+            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
               <label className={styles.label} htmlFor="privilegio">Privilégio *</label>
               <select
                 className={styles.input}
@@ -159,17 +210,17 @@ export const CadastrarUsuario: React.FC = () => {
               >
                 <option value="USER">Usuário</option>
                 <option value="COLETOR">Coletor</option>
-                <option value="ADMIN">Administrador</option>
+                <option value="ADM">Administrador</option>
               </select>
             </div>
           </div>
           
           <div className={styles.buttonGroup}>
-            <button type="button" className={styles.buttonSecondary} onClick={handleCancel} disabled={loading}>
+            <button type="button" className={styles.buttonSecondary} onClick={onCancelar} disabled={loading}>
               Cancelar
             </button>
             <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar Usuário'}
+              {loading ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Salvar Usuário')}
             </button>
           </div>
         </form>

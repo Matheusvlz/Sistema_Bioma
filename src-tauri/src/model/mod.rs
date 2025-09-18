@@ -36,3 +36,5 @@ pub mod tecnica_etapa;
 pub mod calculo;
 pub mod analise;
 pub mod usuario_admin;
+pub mod setor;
+pub mod historico;

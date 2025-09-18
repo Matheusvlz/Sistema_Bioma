@@ -37,7 +37,7 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   const iconComponentsMap: { [key in AuthenticatedRoute]: React.ElementType } = {
     'login': FaSignInAlt,
     'inicio': FaHome,
-    'reports': FaChartBar,
+    'relatorio': FaChartBar,
     'settings': FaCog,
     'laboratorio': FaFlask,
     'frota': FaTruck,

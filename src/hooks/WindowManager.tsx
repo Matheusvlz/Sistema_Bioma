@@ -738,6 +738,42 @@ static async openCadastrarUsuarioAdmin(): Promise<WebviewWindow> {
   });
 }
 
+static async openGerenciarUsuarios(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-usuarios',
+    title: 'Gerenciar Usuários',
+    url: '/#/admin-usuarios',
+    width: 1200,
+    height: 800,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+static async openGerenciarPermissoesSetor(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-permissoes-setor',
+    title: 'Gerenciar Permissões por Setor',
+    url: '/#/admin-permissoes-setor',
+    width: 1000,
+    height: 750,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+static async openVisualizarHistorico(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-historico',
+    title: 'Visualizar Histórico de Atividades',
+    url: '/#/admin-historico',
+    width: 1280,
+    height: 800,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
    static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
     // A API do Tauri para criar uma nova janela
     const webview = new WebviewWindow('rel-tecnica-etapa', {
