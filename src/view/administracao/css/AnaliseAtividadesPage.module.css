@@ -1,0 +1,309 @@
+/* ==========================================================================
+   CSS REFINADO E MESCLADO PARA AnaliseAtividadesPage
+   ========================================================================== */
+
+/* --- Estrutura e Layout Principal --- */
+.pageLayout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #f8fafc; /* Cor de fundo mais suave da nova paleta */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #374151; /* Cor de texto principal da nova paleta */
+}
+
+.headerGlobal, .kpiGrid, .toolbarContainer {
+  position: sticky;
+  z-index: 100;
+  background-color: #f8fafc;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border-bottom: 1px solid #e2e8f0; /* Borda sutil da nova paleta */
+}
+
+.headerGlobal { top: 0; }
+.kpiGrid { top: 73px; }
+.toolbarContainer { top: 185px; }
+
+
+.mainContent {
+  flex-grow: 1; 
+  overflow-y: auto;
+  padding: 1.5rem;
+  margin: 1rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  background-color: #ffffff;
+  border-radius: 12px; /* Bordas mais arredondadas */
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Sombra mais suave */
+}
+
+.dataContainer {
+  flex-grow: 1;
+}
+
+/* --- Detalhes das Zonas --- */
+
+/* ZONA 1: Cabeçalho Global */
+.headerGlobal {
+  height: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+.headerTitles h1 { font-size: 1.75rem; margin: 0; color: #111827; font-weight: 700; }
+.headerTitles p { font-size: 0.9rem; margin: 4px 0 0 0; color: #6b7280; }
+.headerActions { display: flex; align-items: center; gap: 1rem; }
+.actionButtonSecondary {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #111827; /* Cor escura da nova paleta */
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+.actionButtonSecondary:hover {
+  background-color: #374151;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ZONA 2: KPIs de Visão Rápida */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  padding-top: 1.25rem;
+  padding-bottom: 1.25rem;
+}
+.kpiCard { 
+  background: white; 
+  padding: 1.25rem; 
+  border-radius: 12px; 
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  border-top: 4px solid;
+  transition: all 0.2s ease;
+}
+.kpiCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+.kpiValue { font-size: 2.5rem; font-weight: 700; color: #111827; }
+.kpiTitle { font-size: 0.9rem; color: #6b7280; margin-top: 0.25rem; }
+.kpiCard:nth-child(1) { border-color: #3b82f6; } /* Azul */
+.kpiCard:nth-child(2) { border-color: #10b981; } /* Verde */
+.kpiCard:nth-child(3) { border-color: #f59e0b; } /* Amarelo/Laranja */
+.kpiCard:nth-child(4) { border-color: #8b5cf6; } /* Roxo */
+
+/* ZONA 3: Barra de Ferramentas e Filtros */
+.toolbarContainer { padding-bottom: 0.5rem; }
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem; /* Aumenta o espaçamento */
+  align-items: flex-end;
+  padding: 1rem 0;
+}
+.filtroItem { 
+  display: flex; 
+  flex-direction: column; 
+  flex: 1 1 200px; /* Base maior para mais espaço */
+  min-width: 180px;
+}
+
+/* --- ADICIONAR ESTA CLASSE --- */
+/* Regra específica para dar mais espaço ao filtro de período */
+.filtroPeriodo {
+    flex: 0 1 340px; /* Não cresce, pode encolher, base de 340px */
+    min-width: 320px;
+}
+
+.filtroItem label { font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
+.filtroItem select, .filtroItem input { 
+  padding: 0.75rem; 
+  border: 1px solid #d1d5db; 
+  border-radius: 8px; 
+  font-size: 1rem; 
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+.filtroItem select:focus, .filtroItem input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+.dateRangePicker { display: flex; align-items: center; gap: 0.5rem; }
+.toolbarActions { display: flex; gap: 1rem; align-items: flex-end; padding-bottom: 2px; }
+.viewToggle { display: flex; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; }
+.viewToggle button { padding: 0.7rem; border: none; background: #fff; cursor: pointer; display: flex; align-items: center; color: #6b7280; }
+.viewToggle button.active { background-color: #3b82f6; color: white; }
+.limparButton { 
+  padding: 0.75rem 1.25rem; 
+  font-weight: 600; 
+  color: #374151; 
+  background-color: #f3f4f6; 
+  border: 1px solid #d1d5db; 
+  border-radius: 8px; 
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.limparButton:hover { background-color: #e5e7eb; }
+
+/* ZONA 4: Cabeçalho dos Dados (com busca movida) */
+.dataHeader { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding-bottom: 1.5rem; 
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+.searchDataWrapper { 
+  position: relative; 
+  flex: 1 1 400px; /* Ocupa espaço flexível */
+  min-width: 300px;
+}
+.searchIcon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 1.1rem; }
+.searchInput { 
+  width: 100%; 
+  padding: 0.8rem 0.8rem 0.8rem 42px; 
+  border-radius: 8px; 
+  border: 1px solid #d1d5db; 
+  font-size: 1rem; 
+  background-color: #fff; /* Fundo destacado como pedido */
+  transition: all 0.2s ease;
+}
+.searchInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+.dataActions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.statsText { font-size: 0.9rem; color: #6b7280; white-space: nowrap; }
+.orderSelect {
+  padding: 0.6rem; 
+  border-radius: 8px; 
+  border: 1px solid #d1d5db; 
+  background-color: #f9fafb;
+}
+.printButton { 
+  padding: 0.6rem 1rem; 
+  background-color: #6b7280; 
+  color: white; 
+  border: none; 
+  border-radius: 8px; 
+  cursor: pointer; 
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+.printButton:hover { background-color: #4b5563; }
+
+/* Tabela de Dados */
+.dataTable { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
+.dataTable th, .dataTable td { padding: 1rem; text-align: left; }
+.dataTable th { 
+  background-color: transparent; 
+  font-size: 0.8rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+  color: #6b7280;
+  border-bottom: 2px solid #e2e8f0;
+}
+.dataTable tbody tr {
+    background-color: #fff;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+.dataTable tbody tr:hover { 
+    background-color: #f9fafb;
+    transform: scale(1.01);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+.dataTable td { border-bottom: none; }
+.dataTable td:first-child { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+.dataTable td:last-child { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+.statusBadge { padding: 0.3rem 0.75rem; border-radius: 12px; font-size: 0.8rem; font-weight: 600; color: #fff; }
+.coletado { background-color: #10b981; } /* Verde da nova paleta */
+.agendado { background-color: #f59e0b; } /* Amarelo da nova paleta */
+
+/* Paginação com novo estilo */
+.paginationFooter { text-align: center; padding-top: 1.5rem; margin-top: 1.5rem; }
+.paginationFooter button { 
+  margin: 0 0.25rem; 
+  padding: 0.6rem 1rem; 
+  border: 1px solid #d1d5db; 
+  background: #fff; 
+  cursor: pointer; 
+  border-radius: 8px; 
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.paginationFooter button:hover {
+  border-color: #9ca3af;
+  color: #111827;
+}
+.paginationFooter button.activePage { 
+  background: #3b82f6; 
+  color: white; 
+  border-color: #3b82f6; 
+  box-shadow: 0 2px 5px rgba(59, 130, 246, 0.2);
+}
+
+/* --- Estados e Impressão --- */
+.loadingState, .emptyState, .errorState { text-align: center; padding: 3rem; font-size: 1.1rem; color: #6b7280; background-color: #f9fafb; border-radius: 8px; border: 1px dashed #e5e7eb; }
+.errorState { color: #ef4444; background-color: #fef2f2; border-color: #fecaca; }
+
+.printOnly { display: none; }
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+
+  body > #root > div:not(.printOnly) {
+    display: none;
+  }
+  
+  .printOnly {
+    display: block;
+  }
+
+  .dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+  }
+
+  .dataTable th, .dataTable td {
+    border: 1px solid #333 !important;
+    padding: 5px;
+  }
+
+  .dataTable th {
+    background-color: #f2f2f2 !important;
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+
+  .statusBadge {
+    background: none !important;
+    color: #000 !important;
+    border: 1px solid #888;
+    padding: 2px 4px;
+    border-radius: 0;
+  }
+}

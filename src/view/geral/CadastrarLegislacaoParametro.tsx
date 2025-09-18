@@ -1,113 +1,138 @@
+// src/view/geral/CadastrarLegislacaoParametro.tsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import { invoke } from "@tauri-apps/api/core";
 import styles from './css/CadastrarLegislacaoParametro.module.css';
+import { formatNumber } from '../../utils/formatters';
 
-// --- Interfaces para os dados ---
-interface Legislacao { id: number; nome?: string; COMPLEMENTO?: string; }
-interface Tipo { nome: string; }
-interface Matriz { id: number; nome?: string; }
-interface ParametroPopDetalhado { 
-    id: number; 
-    nome_parametro?: string; 
-    grupo?: string;
+// --- Interfaces para os Dados ---
+interface DropdownOption {
+    // ✅ ALTERAÇÃO: Permitimos que o ID seja número ou texto, para se adaptar à sua API.
+    id: number | string;
+    nome: string;
+}
+
+// ✅ Interface específica para os dados que vêm da API de Tipos
+interface TipoFromApi {
+    nome: string;
+    codigo: string;
+}
+
+// ✅ Interface específica para os dados que vêm da API de Unidades
+interface UnidadeFromApi {
+    nome: string;
+}
+
+
+interface ParametroOption {
+    id: number;
+    nome: string;
+    grupo: string;
+}
+
+interface ParametroPopOption {
+    id: number;
+    id_parametro: number;
     pop_codigo?: string;
     pop_numero?: string;
     pop_revisao?: string;
     nome_tecnica?: string;
-}
-interface Unidade { nome: string; }
-
-interface LegislacaoParametroDetalhadoCompleto {
-  id: number;
-  legislacao: number;
-  tipo?: string;
-  matriz?: string;
-  parametro_pop: number;
-  unidade?: string;
-  limite_min?: string;
-  limite_simbolo?: string;
-  limite_max?: string;
-  valor?: number;
-  ativo: boolean;
+    objetivo?: string;
+    lqi?: string;
+    lqs?: string;
+    incerteza?: string;
 }
 
 interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data?: T;
+    success: boolean;
+    data?: T;
+    message?: string;
 }
 
-// --- Props do Componente Principal ---
-interface CadastrarLegislacaoParametroProps {
-  itemParaEdicao?: LegislacaoParametroDetalhadoCompleto;
-  onSalvar: () => void;
-  onCancelar: () => void;
+interface Props {
+    itemParaEdicao?: any;
+    legislacaoIdSelecionada: number;
+    onSalvar: () => void;
+    onCancelar: () => void;
 }
 
-// --- Componente de Autocomplete Reutilizável ---
-const Autocomplete = ({ items, onSelect, displayFn, initialValue, placeholder, error }: any) => {
-    const [inputValue, setInputValue] = useState(initialValue || '');
-    const [sugestoes, setSugestoes] = useState<any[]>([]);
-    const [mostrarSugestoes, setMostrarSugestoes] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement>(null);
+
+// --- COMPONENTE REUTILIZÁVEL DE AUTOCOMPLETE (A versão estável que já tínhamos) ---
+const AutocompleteSelect: React.FC<{
+    options: (DropdownOption | ParametroOption)[];
+    selectedValue: string;
+    onSelect: (value: string, name?: string) => void;
+    placeholder: string;
+    disabled?: boolean;
+}> = ({ options, selectedValue, onSelect, placeholder, disabled = false }) => {
+    
+    const [inputValue, setInputValue] = useState('');
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    const propsRef = useRef({ options, selectedValue, onSelect });
+    useEffect(() => {
+        propsRef.current = { options, selectedValue, onSelect };
+    });
 
     useEffect(() => {
-        setInputValue(initialValue || '');
-    }, [initialValue]);
+        const selectedOption = options.find(opt => String(opt.id) === selectedValue);
+        setInputValue(selectedOption ? selectedOption.nome : '');
+    }, [selectedValue, options]);
 
-    useEffect(() => {
-        const handleClickFora = (event: MouseEvent) => {
-            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-                setMostrarSugestoes(false);
-            }
-        };
-        document.addEventListener("mousedown", handleClickFora);
-        return () => document.removeEventListener("mousedown", handleClickFora);
-    }, []);
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setInputValue(value);
-        if (value) {
-            setSugestoes(items.filter((item: any) => 
-                displayFn(item).toLowerCase().includes(value.toLowerCase())
-            ));
-        } else {
-            setSugestoes(items);
-        }
-        setMostrarSugestoes(true);
-        onSelect(null);
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setInputValue(e.target.value);
+        setShowSuggestions(true);
     };
 
-    const handleFocus = () => {
-        setSugestoes(items);
-        setMostrarSugestoes(true);
+    const handleSelect = (option: DropdownOption | ParametroOption) => {
+        const { onSelect } = propsRef.current;
+        onSelect(String(option.id), 'parametroId' in option ? option.nome : undefined);
+        setInputValue(option.nome);
+        setShowSuggestions(false);
+    };
+    
+    const handleBlur = () => {
+        setTimeout(() => {
+             setShowSuggestions(false);
+             const { options, selectedValue } = propsRef.current;
+             const selectedOption = options.find(opt => String(opt.id) === selectedValue);
+             setInputValue(selectedOption ? selectedOption.nome : '');
+        }, 150);
     };
 
-    const handleSelect = (item: any) => {
-        setInputValue(displayFn(item));
-        onSelect(item);
-        setMostrarSugestoes(false);
-    };
+    const filteredSuggestions = inputValue
+        ? options.filter(opt => opt.nome.toLowerCase().includes(inputValue.toLowerCase()))
+        : options;
 
     return (
-        <div className={styles.autocompleteWrapper} ref={wrapperRef}>
+        <div className={styles.autocompleteWrapper}>
             <input
                 type="text"
                 value={inputValue}
-                onChange={handleChange}
-                onFocus={handleFocus}
+                onChange={handleInputChange}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={handleBlur}
                 placeholder={placeholder}
-                className={`${styles.input} ${error ? styles.inputError : ''}`}
-                autoComplete="off"
+                className={styles.input}
+                disabled={disabled}
+                required
             />
-            {mostrarSugestoes && (
+            {showSuggestions && (
                 <ul className={styles.sugestoesLista}>
-                    {sugestoes.map((item, index) => (
-                        <li key={index} onClick={() => handleSelect(item)}>
-                            {displayFn(item)}
-                        </li>
-                    ))}
+                    {filteredSuggestions.length > 0 ? (
+                        filteredSuggestions.map(opt => (
+                            <li 
+                                key={opt.id} 
+                                onMouseDown={() => {
+                                    handleSelect(opt);
+                                }}
+                            >
+                                {opt.nome} {'grupo' in opt && `(${opt.grupo})`}
+                            </li>
+                        ))
+                    ) : (
+                        <li>Nenhuma opção encontrada.</li>
+                    )}
                 </ul>
             )}
         </div>
@@ -115,229 +140,263 @@ const Autocomplete = ({ items, onSelect, displayFn, initialValue, placeholder, e
 };
 
 
-// --- Componente Principal ---
-const CadastrarLegislacaoParametro: React.FC<CadastrarLegislacaoParametroProps> = ({
-  itemParaEdicao, onSalvar, onCancelar
-}) => {
-  // Estados para os dados do formulário
-  const [legislacaoSelecionada, setLegislacaoSelecionada] = useState<Legislacao | null>(null);
-  const [tipoSelecionado, setTipoSelecionado] = useState('');
-  const [matrizSelecionada, setMatrizSelecionada] = useState('');
-  const [parametroPopSelecionado, setParametroPopSelecionado] = useState<ParametroPopDetalhado | null>(null);
-  const [unidadeSelecionada, setUnidadeSelecionada] = useState('');
-  const [limiteMin, setLimiteMin] = useState('');
-  const [limiteSimbolo, setLimiteSimbolo] = useState('=');
-  const [limiteMax, setLimiteMax] = useState('');
-  const [valor, setValor] = useState('');
-  const [ativo, setAtivo] = useState(true);
-
-  // Estados para as listas de autocompletar e dropdowns
-  const [legislacoes, setLegislacoes] = useState<Legislacao[]>([]);
-  const [tipos, setTipos] = useState<Tipo[]>([]);
-  const [matrizes, setMatrizes] = useState<Matriz[]>([]);
-  const [parametrosPops, setParametrosPops] = useState<ParametroPopDetalhado[]>([]);
-  const [unidades, setUnidades] = useState<Unidade[]>([]);
-  
-  // Estados para o controlo da UI
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const isEdicao = !!itemParaEdicao;
-
-  // Busca os dados para os campos de seleção
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [resLegislacoes, resTipos, resMatrizes, resParamPops, resUnidades]: any[] = await Promise.all([
-          invoke('listar_legislacoes'),
-          invoke('listar_tipos'),
-          invoke('listar_matrizes'),
-          invoke('listar_parametros_pops'),
-          invoke('listar_unidades'),
-        ]);
-        if (resLegislacoes.success && resLegislacoes.data) setLegislacoes(resLegislacoes.data);
-        if (resTipos.success && resTipos.data) setTipos(resTipos.data);
-        if (resMatrizes.success && resMatrizes.data) setMatrizes(resMatrizes.data);
-        if (resParamPops.success && resParamPops.data) setParametrosPops(resParamPops.data);
-        if (resUnidades.success && resUnidades.data) setUnidades(resUnidades.data);
-      } catch (error) {
-        console.error("Falha ao buscar dados para o formulário:", error);
-        setMessage({ text: 'Não foi possível carregar os dados para os campos de seleção.', type: 'error' });
-      }
-    };
-    fetchData();
-  }, []);
-
-  // Preenche o formulário se estiver em modo de edição
-  useEffect(() => {
-    if (itemParaEdicao && legislacoes.length > 0 && parametrosPops.length > 0) {
-        setLegislacaoSelecionada(legislacoes.find(l => l.id === itemParaEdicao.legislacao) || null);
-        setTipoSelecionado(itemParaEdicao.tipo || '');
-        setMatrizSelecionada(itemParaEdicao.matriz || '');
-        setParametroPopSelecionado(parametrosPops.find(p => p.id === itemParaEdicao.parametro_pop) || null);
-        setUnidadeSelecionada(itemParaEdicao.unidade || '');
-        setLimiteMin(itemParaEdicao.limite_min || '');
-        setLimiteSimbolo(itemParaEdicao.limite_simbolo || '=');
-        setLimiteMax(itemParaEdicao.limite_max || '');
-        setValor(String(itemParaEdicao.valor || ''));
-        setAtivo(itemParaEdicao.ativo);
-    }
-  }, [itemParaEdicao, legislacoes, parametrosPops]);
-  
-  const validarFormulario = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!legislacaoSelecionada) newErrors.legislacao = 'Legislação é obrigatória';
-    if (!parametroPopSelecionado) newErrors.parametroPop = 'Parâmetro x POP é obrigatório';
-    if (!unidadeSelecionada) newErrors.unidade = 'Unidade é obrigatória';
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validarFormulario()) return;
-
-    setLoading(true);
-    setMessage(null);
+const CadastrarLegislacaoParametro: React.FC<Props> = ({ itemParaEdicao, legislacaoIdSelecionada, onSalvar, onCancelar }) => {
+    const [tipos, setTipos] = useState<DropdownOption[]>([]);
+    const [matrizes, setMatrizes] = useState<DropdownOption[]>([]);
+    const [unidades, setUnidades] = useState<DropdownOption[]>([]);
+    const [parametros, setParametros] = useState<ParametroOption[]>([]);
+    const [allParametroPops, setAllParametroPops] = useState<ParametroPopOption[]>([]);
+    const [popsFiltrados, setPopsFiltrados] = useState<ParametroPopOption[]>([]);
     
-    const payload = {
-        id: itemParaEdicao?.id,
-        legislacao: legislacaoSelecionada!.id,
-        tipo: tipoSelecionado,
-        matriz: matrizSelecionada,
-        parametro_pop: parametroPopSelecionado!.id,
-        unidade: unidadeSelecionada,
-        limite_min: limiteMin || null,
-        limite_simbolo: limiteSimbolo || null,
-        limite_max: limiteMax || null,
-        valor: valor ? Number(valor) : null,
-        ativo: ativo,
+    const [formData, setFormData] = useState({
+        tipo: '',
+        matriz: '',
+        parametroId: '',
+        parametroPopId: '',
+        unidade: '',
+        limiteMin: '',
+        limiteSimbolo: '=',
+        limiteMax: '',
+        valor: '0.00',
+    });
+    
+    const [grupoDisplay, setGrupoDisplay] = useState('');
+    const [objetivoDisplay, setObjetivoDisplay] = useState('');
+    const [lqDisplay, setLqDisplay] = useState({ lqi: '-', lqs: '-' });
+    const [incertezaDisplay, setIncertezaDisplay] = useState('-');
+    
+    const [loading, setLoading] = useState(true);
+    const [modalState, setModalState] = useState<{ visible: boolean, message: string, success: boolean }>({ visible: false, message: '', success: false });
+
+    useEffect(() => {
+        const carregarDadosIniciais = async () => {
+            setLoading(true);
+            try {
+                const [tiposRes, matrizesRes, unidadesRes, parametrosRes, parametroPopsRes] = await Promise.all([
+                    // Usamos as novas interfaces para garantir que o TypeScript entenda os dados da API
+                    invoke<ApiResponse<TipoFromApi[]>>("listar_tipos"),
+                    invoke<ApiResponse<DropdownOption[]>>("listar_matrizes"), // Matrizes parece estar correto, mantemos
+                    invoke<ApiResponse<UnidadeFromApi[]>>("listar_unidades"),
+                    invoke<ApiResponse<ParametroOption[]>>("listar_parametros"),
+                    invoke<ApiResponse<ParametroPopOption[]>>("listar_parametros_pops")
+                ]);
+                
+                // ✅ SOLUÇÃO: Adaptamos os dados aqui!
+                if (tiposRes.success && Array.isArray(tiposRes.data)) {
+                    // Para cada item da lista de tipos, criamos um novo objeto com 'id' e 'nome'
+                    const tiposAdaptados = tiposRes.data.map((tipo): DropdownOption => ({
+                        id: tipo.codigo, // Usamos o campo 'codigo' como se fosse o 'id'
+                        nome: tipo.nome
+                    }));
+                    setTipos(tiposAdaptados);
+                }
+
+                if (matrizesRes.success && Array.isArray(matrizesRes.data)) {
+                    setMatrizes(matrizesRes.data);
+                }
+
+                if (unidadesRes.success && Array.isArray(unidadesRes.data)) {
+                     // Para cada item da lista de unidades, criamos um novo objeto com 'id' e 'nome'
+                    const unidadesAdaptadas = unidadesRes.data.map((unidade): DropdownOption => ({
+                        id: unidade.nome, // Como não há outro campo, usamos o próprio 'nome' como id único
+                        nome: unidade.nome
+                    }));
+                    setUnidades(unidadesAdaptadas);
+                }
+
+                if (parametrosRes.success && Array.isArray(parametrosRes.data)) setParametros(parametrosRes.data);
+                if (parametroPopsRes.success && Array.isArray(parametroPopsRes.data)) setAllParametroPops(parametroPopsRes.data);
+
+            } catch (err: any) {
+                setModalState({ visible: true, message: "Erro fatal ao carregar dados. Verifique a conexão e os comandos no backend.", success: false });
+            } finally {
+                setLoading(false);
+            }
+        };
+        carregarDadosIniciais();
+    }, []);
+    
+    useEffect(() => {
+        const parametroAtual = parametros.find(p => p.id === Number(formData.parametroId));
+        setGrupoDisplay(parametroAtual?.grupo || '');
+        if (formData.parametroId) {
+            const popsDoParametro = allParametroPops.filter(p => p.id_parametro === Number(formData.parametroId));
+            setPopsFiltrados(popsDoParametro);
+        } else {
+            setPopsFiltrados([]);
+        }
+        if (parametroAtual) {
+            setFormData(prev => ({ ...prev, parametroPopId: '' }));
+        }
+    }, [formData.parametroId, allParametroPops, parametros]);
+
+    useEffect(() => {
+        if (!formData.parametroPopId) {
+            setObjetivoDisplay('');
+            setLqDisplay({ lqi: '-', lqs: '-' });
+            setIncertezaDisplay('-');
+            return;
+        }
+        const popAtual = allParametroPops.find(p => p.id === Number(formData.parametroPopId));
+        setObjetivoDisplay(popAtual?.objetivo || '-');
+        setLqDisplay({ lqi: formatNumber(popAtual?.lqi), lqs: formatNumber(popAtual?.lqs) });
+        setIncertezaDisplay(formatNumber(popAtual?.incerteza));
+    }, [formData.parametroPopId, allParametroPops]);
+
+    const handleChange = (name: string, value: string) => {
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    try {
-      const comando = isEdicao ? 'editar_legislacao_parametro' : 'cadastrar_legislacao_parametro';
-      const response: ApiResponse<any> = await invoke(comando, { payload });
+    const handleParametroChange = (id: string) => {
+        setFormData(prev => ({ ...prev, parametroId: id }));
+    };
 
-      if (response.success) {
-        setMessage({ text: response.message, type: 'success' });
-        setTimeout(onSalvar, 1000);
-      } else {
-        setMessage({ text: response.message, type: 'error' });
-      }
-    } catch (error: any) {
-      setMessage({ text: error?.message || 'Erro ao salvar relacionamento', type: 'error' });
-    } finally {
-      setLoading(false);
+    const handleTipoChange = (value: string) => {
+        setFormData(prev => ({ ...prev, tipo: value }));
+    };
+    const handleMatrizChange = (value: string) => {
+        setFormData(prev => ({ ...prev, matriz: value }));
+    };
+    const handleUnidadeChange = (value: string) => {
+        setFormData(prev => ({ ...prev, unidade: value }));
+    };
+    const handleParametroPopIdChange = (value: string) => {
+        setFormData(prev => ({...prev, parametroPopId: value}));
     }
-  };
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h2>{isEdicao ? 'Editar Relação Legislação x Parâmetro' : 'Nova Relação Legislação x Parâmetro'}</h2>
-      </div>
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const payloadParaBackend = {
+                tipo: formData.tipo,
+                matriz: formData.matriz,
+                parametroId: formData.parametroId,
+                parametroPopId: formData.parametroPopId,
+                unidade: formData.unidade,
+                valor: formData.valor,
+                limite_min: formData.limiteMin,
+                limite_max: formData.limiteMax,
+                limite_simbolo: formData.limiteSimbolo,
+                legislacao: legislacaoIdSelecionada,
+                parametro_pop: Number(formData.parametroPopId),
+                ativo: true,
+            };
 
-      {message && <div className={`${styles.message} ${styles[message.type]}`}>{message.text}</div>}
+            const res: ApiResponse<any> = await invoke("cadastrar_legislacao_parametro_tauri", { 
+                payload: payloadParaBackend
+            });
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-                <label className={styles.label}>Legislação *</label>
-                <Autocomplete 
-                    items={legislacoes}
-                    onSelect={setLegislacaoSelecionada}
-                    displayFn={(item: Legislacao) => `${item.nome} ${item.COMPLEMENTO || ''}`}
-                    initialValue={legislacaoSelecionada ? `${legislacaoSelecionada.nome} ${legislacaoSelecionada.COMPLEMENTO || ''}` : ''}
-                    placeholder="Selecione uma Legislação"
-                    error={errors.legislacao}
-                />
-                {errors.legislacao && <span className={styles.errorText}>{errors.legislacao}</span>}
+            if(res.success) {
+                setModalState({ visible: true, message: res.message || 'Operação realizada com sucesso!', success: true });
+            } else {
+                setModalState({ visible: true, message: res.message || 'Ocorreu um erro.', success: false });
+            }
+        } catch (err: any) {
+            setModalState({ visible: true, message: err.toString(), success: false });
+        }
+    };
+    
+    const closeModal = () => {
+        if (modalState.success) {
+            onSalvar();
+        }
+        setModalState({ visible: false, message: '', success: false });
+    };
+
+    return (
+        <div className={styles.container}>
+            {modalState.visible && (
+                <div className={styles.modalBackdrop}>
+                    <div className={`${styles.modalContent} ${modalState.success ? styles.successModal : styles.errorModal}`}>
+                        <h3>{modalState.success ? 'Sucesso!' : 'Erro!'}</h3>
+                        <p>{modalState.message}</p>
+                        <button onClick={closeModal} className={styles.modalButton}>Fechar</button>
+                    </div>
+                </div>
+            )}
+            
+            <div className={styles.header}>
+                <h2>{itemParaEdicao ? 'Editar' : 'Novo'} Relacionamento</h2>
             </div>
-            <div className={styles.formGroup}>
-                <label className={styles.label}>Parâmetro x POP *</label>
-                <Autocomplete 
-                    items={parametrosPops}
-                    onSelect={setParametroPopSelecionado}
-                    displayFn={(item: ParametroPopDetalhado) => `${item.nome_parametro} (${item.pop_codigo} ${item.pop_numero})`}
-                    initialValue={parametroPopSelecionado ? `${parametroPopSelecionado.nome_parametro} (${parametroPopSelecionado.pop_codigo} ${parametroPopSelecionado.pop_numero})` : ''}
-                    placeholder="Selecione um Parâmetro x POP"
-                    error={errors.parametroPop}
-                />
-                {errors.parametroPop && <span className={styles.errorText}>{errors.parametroPop}</span>}
-            </div>
+            
+            {loading ? <p>A carregar formulário...</p> : (
+                <form className={styles.form} onSubmit={handleSubmit}>
+                    <div className={styles.formGrid}>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Tipo</label>
+                            <AutocompleteSelect options={tipos} selectedValue={formData.tipo} onSelect={handleTipoChange} placeholder="Selecione o Tipo" />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Matriz</label>
+                            <AutocompleteSelect options={matrizes} selectedValue={formData.matriz} onSelect={handleMatrizChange} placeholder="Selecione a Matriz" />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Parâmetro</label>
+                            <AutocompleteSelect options={parametros} selectedValue={formData.parametroId} onSelect={handleParametroChange} placeholder="Busque o Parâmetro" />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Grupo</label>
+                            <input type="text" value={grupoDisplay} className={styles.input} readOnly disabled />
+                        </div>
+                        
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>POP / Técnica</label>
+                            <AutocompleteSelect 
+                                options={popsFiltrados.map(p => ({
+                                    id: p.id, 
+                                    nome: `${p.pop_codigo || ''} ${p.pop_numero || ''} R${p.pop_revisao || ''} - ${p.nome_tecnica || ''}`
+                                }))} 
+                                selectedValue={formData.parametroPopId} 
+                                onSelect={handleParametroPopIdChange} 
+                                placeholder="Selecione o POP"
+                                disabled={!formData.parametroId}
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Objetivo</label>
+                            <input type="text" value={objetivoDisplay} className={styles.input} readOnly disabled />
+                        </div>
+
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>LQ (Inferior / Superior)</label>
+                            <input type="text" value={`Inf: ${lqDisplay.lqi} | Sup: ${lqDisplay.lqs}`} className={styles.input} readOnly disabled />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Incerteza ±</label>
+                            <input type="text" value={incertezaDisplay} className={styles.input} readOnly disabled />
+                        </div>
+                        
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Unidade</label>
+                            <AutocompleteSelect options={unidades} selectedValue={formData.unidade} onSelect={handleUnidadeChange} placeholder="Selecione a Unidade" />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label className={styles.label}>Valor</label>
+                            <input type="number" name="valor" value={formData.valor} onChange={(e) => handleChange('valor', e.target.value)} className={styles.input} step="0.01" required />
+                        </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label className={styles.label}>Limite da Legislação</label>
+                        <div className={styles.limiteRow}>
+                            <input type="text" name="limiteMin" value={formData.limiteMin} onChange={(e) => handleChange('limiteMin', e.target.value)} placeholder="Mínimo" className={styles.input}/>
+                            <select name="limiteSimbolo" value={formData.limiteSimbolo} onChange={(e) => handleChange('limiteSimbolo', e.target.value)} className={styles.select}>
+                                <option value="=">=</option><option value="<">&lt;</option><option value=">">&gt;</option>
+                                <option value="<=">&lt;=</option><option value=">=">&gt;=</option><option value="até">até</option>
+                            </select>
+                            <input type="text" name="limiteMax" value={formData.limiteMax} onChange={(e) => handleChange('limiteMax', e.target.value)} placeholder="Máximo" className={styles.input}/>
+                        </div>
+                    </div>
+
+                    <div className={styles.buttonGroup}>
+                        <button type="button" onClick={onCancelar} className={styles.buttonSecondary}>Voltar</button>
+                        <button type="submit" className={styles.buttonPrimary}>Salvar Relacionamento</button>
+                    </div>
+                </form>
+            )}
         </div>
-
-        <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-                <label htmlFor="tipo" className={styles.label}>Tipo</label>
-                <select id="tipo" value={tipoSelecionado} onChange={(e) => setTipoSelecionado(e.target.value)} className={styles.select}>
-                    <option value="">Todos</option>
-                    {tipos.map(t => <option key={t.nome} value={t.nome}>{t.nome}</option>)}
-                </select>
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="matriz" className={styles.label}>Matriz</label>
-                <select id="matriz" value={matrizSelecionada} onChange={(e) => setMatrizSelecionada(e.target.value)} className={styles.select}>
-                    <option value="">Todas</option>
-                    {matrizes.map(m => <option key={m.id} value={m.nome}>{m.nome}</option>)}
-                </select>
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="unidade" className={styles.label}>Unidade *</label>
-                <select id="unidade" value={unidadeSelecionada} onChange={(e) => setUnidadeSelecionada(e.target.value)} className={`${styles.select} ${errors.unidade ? styles.inputError : ''}`}>
-                    <option value="">Selecione...</option>
-                    {unidades.map(u => <option key={u.nome} value={u.nome}>{u.nome}</option>)}
-                </select>
-                {errors.unidade && <span className={styles.errorText}>{errors.unidade}</span>}
-            </div>
-        </div>
-
-        <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-                <label htmlFor="limiteMin" className={styles.label}>Limite Mínimo</label>
-                <input type="text" id="limiteMin" value={limiteMin} onChange={(e) => setLimiteMin(e.target.value)} className={styles.input} />
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="limiteSimbolo" className={styles.label}>Símbolo</label>
-                <select id="limiteSimbolo" value={limiteSimbolo} onChange={(e) => setLimiteSimbolo(e.target.value)} className={styles.select}>
-                    <option value="=">=</option>
-                    <option value="<">&lt;</option>
-                    <option value=">">&gt;</option>
-                    <option value="<=">&lt;=</option>
-                    <option value=">=">&gt;=</option>
-                    <option value="até">até</option>
-                </select>
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="limiteMax" className={styles.label}>Limite Máximo</label>
-                <input type="text" id="limiteMax" value={limiteMax} onChange={(e) => setLimiteMax(e.target.value)} className={styles.input} />
-            </div>
-            <div className={styles.formGroup}>
-                <label htmlFor="valor" className={styles.label}>Valor</label>
-                <input type="number" step="0.01" id="valor" value={valor} onChange={(e) => setValor(e.target.value)} className={styles.input} />
-            </div>
-        </div>
-
-        <div className={styles.formGroup}>
-             <label className={styles.checkboxLabel}>
-              <input type="checkbox" checked={ativo}
-                onChange={(e) => setAtivo(e.target.checked)} disabled={loading}
-              /> Relacionamento Ativo
-            </label>
-        </div>
-        
-        <div className={styles.buttonGroup}>
-          <button type="button" onClick={onCancelar} className={styles.buttonSecondary} disabled={loading}>
-            Cancelar
-          </button>
-          <button type="submit" className={styles.buttonPrimary} disabled={loading}>
-            {loading ? 'A Salvar...' : (isEdicao ? 'Salvar Alterações' : 'Cadastrar')}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+    );
 };
 
 export default CadastrarLegislacaoParametro;

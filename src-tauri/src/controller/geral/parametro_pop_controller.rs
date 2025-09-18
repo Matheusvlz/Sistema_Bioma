@@ -1,8 +1,9 @@
 use tauri::{command, AppHandle};
 use reqwest::Client;
 use crate::model::api_response::ApiResponse;
-use crate::model::parametro_pop::{ParametroPopDetalhado, ParametroPopPayload, NovoParametroApiPayload, AtualizacaoParametroPop};
+use crate::model::parametro_pop::{ParametroPopDetalhado, ParametroPopPayload, NovoParametroApiPayload, AtualizacaoParametroPop, AtualizacaoLqIncertezaPayload};
 use crate::config::get_api_url;
+use serde_json;
 
 /// [GET] Busca todos os relacionamentos Parametro x POP da API.
 #[command]
@@ -113,6 +114,75 @@ pub async fn deletar_parametro_pop(app_handle: AppHandle, id: u32) -> Result<Api
                 let status = response.status();
                 let err_body = response.text().await.unwrap_or_default();
                 Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
+    }
+}
+
+// --- NOVAS FUNÇÕES ADICIONADAS ABAIXO ---
+
+/// [GET] Busca relacionamentos Parametro x POP por grupo.
+// --- FUNÇÃO "ESPIÃ" TEMPORÁRIA ---
+#[command]
+pub async fn listar_parametros_pops_por_grupo(app_handle: AppHandle, grupo: String) -> Result<ApiResponse<Vec<ParametroPopDetalhado>>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let grupo_encoded = urlencoding::encode(&grupo);
+    let url = format!("{}/parametro-pop/grupo/{}", api_url, grupo_encoded);
+    
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                // --- O NOSSO "ESPIÃO" COMEÇA AQUI ---
+                
+                // Passo 1: Capturamos a resposta como texto puro, em vez de a converter diretamente.
+                match response.text().await {
+                    Ok(raw_json) => {
+                        // Passo 2: Imprimimos o JSON bruto na consola do 'cargo run'.
+                        // Esta é a nossa "caixa preta" que vai revelar tudo.
+                        println!("\n\n--- RESPOSTA BRUTA DA API (ESPIÃO) ---\n");
+                        println!("{}", &raw_json);
+                        println!("\n-------------------------------------\n\n");
+
+                        // Passo 3: Agora, tentamos converter o texto que recebemos para a nossa struct.
+                        match serde_json::from_str::<Vec<ParametroPopDetalhado>>(&raw_json) {
+                            Ok(data) => Ok(ApiResponse::success(format!("Dados para o grupo '{}' carregados.", grupo), Some(data))),
+                            Err(e) => {
+                                // Se a conversão falhar, este erro dir-nos-á exatamente porquê.
+                                eprintln!("\n\n!!! ERRO DE DESERIALIZAÇÃO NO TAURI: {} !!!\n\n", e);
+                                Err(ApiResponse::error(format!("Erro ao processar JSON da API no Tauri: {}", e)))
+                            }
+                        }
+                    },
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao ler o corpo da resposta da API: {}", e)))
+                }
+                // --- FIM DO "ESPIÃO" ---
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}) {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
+    }
+}
+
+/// [PUT] Atualiza o LQ e a Incerteza de um relacionamento.
+#[command]
+pub async fn atualizar_lq_incerteza_tauri(app_handle: AppHandle, id: u32, payload: AtualizacaoLqIncertezaPayload) -> Result<ApiResponse<()>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/parametro-pop/lq-incerteza/{}", api_url, id);
+
+    match client.put(&url).json(&payload).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                Ok(ApiResponse::success("Valores atualizados com sucesso!".to_string(), None))
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}) {}", status, err_body)))
             }
         },
         Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),

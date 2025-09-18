@@ -309,3 +309,16 @@ export const capitalizeWords = (text: string): string => {
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 };
+
+export const formatNumber = (value: number | string | null | undefined): string => {
+  // Se o valor for nulo, indefinido ou uma string vazia, retorna um traço.
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+
+  // Converte o valor para string para garantir que podemos usar .replace()
+  const stringValue = String(value);
+
+  // Troca o ponto decimal por vírgula para o padrão brasileiro.
+  return stringValue.replace('.', ',');
+};

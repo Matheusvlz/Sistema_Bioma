@@ -35,10 +35,20 @@ interface CadastrarPopProps {
 const CadastrarPop: React.FC<CadastrarPopProps> = ({
   popParaEdicao, onSalvar, onCancelar
 }) => {
-  const [pop, setPop] = useState({
+  const [pop, setPop] = useState<{
+    id: number | undefined;
+    codigo: string;
+    numero: string;
+    revisao: string;
+    tecnica: string;
+    IDTECNICA: number;
+    obs: string;
+    ESTADO: boolean;
+    OBJETIVO: string;
+  }>({
     id: undefined, codigo: '', numero: '', revisao: '', tecnica: '', 
     IDTECNICA: 0, obs: '', ESTADO: true, OBJETIVO: '',
-  });
+});
   const [tecnicas, setTecnicas] = useState<Tecnica[]>([]);
   const [sugestoesTecnica, setSugestoesTecnica] = useState<Tecnica[]>([]);
   const [mostrarSugestoes, setMostrarSugestoes] = useState(false);

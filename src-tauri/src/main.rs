@@ -40,6 +40,7 @@ use controller::geral::lab_terceirizado_controller::{
     editar_lab_terceirizado,
     deletar_lab_terceirizado
 };
+// ✅ CORREÇÃO: Usamos os nomes de importação que já existiam, sem o sufixo _tauri.
 use controller::geral::tipo_controller::{
     listar_tipos,
     cadastrar_tipo,
@@ -133,16 +134,60 @@ use controller::geral::parametro_pop_controller::{
     listar_parametros_pops,
     cadastrar_parametro_pop,
     editar_parametro_pop,
-    deletar_parametro_pop
+    deletar_parametro_pop,
+    listar_parametros_pops_por_grupo,
+    atualizar_lq_incerteza_tauri
 };
 
 use controller::geral::legislacao_parametro_controller::{
-    listar_legislacao_parametro,
-    cadastrar_legislacao_parametro,
-    editar_legislacao_parametro,
-    deletar_legislacao_parametro
+    listar_legislacao_parametro_tauri,
+    cadastrar_legislacao_parametro_tauri,
+    editar_legislacao_parametro_tauri,
+    deletar_legislacao_parametro_tauri,
+    listar_legislacoes_ativas_tauri,
+    listar_parametros_simples_tauri,
+    listar_pops_por_parametro_tauri
 };
 
+use controller::geral::pacote_controller::{
+    listar_pacotes_tauri,
+    buscar_pacote_por_id_tauri,
+    criar_pacote_tauri,
+    editar_pacote_tauri,
+    deletar_pacote_tauri
+};
+
+use crate::controller::geral::etapa_controller::{
+    listar_etapas,
+    cadastrar_etapa,
+    editar_etapa,
+    deletar_etapa,
+};
+use crate::controller::geral::tecnica_etapa_controller::{
+    listar_etapas_por_tecnica,
+    relacionar_etapas_a_tecnica,
+    remover_tecnica_etapa,
+    reordenar_etapas_da_tecnica,
+};
+
+use crate::controller::geral::calculo_controller::{
+    self, 
+    validar_formula, 
+    testar_formula, 
+    salvar_calculo, 
+    listar_calculos, 
+    buscar_calculo_por_id, 
+    editar_calculo, 
+    deletar_calculo
+}; 
+
+
+use crate::controller::geral::analise_controller::{
+    get_cidades_analise_command,
+    get_atividades_filtradas_command,
+    get_clientes_analise_command,  // <-- ADICIONAR
+    get_coletores_analise_command  // <-- ADICIONAR
+};
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -164,6 +209,22 @@ use controller::laboratorio::cadastrar_amostra_controller::{
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
+
+
+
+
+use controller::admin::setor_controller::{
+    listar_setores_command,
+    criar_setor_command,
+    listar_usuarios_por_setor_command,
+    atualizar_usuarios_do_setor_command,
+};
+
+use controller::admin::historico_controller::{
+    listar_historico_command,
+    listar_acoes_historico_command,
+};
+
 use controller::laboratorio::planilha_controller::{ consultar_amostras_por_planilha, consultar_intervalos_planilhas, gerar_nova_planilha};
 
 // Módulo: Qualidade e Utilitários
@@ -178,6 +239,27 @@ use controller::qualidade::tauri_print_commands_controller::{
     validate_printer, get_default_print_settings
 };
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
+
+
+
+
+
+
+
+
+
+
+
+
+// Admin
+
+use controller::admin::usuario_controller::{
+    listar_usuarios_admin_command,
+    buscar_usuario_admin_command,
+    criar_usuario_admin_command,
+    atualizar_usuario_admin_command,
+    atualizar_status_usuario_admin_command
+};
 
 // Módulos de Componentes e Outros
 use controller::components::search_controller::{
@@ -281,6 +363,7 @@ fn main() {
             cadastrar_lab_terceirizado,
             editar_lab_terceirizado,
             deletar_lab_terceirizado,
+            // ✅ CORREÇÃO: Usamos os comandos que já existiam, sem o sufixo.
             listar_tipos,
             cadastrar_tipo,
             editar_tipo,
@@ -339,11 +422,41 @@ fn main() {
             cadastrar_parametro_pop,
             editar_parametro_pop,
             deletar_parametro_pop,
-            listar_legislacao_parametro,
-            cadastrar_legislacao_parametro,
-            editar_legislacao_parametro,
-            deletar_legislacao_parametro,
+            listar_parametros_pops_por_grupo,
+            atualizar_lq_incerteza_tauri,
+            listar_etapas,
+            cadastrar_etapa,
+            editar_etapa,
+            deletar_etapa,
+            listar_etapas_por_tecnica,
+            relacionar_etapas_a_tecnica,
+            remover_tecnica_etapa,
+            reordenar_etapas_da_tecnica,
             
+            listar_legislacao_parametro_tauri,
+            cadastrar_legislacao_parametro_tauri,
+            editar_legislacao_parametro_tauri,
+            deletar_legislacao_parametro_tauri,
+            listar_legislacoes_ativas_tauri,
+
+            listar_pacotes_tauri,
+            buscar_pacote_por_id_tauri,
+            criar_pacote_tauri,
+            editar_pacote_tauri,
+            deletar_pacote_tauri, 
+
+            validar_formula,
+            testar_formula,
+            salvar_calculo,
+            listar_calculos,
+            buscar_calculo_por_id,
+            editar_calculo,
+            deletar_calculo,
+
+            get_cidades_analise_command,
+            get_atividades_filtradas_command,
+            get_clientes_analise_command, // <-- ADICIONAR
+            get_coletores_analise_command, // <-- ADICIONAR
             
             // Comandos de Laboratório
             buscar_checagem, 
@@ -399,6 +512,23 @@ fn main() {
             decode_base64_to_json,
             update_template,
             get_template_by_id,
+
+            // Comandos do Módulo de Administração de Usuários
+            listar_usuarios_admin_command,
+            buscar_usuario_admin_command,
+            criar_usuario_admin_command,
+            atualizar_usuario_admin_command,
+            atualizar_status_usuario_admin_command,
+
+            listar_setores_command,
+            criar_setor_command,
+            listar_usuarios_por_setor_command,
+            atualizar_usuarios_do_setor_command,
+
+            listar_historico_command,
+            listar_acoes_historico_command,
+            
+            // Comandos de Componentes e Outros
             buscar_clientes_dropdown,
             buscar_clientes_filtros,
             buscar_usuarios_dropdown,
@@ -455,3 +585,4 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("Erro ao iniciar o app Tauri");
 }
+

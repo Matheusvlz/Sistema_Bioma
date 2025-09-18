@@ -1,5 +1,5 @@
 import { Inicio } from '../view/Main';
-import { Reports } from '../view/Reports';
+import { Relatorio } from '../view/Relatorio';
 import { Settings } from '../view/Settings';
 import { Laboratorio } from '../view/Laboratorio';
 import { Administracao } from '../view/Administracao';
@@ -23,6 +23,13 @@ import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
 import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
 import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoParametro';
 import CadastrarColeta from '../view/geral/CadastrarColeta';
+import CalculoIDE from '../view/geral/CalculoIDE';
+
+import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
+import { CadastrarUsuario }  from '../view/administracao/CadastrarUsuarios';
+import { ListarUsuarios } from '../view/administracao/ListarUsuarios';
+import { GerenciarPermissoesSetor } from '../view/administracao/GerenciarPermissoesSetor';
+import { VisualizarHistorico } from '../view/administracao/VisualizarHistorico';
 
 import VisualizarConsultor from '../view/geral/VisualizarConsultor';
 import VisualizarTipos from '../view/geral/VisualizarTipos';
@@ -48,6 +55,12 @@ import Cadatrar_Abastecimento from '../view/frota/Cadastrar_Abastecimento';
 import VisualizarAbastecimentos from '../view/frota/VisualizarAbastecimentos';
 import VisualizarSubMatrizes from '../view/geral/VisualizarSubMatrizes';
 import VisualizarParametroPop from '../view/geral/VisualizarParametroPop';
+import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
+import GerenciarTecnicaEtapa from '../view/geral/GerenciarTecnicaEtapa';
+import { VisualizarPacotes } from '../view/geral/VisualizarPacotes';
+import { CadastrarPacote } from '../view/geral/CadastrarPacote';
+
+// Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
 import Visualizar_Manutencao from '../view/frota/Visualizar_Manutencao';
 import LocalizacaoTempoReal from '../view/frota/Localizacao_Tempo_Real';
@@ -59,7 +72,7 @@ interface RouteConfig {
 
 export const authenticatedRoutes: Record<string, RouteConfig> = {
   inicio: { component: <Inicio />, hasLayout: true },
-  reports: { component: <Reports />, hasLayout: true },
+  relatorio: { component: <Relatorio />, hasLayout: true },
   settings: { component: <Settings />, hasLayout: true },
   laboratorio: { component: <Laboratorio />, hasLayout: true },
   geral: { component: <Geral />, hasLayout: true },
@@ -99,13 +112,14 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   // SUBROTAS DE RELACIONAMENTOS
   'rel-parametro-pop': { component: <VisualizarParametroPop />, hasLayout: false },
-  'rel-limite-quantificacao': { component: <Inicio />, hasLayout: true },
+  'rel-limite-quantificacao': { component: <VisualizarLqIncerteza />, hasLayout: false },
   'rel-legislacao-parametro': { component: <VisualizarLegislacaoParametro />, hasLayout: false },
-  'rel-pacote-parametro': { component: <Inicio />, hasLayout: true },
-  'rel-tecnica-etapa': { component: <Inicio />, hasLayout: true },
+  'rel-pacote-parametro': { component: <VisualizarPacotes />, hasLayout: false },
+  'cadastrar-pacote': { component: <CadastrarPacote onSalvar={() => {}} onCancelar={() => {}} />, hasLayout: false },
+  'rel-tecnica-etapa': { component: <GerenciarTecnicaEtapa />, hasLayout: false },
 
   // SUBROTAS DE CONTAS
-  'cadastrar-calculo': { component: <Inicio />, hasLayout: true },
+  'cadastrar-calculo': { component: <CalculoIDE />, hasLayout: true },
   'visualizar-calculo': { component: <Inicio />, hasLayout: true },
   
 
@@ -138,9 +152,21 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   
   'localizacao-temporeal': {component: <LocalizacaoTempoReal />, hasLayout: false},
 
-  'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false}
+  'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false},
 
 
+
+
+
+
+
+
+  // Administração
+  'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
+  'cadastrar-usuarios-admin': { component: <CadastrarUsuario />, hasLayout: false },
+  'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
+  'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
+  'admin-historico': { component: <VisualizarHistorico />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

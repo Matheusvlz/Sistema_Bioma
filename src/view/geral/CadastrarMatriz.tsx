@@ -28,18 +28,22 @@ interface CadastrarMatrizProps {
 const CadastrarMatriz: React.FC<CadastrarMatrizProps> = ({
   matrizParaEdicao, onSalvar, onCancelar
 }) => {
-  const [matriz, setMatriz] = useState<MatrizPayload>({ nome: '' });
+  const [matriz, setMatriz] = useState<MatrizPayload>({ id: 0, nome: '' });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const isEdicao = !!matrizParaEdicao;
 
-  useEffect(() => {
-    if (matrizParaEdicao) {
-      setMatriz(matrizParaEdicao);
-    }
-  }, [matrizParaEdicao]);
+ useEffect(() => {
+  if (matrizParaEdicao) {
+    setMatriz({
+      id: matrizParaEdicao.id,
+      nome: matrizParaEdicao.nome || '' // Garante que o nome seja sempre uma string
+    });
+  }
+}, [matrizParaEdicao]);
+
   
   const handleInputChange = (field: keyof MatrizPayload, value: string) => {
     setMatriz(prev => ({ ...prev, [field]: value }));

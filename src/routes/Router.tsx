@@ -2,23 +2,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { core } from '@tauri-apps/api';
 import {
-  FaHome,
-  FaSignInAlt,
-  FaChartBar,
-  FaCog,
-  FaFlask,
-  FaTruck,
-  FaCalendarAlt,
-  FaClipboardCheck,
-  FaMoneyBillWave,
-  FaGlobeAmericas,
-  FaUserCog,
-  FaUsers,
-  FaBuilding,
-  FaHandshake,
-  FaWallet
+  FaHome, FaSignInAlt, FaChartBar, FaCog, FaFlask, FaTruck, FaCalendarAlt, FaClipboardCheck, FaMoneyBillWave, FaGlobeAmericas, FaUserCog, FaUsers, FaBuilding, FaHandshake, FaWallet
 } from 'react-icons/fa';
-import { authenticatedRoutes, AuthenticatedRoute } from './route'; // Import authenticatedRoutes and AuthenticatedRoute
+import { authenticatedRoutes, AuthenticatedRoute } from './route';
 
 interface RouterContextType {
   currentRoute: AuthenticatedRoute;
@@ -47,12 +33,11 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // You can keep a separate map for icons or extract it from authenticatedRoutes if icons were part of it.
-  // For now, let's keep it as is, assuming your icon mapping doesn't change.
+  // O seu mapa de ícones (sem alterações)
   const iconComponentsMap: { [key in AuthenticatedRoute]: React.ElementType } = {
-    'login': FaSignInAlt, // Assuming 'login' is still conceptually a route for icon purposes
+    'login': FaSignInAlt,
     'inicio': FaHome,
-    'reports': FaChartBar,
+    'relatorio': FaChartBar,
     'settings': FaCog,
     'laboratorio': FaFlask,
     'frota': FaTruck,
@@ -62,7 +47,7 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     'geral': FaGlobeAmericas,
     'administracao': FaUserCog,
     'cadastrar-clientes': FaUsers,
-    'visualizar-cliente': FaUsers,
+    'visualizar-clientes': FaUsers,
     'gerenciar-categoria': FaUsers,
     'cadastro-usuario-portal': FaUsers,
     'gerenciar-setor': FaUsers,
@@ -90,6 +75,23 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
     'rel-tecnica-etapa': FaHandshake,
     'cadastrar-calculo': FaWallet,
     'visualizar-calculo': FaWallet,
+    // Adicionando as rotas faltantes para os ícones
+    'cadastrar-pacote': FaHandshake,
+    'chat': FaHome, // Exemplo, ajuste se necessário
+    'criar-planilha': FaClipboardCheck,
+    'cadastrar-planilha': FaClipboardCheck,
+    'planilha-laboratorio': FaFlask,
+    'cadastrar-amostra': FaFlask,
+    'visualizar-amostras': FaFlask,
+    'cadastrar-motorista': FaTruck,
+    'cadastrar-veiculo': FaTruck,
+    'cadastrar-posto': FaTruck,
+    'cadastrar-viagem': FaTruck,
+    'visualizar-viagem': FaTruck,
+    'cadastrar_abastecimento': FaTruck,
+    'visualizar-abastecimento': FaTruck,
+    'historico-usuario': FaUserCog,
+    'visualizar-cliente': FaUsers,
   };
 
   const getRouteIcon = (route: AuthenticatedRoute): React.ReactNode => {
@@ -104,8 +106,10 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
   useEffect(() => {
     const initializeRoute = async () => {
       setIsLoading(true);
-      const pathFromHash = window.location.hash.substring(2);
-      // Check if the route exists in authenticatedRoutes and has a component
+      
+      // ✅ CORREÇÃO DEFINITIVA: Separa o caminho dos parâmetros de busca.
+      const pathFromHash = window.location.hash.substring(2).split('?')[0];
+      
       const isValidHashRoute = authenticatedRoutes.hasOwnProperty(pathFromHash);
 
       if (isValidHashRoute) {
@@ -116,8 +120,6 @@ export const RouterProvider: React.FC<RouterProviderProps> = ({ children }) => {
         try {
           const isAuth = await core.invoke<boolean>('verificar_autenticacao');
           setIsAuthenticated(isAuth);
-          // If not authenticated, always go to 'login'.
-          // If authenticated but hash is invalid, default to 'inicio'.
           setCurrentRoute(isAuth ? 'inicio' : 'login');
         } catch (error) {
           console.error('Erro ao verificar autenticação:', error);

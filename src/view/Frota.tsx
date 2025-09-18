@@ -299,16 +299,11 @@ export const Frota: React.FC = memo(() => {
      //   setLoading(true);
      //   setError(null);
 
-        // Chama o comando do backend Rust 'buscar_agendamentos_hoje'
-        // A função invoke retorna uma Promise que resolve com o valor de `Ok`
-        // ou é rejeitada com o valor de `Err` do Result do Rust.
         const resultado = await invoke<AgendamentoDia[]>('buscar_agendamentos_hoje');
         
-        // Atualiza o estado com os dados recebidos
         setAgendamentos(resultado);
 
-      } catch (err) {
-        // Se a Promise for rejeitada, o erro (a String do Rust) é capturado aqui
+    } catch (err) {
         console.error("Erro ao buscar agendamentos:", err);
         //setError(err as string);
       } finally {

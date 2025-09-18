@@ -47,17 +47,20 @@ body.dark-mode {
 
 /* Header limpo e minimalista */
 .layout-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e5e7eb;
   height: 70px;
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
+  width: 100%;
   z-index: 100;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; /* Transição suave */
+  /* Adicionado para garantir que o .header-content se centralize, se necessário */
+  display: flex;
+  align-items: center;
 }
+
 
 /* Dark Mode para o Header */
 body.dark-mode .layout-header {
@@ -67,24 +70,35 @@ body.dark-mode .layout-header {
 }
 
 .header-content {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start; /* Alinha o conteúdo à esquerda */
+  display: grid;
+  /* 3 colunas: [grupo da esquerda] [espaço vazio flexível] [grupo da direita] */
+  grid-template-columns: auto 1fr auto; 
+  align-items: center; /* Centraliza tudo na altura (verticalmente) */
+  width: 100%;
   height: 100%;
   padding: 0 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
-  gap: 1.5rem; /* Espaçamento entre os principais grupos do header */
+  gap: 2rem; /* Espaçamento entre os grupos */
 }
+
+.header-group-left {
+  grid-column: 1; /* Coloca este grupo na primeira coluna */
+  
+  /* Usamos Flexbox aqui dentro para alinhar o logo e os ícones */
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* Espaço entre o logo e o grupo de ícones */
+  padding-top: 6px;
+}
+
 
 .logo-small {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-weight: 600;
+  font-weight: 600;      /* <<< O negrito vem daqui */
   color: #111827;
-  font-size: 1.25rem;
-  transition: color 0.3s ease; /* Transição suave */
+  font-size: 1.25rem;    /* <<< O tamanho da fonte vem daqui */
+  transition: color 0.3s ease;
 }
 
 /* Dark Mode para o Logo Small */
@@ -94,18 +108,21 @@ body.dark-mode .logo-small {
 
 /* Novo: Container para os ícones à esquerda */
 .header-actions-left {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem; /* Espaçamento entre os ícones */
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
 }
 
 /* Novo: Container para as ações à direita (info do usuário e logout) */
 .header-actions-right {
-    display: flex;
-    align-items: center;
-    /* Remover gap aqui, pois o dropdown será o único item flex */
-    margin-left: auto; /* Empurra este grupo para a direita */
+  grid-column: 3; /* Coloca este grupo na terceira coluna */
+
+  /* Usamos Flexbox aqui dentro para alinhar o item do usuário */
+  display: flex;
+  align-items: center;
+  padding-top: 6px;
 }
+
 .task-actions {
     display: flex;
     align-items: center;
@@ -153,8 +170,9 @@ body.dark-mode .header-icon-button:hover {
 
 /* --- User Dropdown Styles --- */
 .user-dropdown {
-    position: relative;
-    display: inline-block; /* Permite que o dropdown se posicione em relação a ele */
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
 .user-info-toggle {
@@ -654,17 +672,15 @@ body.dark-mode .layout-main::before {
   background: rgba(16, 185, 129, 0.5);
 }
 
+.messages-container,
 .notifications-container,
 .tasks-container {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%; /* Força o contêiner do ícone a ter 70px de altura */
 }
 
-.messages-container,
-.tasks-container {
-    position: relative;
-    display: inline-block;
-}
 
 .notification-badge {
     position: absolute;

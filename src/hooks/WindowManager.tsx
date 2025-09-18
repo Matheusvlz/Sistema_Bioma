@@ -620,48 +620,103 @@ export class WindowManager {
     });
   }
 
-
-  static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
+static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'rel-legislacao-parametro',
       title: 'Gerir Legislação x Parâmetro',
       url: '/#/rel-legislacao-parametro',
-      width: 1400, // Tela maior para a tabela complexa
+      // Combinando as duas versões: tamanho maior + centralizado
+      width: 1400,
       height: 900,
+      center: true,
       allowMultiple: false,
     });
   }
 
-    static async openCadastrarManutencao(): Promise<WebviewWindow> {
+  // Mantendo as novas funções que seu amigo criou
+  static async openCadastrarManutencao(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'cadastrar-manutencao',
       title: 'Cadastrar Manutenção',
       url: '/#/cadastrar-manutencao',
-      width: 1000, 
+      width: 1000,
       height: 900,
       allowMultiple: false,
     });
   }
 
-     static async openVisualizarManutencao(): Promise<WebviewWindow> {
+  static async openVisualizarManutencao(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'visualizar-manutencao',
       title: 'Visualizar Manutenção',
       url: '/#/visualizar-manutencao',
-      width: 1200, 
+      width: 1200,
       height: 900,
       allowMultiple: false,
     });
   }
 
-
-       static async openLocalizacao(): Promise<WebviewWindow> {
+  static async openLocalizacao(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'localizacao-temporeal',
       title: 'Localização em Tempo Real',
       url: '/#/localizacao-temporeal',
-      width: 1200, 
+      width: 1200,
       height: 900,
+      allowMultiple: false,
+    });
+  }
+
+    // Gerir LQ e Incerteza
+    static async openGerenciarLqIncerteza(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'rel-limite-quantificacao', // O 'label' deve corresponder à chave da rota
+            title: 'Gerir Limite de Quantificação e Incerteza', // O título que aparecerá na janela
+            url: '/#/rel-limite-quantificacao', // A URL interna para a nova tela
+            width: 1280,
+            height: 800,
+            center: true, // Garante que a janela abre no centro
+            allowMultiple: false, // Impede que múltiplas janelas iguais sejam abertas
+        });
+    }
+
+
+       static async openGerenciarPacotes(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'rel-pacote-parametro',
+            title: 'Gerir Pacotes de Parâmetros',
+            url: '/#/rel-pacote-parametro',
+            width: 1024,
+            height: 768,
+            center: true,
+            allowMultiple: false,
+        });
+    }
+
+    static async openCadastrarPacote(pacoteId?: number): Promise<WebviewWindow> {
+        const url = pacoteId 
+            ? `/#/cadastrar-pacote?id=${pacoteId}` 
+            : '/#/cadastrar-pacote';
+        
+        return this.openWindow({
+            label: `cadastrar-pacote-${pacoteId || 'novo'}`,
+            title: pacoteId ? 'Editar Pacote de Parâmetros' : 'Novo Pacote de Parâmetros',
+            url: url,
+            width: 1280,
+            height: 800,
+            center: true,
+            allowMultiple: true, // Permite abrir múltiplos cadastros
+        });
+    }
+
+    static async openAnalisarColetores(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'analisar-coletores',
+      // MUDANÇA AQUI para consistência:
+      title: 'Relatório de Coletores', 
+      url: '/#/analisar-coletores',
+      width: 1280,
+      height: 800,
       allowMultiple: false,
     });
   }
@@ -681,7 +736,97 @@ export class WindowManager {
 
 
 
-  
-  
+
+
+
+
+static async openCadastrarUsuarioAdmin(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'cadastrar-usuario-admin',
+    title: 'Cadastrar Novo Usuário',
+    url: '/#/cadastrar-usuarios-admin', // <-- Ponto CRÍTICO a ser verificado
+    width: 550,
+    height: 750,
+    allowMultiple: false,
+  });
+}
+
+static async openGerenciarUsuarios(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-usuarios',
+    title: 'Gerenciar Usuários',
+    url: '/#/admin-usuarios',
+    width: 1200,
+    height: 800,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+static async openGerenciarPermissoesSetor(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-permissoes-setor',
+    title: 'Gerenciar Permissões por Setor',
+    url: '/#/admin-permissoes-setor',
+    width: 1000,
+    height: 750,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+static async openVisualizarHistorico(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'admin-historico',
+    title: 'Visualizar Histórico de Atividades',
+    url: '/#/admin-historico',
+    width: 1280,
+    height: 800,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+   static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
+    // A API do Tauri para criar uma nova janela
+    const webview = new WebviewWindow('rel-tecnica-etapa', {
+      url: '/#/rel-tecnica-etapa', // A rota do React que a nova janela deve carregar
+      title: 'Gerenciar Técnicas e Etapas',
+      width: 1400,
+      height: 900,
+      minWidth: 900,
+      minHeight: 600,
+    });
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+    // Essas duas linhas são importantes para garantir que a janela seja criada corretamente
+    webview.once('tauri://created', function () {
+      // A janela foi criada com sucesso
+    });
+    webview.once('tauri://error', function (e) {
+      // Ocorreu um erro ao criar a janela
+      console.error(e);
+    });
+    
+
+    return webview;
+  }
 
 }
