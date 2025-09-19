@@ -210,7 +210,10 @@ use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
 
-
+use controller::laboratorio::amostra_personalizavel_controller::{
+    listar_amostras_por_faixa_tauri,
+    atualizar_amostras_em_lote_tauri
+};
 
 
 use controller::admin::setor_controller::{
@@ -483,6 +486,8 @@ fn main() {
             gerar_nova_planilha,
             buscar_pg,
             buscar_certificado,
+            listar_amostras_por_faixa_tauri,
+            atualizar_amostras_em_lote_tauri,
 
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,
