@@ -303,14 +303,15 @@ export class WindowManager {
       allowMultiple: true
     });
   }
-  static async openCadastrarAmostra(): Promise<WebviewWindow> {
+  static async openCadastrarAmostra(cadastrar?: any): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'cadastrar-amostra',
       title: 'Cadastrar Amostra',
       url: '/#/cadastrar-amostra',
       width: 1200,
       height: 600,
-      allowMultiple: true
+      allowMultiple: true,
+      data: cadastrar
     });
   }
     static async openVisualizarAmostas(): Promise<WebviewWindow> {

@@ -210,6 +210,7 @@ pub struct DadosGeraisCadastro {
 pub struct CadastroAmostraCompletaRequest {
     pub dados_gerais: DadosGeraisCadastro,
     pub amostras: Vec<AmostraCompleta>,
+    pub coleta: Option<Vec<AmostraColeta>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -217,6 +218,28 @@ pub struct CadastroResponse {
     pub id_solicitacao: u64,
     pub protocolo: String,
 }
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AmostraColeta {
+  pub id: Option<u32>,
+  pub coletaid: Option<u32>,
+  pub hora: Option<String>,
+  pub identificacao: Option<u32>, // Note: The original code had a syntax error here
+  pub complemento: Option<String>,
+  pub ponto: Option<String>,
+  pub coletadopor: Option<String>,
+  pub condicoesambientais: Option<String>,
+  pub vazao: Option<String>,
+  pub ph: Option<String>,
+  pub cloro: Option<String>,
+  pub temperatura: Option<String>,
+  pub cor: Option<String>,
+  pub turbidez: Option<String>,
+  pub sdt: Option<String>,
+  pub condutividade: Option<String>,
+}
+
 
 // === FUNÇÕES AUXILIARES ===
 

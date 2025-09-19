@@ -4,10 +4,12 @@ import { invoke } from "@tauri-apps/api/core";
 import styles from './css/CadastrarColeta.module.css';
 import { listen } from '@tauri-apps/api/event';
 import { emit } from '@tauri-apps/api/event';
+import { WindowManager } from '../../hooks/WindowManager';
 
 // Interfaces para os dados do backend
 interface ColetaData {
   numero?: number;
+  idcliente?: number;
   prefixo?: string;
   data_coleta?: string;
   responsavel_coleta?: string;
@@ -23,6 +25,18 @@ interface ColetaData {
   registro?: string;
 }
 
+interface CustomAmostra
+{
+  type: String;
+  data_content: DataContent;
+
+}
+
+interface DataContent
+{
+  amostra: Amostra[];
+  coleta: Coleta;
+}
  interface SingleAmostraResponse {
     success: boolean;
     data: AmostraData | null; // Use null for optional data
@@ -281,37 +295,41 @@ const convertAmostrasData = (amostrasData: AmostraData[]): Amostra[] => {
     ));
   };
 
-  const handleCadastrarAmostras = () => {
-
+const handleCadastrarAmostras = () => {
     if (selectedAmostras.size === 0) {
-        alert("Nenhuma amostra selecionada para cadastrar.");
+        setMessage({ text: "Nenhuma amostra selecionada para cadastrar.", type: 'error' });
         return;
     }
 
-    let alertMessage = "Amostras selecionadas para cadastro:\n\n";
+    // Filtra apenas as amostras selecionadas
+    const amostrasParaCadastro = Array.from(selectedAmostras).map(index => amostras[index]);
 
-    selectedAmostras.forEach(index => {
-        const amostra = amostras[index];
-        alertMessage += `--- Amostra #${amostra.coletaId || 'NOVA-' + (index + 1)} ---\n`;
-        alertMessage += `Hora: ${amostra.hora}\n`;
-        alertMessage += `Identificação: ${amostra.identificacao} - ${amostra.complemento}\n`;
-        alertMessage += `Ponto: ${amostra.ponto}\n`;
-        alertMessage += `Coletado por: ${amostra.coletadoPor}\n`;
-        alertMessage += `Condições Ambientais: ${amostra.condicoesAmbientais}\n`;
-        alertMessage += `Vazão: ${amostra.vazao}\n`;
-        alertMessage += `pH: ${amostra.ph}\n`;
-        alertMessage += `Cloro: ${amostra.cloro}\n`;
-        alertMessage += `Temperatura: ${amostra.temperatura}\n`;
-        alertMessage += `Cor: ${amostra.cor}\n`;
-        alertMessage += `Turbidez: ${amostra.turbidez}\n`;
-        alertMessage += `SDT: ${amostra.sdt}\n`;
-        alertMessage += `Condutividade: ${amostra.condutividade}\n\n`;
-    });
+    // Cria o objeto CustomAmostra com a estrutura correta
+    const cadastrarData: CustomAmostra = {
+        type: "cadastrar_coleta",
+        data_content: {
+            amostra: amostrasParaCadastro,
+            coleta: coleta
+        }
+    };
 
-    alert(alertMessage);
-
+    // Chama o WindowManager para abrir a janela CadastrarAmostra
+    try {
+        WindowManager.openCadastrarAmostra(cadastrarData);
+        // alert(JSON.stringify(cadastrarData));
+        // Mensagem de sucesso
+        setMessage({ 
+            text: `${amostrasParaCadastro.length} amostra(s) enviada(s) para cadastro.`, 
+            type: 'success' 
+        });
+    } catch (error) {
+        console.error('Erro ao abrir janela CadastrarAmostra:', error);
+        setMessage({ 
+            text: 'Erro ao abrir janela de cadastro de amostras.', 
+            type: 'error' 
+        });
+    }
 };
-
 
 // file: CadastrarColeta.tsx
 const handleCadastrarNumero = async () => {

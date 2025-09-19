@@ -3,10 +3,53 @@ import Sidebar from './Sidebar';
 import { TestTubeDiagonal, ClipboardPen, Plus, Search, X, RefreshCcw, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import { ParametrosSelector } from './ParametrosSelector';
+import { listen } from '@tauri-apps/api/event';
+import { emit } from '@tauri-apps/api/event';
 // Ícones simples usando SVG
 const PlusIcon = () => <Plus size={14} />;
 const SearchIcon = () => <Search size={14} />;
 const XIcon = () => <X size={14} />;
+
+// Interfaces para os dados da coleta
+interface DataContent {
+  amostra: AmostraData[];
+  coleta: Coleta;
+}
+
+// Interface para os dados da Amostra (formato do frontend)
+interface AmostraData {
+  id?: number;
+  coletaId?: number;
+  hora: string;
+  identificacao: string | number; // CORREÇÃO: Aceita tanto string quanto number
+  complemento: string;
+  ponto: string;
+  coletadoPor: string;
+  condicoesAmbientais: string;
+  vazao: string;
+  ph: string;
+  cloro: string;
+  temperatura: string;
+  cor: string;
+  turbidez: string;
+  sdt: string;
+  condutividade: string;
+}
+
+interface Coleta {
+  id?: number;
+  idcliente: number;
+  dataRegistro: string;
+  reciboColeta: string;
+  cliente: string;
+  dataColeta: string;
+  acompanhante: string;
+  documento: string;
+  cargo: string;
+  coletor: string;
+  observacao: string;
+  equipamentos: string[];
+}
 
 // Interface para definir uma amostra
 interface Amostra {
@@ -24,7 +67,12 @@ interface Amostra {
   checkedDisponiveis: number[];
   checkedSelecionados: number[];
 }
+interface CustomAmostra
+{
+  type: String;
+  data_content: any;
 
+}
 interface CustomSelectProps<T> {
   options: T[];
   value: string;
@@ -61,6 +109,7 @@ function CustomSelect<T extends Record<string, any>>({
     );
   }, [options, searchQuery, displayKey]);
 
+  
   // Atualizar o valor de exibição quando o valor selecionado mudar
   useEffect(() => {
     if (value) {
@@ -74,6 +123,11 @@ function CustomSelect<T extends Record<string, any>>({
       setSearchQuery('');
     }
   }, [value, options, displayKey, valueKey]);
+
+  // Método para processar dados da interface DataContent
+
+
+   
 
   // Fechar dropdown quando clicar fora
   useEffect(() => {
@@ -466,7 +520,8 @@ const [dataLimpeza, setDataLimpeza] = useState('');
 const [momentoLimpeza, setMomentoLimpeza] = useState('');
 const [tempoDecorrido, setTempoDecorrido] = useState('');
 const [unidadeTempoDecorrido, setUnidadeTempoDecorrido] = useState('minutos');
-
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null); 
+  // CORREÇÃO: Novo estado para ID do cliente
 // Estados para campos condicionais IN 60
 const [protocoloCliente, setProtocoloCliente] = useState('');
 const [remessaCliente, setRemessaCliente] = useState('');
@@ -515,7 +570,133 @@ const [remessaCliente, setRemessaCliente] = useState('');
     }
   }, [loading, relatorios, selectedReportType]);
 
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
 
+    const setupListener = async () => {
+      try {
+        unlisten = await listen('window-data', (event) => {
+          console.log('Dados recebidos da janela pai:', event.payload);
+          const received = event.payload as CustomAmostra;
+        
+          switch(received.type) {
+            case "editar":
+              break;
+            case "cadastrar_amostra":
+              break;
+            case "cadastrar_coleta":
+              renderDataColeta(received.data_content);
+              break;
+            default:
+              break;
+          }
+        });
+
+        await emit('window-ready');
+      } catch (error) {
+        alert("erro");
+        console.error('Erro ao configurar listener:', error);
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, []);
+    
+
+   const renderDataColeta = (dataContent: DataContent) => {
+    const { amostra, coleta } = dataContent;
+    
+    // CORREÇÃO: Setar corretamente o ID do cliente
+    setSelectedClientId(coleta.idcliente);
+    
+    // CORREÇÃO: Buscar o cliente pelo ID para preencher os dados completos
+    const buscarClientePorId = async (clienteId: number) => {
+      try {
+        const response: ClienteResponse = await invoke('buscar_cliente_por_id', {
+          clienteId: clienteId
+        });
+        
+        if (response.success && response.data && response.data.length > 0) {
+          const clienteEncontrado = response.data[0];
+          setSelectedClienteObj(clienteEncontrado);
+          setSelectedClient(clienteEncontrado.fantasia || clienteEncontrado.razao || '');
+          
+          // Carregar dados do cliente (solicitantes, orçamentos, etc.)
+          const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
+            clienteId: clienteEncontrado.id,
+          });
+
+          setSolicitantes(dadosCliente.solicitantes);
+          setOrcamentos(dadosCliente.orcamentos);
+          setSetores(dadosCliente.setor_portal);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar cliente por ID:', error);
+      }
+    };
+    
+    // Buscar cliente se temos o ID
+    if (coleta.idcliente) {
+      buscarClientePorId(coleta.idcliente);
+    }
+    
+    // Preencher dados da coleta na parte superior
+    setStartDate(coleta.dataRegistro);
+    setCollectDate(coleta.dataColeta);
+    setSelectedClient(coleta.cliente);
+    setCompanion(coleta.acompanhante);
+    setCollectorName(coleta.coletor);
+    
+    // Mapear equipamentos se necessário
+    if (coleta.equipamentos && coleta.equipamentos.length > 0) {
+      console.log('Equipamentos:', coleta.equipamentos);
+    }
+    
+    // CORREÇÃO: Mapear amostras para o estado amostras com tratamento correto da identificação
+    const novasAmostras: Amostra[] = amostra.map((amostraData, index) => {
+      // CORREÇÃO: Buscar a identificação correta pelo ID
+      let identificacaoString = '';
+      if (amostraData.identificacao) {
+        const identificacaoObj = identificacoes.find(id => id.id === Number(amostraData.identificacao));
+        identificacaoString = identificacaoObj ? identificacaoObj.id1 : String(amostraData.identificacao);
+      }
+      
+      return {
+        id: amostraData.id || index + 1,
+        numero: amostraData.coletaId ? String(amostraData.coletaId) : '',
+        horaColeta: amostraData.hora || '',
+        identificacao: identificacaoString, // CORREÇÃO: Usar a string da identificação
+        temperatura: amostraData.temperatura || '',
+        complemento: amostraData.complemento || '',
+        condicoesAmbientais: amostraData.condicoesAmbientais || '',
+        itemOrcamento: null,
+        parametrosDisponiveis: parametrosBase,
+        parametrosSelecionados: [],
+        checkedDisponiveis: [],
+        checkedSelecionados: [],
+      };
+    });
+    
+    // Atualizar estado das amostras
+    setAmostras(novasAmostras);
+    
+    // Definir a primeira amostra como ativa
+    if (novasAmostras.length > 0) {
+      setActiveAmostraTab(novasAmostras[0].id);
+    }
+    
+    console.log('Dados da coleta processados:', { 
+      coleta, 
+      amostras: novasAmostras, 
+      clienteId: coleta.idcliente
+    });
+  };
   // --- LÓGICA PARA EXTRAIR ANOS ÚNICOS E FILTRAR ORÇAMENTOS ---
   const availableYears = useMemo(() => {
     const years = new Set(orcamentos.map(o => o.ano));
@@ -1328,6 +1509,7 @@ const ErrorModal = () => (
     try {
       setSelectedClienteObj(cliente);
       setSelectedClient(cliente.fantasia || cliente.razao || '');
+      setSelectedClientId(cliente.id); // CORREÇÃO: Setar o ID do cliente
       setShowDropdown(false);
       setSearchResults([]);
 
@@ -1473,6 +1655,7 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
   const handleClearSearch = () => {
     setSelectedClient('');
     setSelectedClienteObj(null);
+    setSelectedClientId(null); 
     setSearchResults([]);
     setShowDropdown(false);
     setSolicitantes([]);
@@ -1743,8 +1926,7 @@ const renderCadastroContent = () => (
                 </div>
                  <div style={styles.col6}>
                     <label style={styles.label}>E-mail do Solicitante</label>
-                    <input type="email" value={emailSolicitante} onChange={(e) => setEmailSolicitante(e.target.value)} style={selectedSolicitanteObj ? {...styles.input, ...styles.inputReadOnly} : styles.input} readOnly={!!selectedSolicitanteObj} placeholder="O e-mail será preenchido ao selecionar"/>
-                </div>
+                   <input type="email" value={emailSolicitante} style={{...styles.input, ...styles.inputReadOnly}} readOnly placeholder="E-mail será preenchido automaticamente"/>                </div>
             </div>
         </div>
       </div>
@@ -2377,19 +2559,21 @@ const renderDadosContent = () => {
         </div>
       </div>
 
-      <div style={{...styles.grid12, marginTop: '16px'}}>
-        <div style={styles.col4}>
-          <label style={styles.label}>Identificação</label>
-          <select
-            value={amostraAtiva.identificacao}
-            onChange={(e) => atualizarAmostra(amostraAtiva.id, 'identificacao', e.target.value)}
-            style={styles.select}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-          >
-              {identificacoes.map((legislacao) => (
-                <option key={legislacao.id} value={legislacao.id}>
-                  {legislacao.id1}
+        <div style={{...styles.grid12, marginTop: '16px'}}>
+          <div style={styles.col4}>
+            <label style={styles.label}>Identificação</label>
+            {/* CORREÇÃO: Select de identificação corrigido */}
+            <select
+              value={amostraAtiva.identificacao}
+              onChange={(e) => atualizarAmostra(amostraAtiva.id, 'identificacao', e.target.value)}
+              style={styles.select}
+              onFocus={handleInputFocus}
+              onBlur={handleInputBlur}
+            >
+              <option value="">Selecione uma identificação</option>
+              {identificacoes.map((identificacao) => (
+                <option key={identificacao.id} value={identificacao.id1}>
+                  {identificacao.id1}
                 </option>
               ))}
           </select>
@@ -2542,7 +2726,7 @@ const renderDadosContent = () => {
       atualizarAmostra(amostraAtiva.id, campo, valor);
     };
 
-    return (
+ return (
       <div>
         <ParametrosSelector
           

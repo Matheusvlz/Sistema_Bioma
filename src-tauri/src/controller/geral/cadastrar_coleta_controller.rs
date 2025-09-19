@@ -11,25 +11,6 @@ pub struct ColetaRequest {
     pub visualizacao: Option<bool>, 
 }
 
-// Estrutura para os dados da coleta principal
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ColetaData {
-    pub numero: Option<u32>,
-    pub prefixo: Option<String>,
-    pub data_coleta: Option<String>,
-    pub responsavel_coleta: Option<String>,
-    pub plano_amostragem: Option<String>,
-    pub cliente: Option<String>,
-    pub acompanhante: Option<String>,
-    pub acompanhante_doc: Option<String>,
-    pub acompanhante_cargo: Option<String>,
-    pub coletor: Option<String>,
-    pub fantasia: Option<String>,
-    pub pre_cadastrado: Option<bool>,
-    pub observacao: Option<String>,
-    pub registro: Option<String>,
-}
-
 // Estrutura para os dados das amostras
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmostraData {
@@ -70,9 +51,28 @@ pub struct Equipamentos {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColetaCompleta {
-    pub coleta: ColetaData,
+    pub coleta: Option<Vec<AmostraColeta>>,
     pub amostras: Vec<AmostraData>,
-    pub equipamentos: Vec<Equipamentos>
+    pub equipamentos: Vec<Equipamentos>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ColetaData {
+    pub numero: Option<u32>,
+    pub prefixo: Option<String>,
+    pub data_coleta: Option<String>,
+    pub responsavel_coleta: Option<String>,
+    pub plano_amostragem: Option<String>,
+    pub cliente: Option<String>,
+    pub acompanhante: Option<String>,
+    pub acompanhante_doc: Option<String>,
+    pub acompanhante_cargo: Option<String>,
+    pub coletor: Option<String>,
+    pub fantasia: Option<String>,
+    pub pre_cadastrado: Option<bool>,
+    pub observacao: Option<String>,
+    pub registro: Option<String>,
+    pub idcliente: Option<u32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -87,6 +87,35 @@ pub struct SingleAmostraResponse {
     pub success: bool,
     pub data: Option<AmostraData>,
     pub message: Option<String>,
+}
+
+// Fixed struct with proper union type using an enum
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AmostraColeta {
+    pub id: Option<u32>,
+    pub coletaid: Option<u32>,
+    pub hora: Option<String>,
+    pub identificacao: Option<IdentificacaoType>,
+    pub complemento: Option<String>,
+    pub ponto: Option<String>,
+    pub coletadopor: Option<String>,
+    pub condicoesambientais: Option<String>,
+    pub vazao: Option<String>,
+    pub ph: Option<String>,
+    pub cloro: Option<String>,
+    pub temperatura: Option<String>,
+    pub cor: Option<String>,
+    pub turbidez: Option<String>,
+    pub sdt: Option<String>,
+    pub condutividade: Option<String>,
+}
+
+// Enum to handle the union type for identificacao
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IdentificacaoType {
+    Number(u32),
+    Text(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
