@@ -321,13 +321,20 @@ const handleItemClick = useCallback((itemName: string) => {
       
       case "Cadastrar Fornecedor":
         console.log("Ação: Abrir tela de cadastro de fornecedor!");
-        // TODO: Adicionar lógica para navegar para a página de cadastro de fornecedores.
+        WindowManager.openCadastrarFornecedor();
         break;
 
       case "Visualizar Pesquisa":
         console.log("Ação: Mostrar resultados das pesquisas de satisfação!");
         // TODO: Adicionar lógica para carregar e exibir os dados da pesquisa.
         break;
+
+      case "Visualizar Fornecedor":
+        console.log("Ação: Abrir tela de visualização de fornecedores!");
+        WindowManager.openVisualizarFornecedores();
+        break;
+
+      
 
       // O 'default' é executado se nenhum dos casos acima corresponder.
       default:

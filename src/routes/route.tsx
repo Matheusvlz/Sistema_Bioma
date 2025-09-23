@@ -59,6 +59,9 @@ import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
 import GerenciarTecnicaEtapa from '../view/geral/GerenciarTecnicaEtapa';
 import { VisualizarPacotes } from '../view/geral/VisualizarPacotes';
 import { CadastrarPacote } from '../view/geral/CadastrarPacote';
+import PersonalizarAmostra from '../view/laboratorio/PersonalizarAmostra';
+import FormularioFornecedor from '../view/qualidade/FormularioFornecedor';
+import VisualizarFornecedores from '../view/qualidade/VisualizarFornecedores';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -154,6 +157,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false},
 
+  'lab-personalizar-amostra': { component: <PersonalizarAmostra />, hasLayout: false },
+
 
 
 
@@ -167,6 +172,22 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
   'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
   'admin-historico': { component: <VisualizarHistorico />, hasLayout: false },
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // Qualidade
+  'qualidade-fornecedor-form': { component: <FormularioFornecedor />, hasLayout: false },
+  'visualizar-fornecedores': { component: <VisualizarFornecedores />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

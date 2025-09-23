@@ -19,7 +19,7 @@ pub struct AmostraPersonalizavelDetalhado {
     pub protocolo_cliente: Option<String>,
     pub remessa_cliente: Option<String>,
     pub certificado_tipo_nome: String,
-    pub is_editavel: bool,
+    pub is_editavel: i64,
 }
 
 // Struct para o payload enviado do Frontend para o Tauri, e do Tauri para a API.

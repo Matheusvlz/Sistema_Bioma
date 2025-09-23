@@ -23,8 +23,25 @@ pub async fn listar_amostras_por_faixa_tauri(
     match client.get(&url).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                match response.json::<Vec<AmostraPersonalizavelDetalhado>>().await {
-                    Ok(data) => Ok(ApiResponse::success("Amostras carregadas.".to_string(), Some(data))),
+                // --- NOSSO ESPIÃO ---
+                // 1. Primeiro, lemos a resposta como TEXTO puro, sem tentar adivinhar o formato.
+                let response_text_result = response.text().await;
+
+                // 2. Verificamos se a leitura do texto em si falhou.
+                if let Err(e) = &response_text_result {
+                    return Err(ApiResponse::error(format!("Erro ao ler o corpo da resposta da API: {}", e)));
+                }
+                let text = response_text_result.unwrap();
+
+                // 3. IMPRIMIMOS O TEXTO no console do `cargo run` para podermos ver!
+                println!("\n\n--- RESPOSTA DA API (ESPIÃO) ---");
+                println!("{}", text);
+                println!("---------------------------------\n\n");
+
+                // 4. AGORA, tentamos converter o texto que capturamos para JSON.
+                // Isto provavelmente ainda vai falhar, mas o print acima nos dará a prova do porquê.
+                match serde_json::from_str::<Vec<AmostraPersonalizavelDetalhado>>(&text) {
+                    Ok(data) => Ok(ApiResponse::success("Dados carregados.".to_string(), Some(data))),
                     Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
                 }
             } else {
@@ -36,6 +53,7 @@ pub async fn listar_amostras_por_faixa_tauri(
         Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
+
 
 #[command]
 pub async fn atualizar_amostras_em_lote_tauri(

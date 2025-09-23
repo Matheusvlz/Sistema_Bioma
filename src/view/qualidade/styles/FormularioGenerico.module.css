@@ -1,0 +1,336 @@
+/* Local: src/view/qualidade/styles/FormularioGenerico.module.css */
+
+/* --- Container e Estrutura Principal --- */
+.container {
+    background-color: var(--neutral-50);
+    padding: 2rem;
+    height: 100vh;
+    overflow-y: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--neutral-700);
+}
+
+.form {
+    background: var(--white);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem;
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+    animation: fadeIn 0.5s ease-out;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--neutral-800);
+    margin: 0;
+}
+
+/* --- Linhas e Grupos de Formulário --- */
+.formRow {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Por padrão, ocupa espaço igual */
+}
+
+.formGroup label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 0.5rem;
+}
+
+.formGroup input,
+.formGroup select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-md);
+    font-size: 0.9rem;
+    transition: var(--transition-normal);
+    background-color: var(--gray-50);
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+    outline: none;
+    border-color: var(--primary-green-500);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+    background-color: var(--white);
+}
+
+/* --- Estilos Específicos --- */
+.checkboxGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    background-color: var(--gray-50);
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--gray-200);
+}
+
+.checkboxItem {
+    display: flex;
+    align-items: center;
+}
+
+.checkboxItem input {
+    margin-right: 0.75rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    accent-color: var(--primary-green-600);
+}
+
+.checkboxItem label {
+    font-weight: 500;
+    color: var(--neutral-600);
+    margin-bottom: 0; /* Sobrescreve o padrão do formGroup */
+}
+
+.radioGroup {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0.75rem;
+}
+
+.radioGroup input {
+    margin-right: 0.5rem;
+    width: 1.15rem;
+    height: 1.15rem;
+    accent-color: var(--primary-green-600);
+}
+
+.radioGroup label {
+    font-weight: 500;
+    color: var(--neutral-600);
+    margin-bottom: 0;
+}
+
+/* --- Abas (Tabs) --- */
+.tabContainer {
+    margin-top: 2rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+}
+
+.tabHeader {
+    display: flex;
+    background-color: var(--gray-100);
+}
+
+.tabHeader button {
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--gray-600);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    border-bottom: 3px solid transparent;
+}
+
+.tabHeader button:hover {
+    background-color: var(--gray-200);
+    color: var(--primary-green-800);
+}
+
+.tabHeader .tabActive {
+    color: var(--primary-green-700);
+    background-color: var(--white);
+    border-bottom-color: var(--primary-green-600);
+}
+
+.tabContent {
+    padding: 1.5rem;
+}
+
+/* --- Formulários e Tabelas dentro das Abas --- */
+.subForm {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.subForm input, .subForm select {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+    background-color: var(--white);
+    border-radius: var(--border-radius-sm);
+}
+
+.subForm button {
+    padding: 0.6rem 1.2rem;
+    background: var(--primary-green-100);
+    color: var(--primary-green-800);
+    border: 1px solid var(--primary-green-200);
+    font-weight: 600;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+.subForm button:hover {
+    background-color: var(--primary-green-200);
+    border-color: var(--primary-green-300);
+}
+
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+.dataTable th, .dataTable td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 0.875rem;
+}
+.dataTable th {
+    background-color: var(--gray-50);
+    font-weight: 600;
+    color: var(--neutral-600);
+}
+.dataTable tr:last-child td {
+    border-bottom: none;
+}
+.dataTable td button {
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.dataTable td button:hover {
+    background-color: #fecaca;
+    border-color: #f87171;
+}
+
+/* --- Botões de Ação --- */
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+}
+
+.btnPrimary, .btnSecondary, .btnOutline {
+    padding: 0.8rem 1.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: var(--transition-normal);
+    border: 1px solid transparent;
+}
+.btnPrimary:disabled, .btnSecondary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btnPrimary {
+    background-color: var(--primary-green-600);
+    color: var(--white);
+    border-color: var(--primary-green-700);
+    box-shadow: var(--shadow-sm);
+}
+.btnPrimary:hover:not(:disabled) {
+    background-color: var(--primary-green-700);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.btnSecondary {
+    background-color: var(--gray-200);
+    color: var(--gray-800);
+    border-color: var(--gray-300);
+}
+.btnSecondary:hover:not(:disabled) {
+    background-color: var(--gray-300);
+    border-color: var(--gray-400);
+}
+
+.btnOutline {
+    background-color: var(--white);
+    color: var(--primary-green-700);
+    border-color: var(--primary-green-600);
+}
+.btnOutline:hover:not(:disabled) {
+    background-color: var(--primary-green-50);
+}
+
+
+/* --- Mensagens e Estados de Loading --- */
+.loading {
+    text-align: center;
+    padding: 4rem;
+    font-size: 1.2rem;
+    color: var(--neutral-500);
+    animation: pulse 1.5s infinite;
+}
+
+.error {
+    background-color: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #ffdde1;
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+.success {
+    background-color: #f0fdf4;
+    color: #166534;
+    border: 1px solid #dcfce7;
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .form {
+        padding: 1.5rem;
+    }
+    .formRow {
+        flex-direction: column;
+        gap: 1.25rem;
+        margin-bottom: 0;
+    }
+    .formRow .formGroup {
+        margin-bottom: 1.25rem;
+    }
+    .header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}

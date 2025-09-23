@@ -1,0 +1,130 @@
+/* src/view/laboratorio/css/PersonalizarAmostra.module.css */
+
+.container {
+    padding: 20px;
+    background-color: #f4f6f8;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.searchBox {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.input, .buttonPrimary, .buttonSuccess {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+.buttonPrimary {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    border-color: #007bff;
+}
+
+.buttonPrimary:disabled {
+    background-color: #a0cfff;
+    cursor: not-allowed;
+}
+
+.buttonSuccess {
+    background-color: #28a745;
+    color: white;
+    cursor: pointer;
+    border-color: #28a745;
+}
+
+.buttonSuccess:disabled {
+    background-color: #89d89a;
+    cursor: not-allowed;
+}
+
+.tableContainer {
+    flex-grow: 1;
+    overflow-y: auto;
+    background-color: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th, .table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.table th {
+    background-color: #e9ecef;
+    position: sticky;
+    top: 0;
+}
+
+.table input {
+    width: 100%;
+    border: 1px solid #ccc;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.table input:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+.locked {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.footer {
+    padding-top: 20px;
+    text-align: right;
+}
+
+.error, .success {
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    color: white;
+}
+
+.error { background-color: #dc3545; }
+.success { background-color: #28a745; }
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 50px auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
