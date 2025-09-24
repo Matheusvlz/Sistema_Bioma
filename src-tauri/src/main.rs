@@ -251,6 +251,7 @@ use controller::qualidade::fornecedor_controller::{
     deletar_fornecedor_tauri,
     listar_categorias_fornecedor_tauri,
     listar_fornecedores_tauri,
+    listar_qualificacoes_tauri,
 };
 
 
@@ -532,6 +533,7 @@ fn main() {
             deletar_fornecedor_tauri,
             listar_categorias_fornecedor_tauri,
              listar_fornecedores_tauri, 
+             listar_qualificacoes_tauri,
             
 
             // Comandos do Módulo de Administração de Usuários

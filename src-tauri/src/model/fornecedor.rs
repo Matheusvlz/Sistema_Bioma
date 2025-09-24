@@ -121,4 +121,25 @@ pub struct FornecedorListagem {
     pub NOME: Option<String>,
     pub DOCUMENTO: Option<String>,
     pub CONTATO: Option<String>,
+    pub QUALIFICADO: Option<i8>,
+    pub OBSOLETO: Option<bool>,
+    pub QUALIFICACAO_DESCRICAO: Option<String>,
+    pub QUALIFICACAO_VALIDADE: Option<String>,
+}
+
+// NOVO: Struct para a resposta paginada da API
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RespostaPaginada {
+    pub itens: Vec<FornecedorListagem>,
+    pub total: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[allow(non_snake_case)]
+pub struct QualificacaoListagem {
+    pub RELATORIO: Option<String>,
+    pub FANTASIA: Option<String>,
+    pub DATA_QUALIFICACAO: Option<String>, // Datas da API vêm como String
+    pub VALIDADE: Option<String>,          // Datas da API vêm como String
+    pub FORNECEDOR_ID: u32,
 }

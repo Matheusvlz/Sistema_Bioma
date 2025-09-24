@@ -811,6 +811,18 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
     });
   }
 
+  static async openVisualizarQualificacoes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-qualificacoes',
+      title: 'Visualizar Qualificações', 
+      url: '/#/visualizar-qualificacoes',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
 static async openVisualizarHistorico(): Promise<WebviewWindow> {
   return this.openWindow({
     label: 'admin-historico',

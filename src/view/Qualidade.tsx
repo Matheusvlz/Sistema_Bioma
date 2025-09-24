@@ -329,11 +329,17 @@ const handleItemClick = useCallback((itemName: string) => {
         // TODO: Adicionar lógica para carregar e exibir os dados da pesquisa.
         break;
 
+
+
       case "Visualizar Fornecedor":
         console.log("Ação: Abrir tela de visualização de fornecedores!");
         WindowManager.openVisualizarFornecedores();
         break;
 
+      case "Visualizar Qualificações":
+        console.log("Ação: Abrir tela de visualização de qualificações!");
+        WindowManager.openVisualizarQualificacoes();
+        break;
       
 
       // O 'default' é executado se nenhum dos casos acima corresponder.

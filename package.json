@@ -19,6 +19,7 @@
     "chart.js": "^4.5.0",
     "dialog": "^0.3.1",
     "lucide-react": "^0.523.0",
+    "md": "^0.6.0",
     "react": "^18.3.1",
     "react-beautiful-dnd": "^13.1.1",
     "react-calendar": "^6.0.0",

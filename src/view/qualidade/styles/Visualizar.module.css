@@ -1,62 +1,109 @@
-/* Em src/view/qualidade/styles/Visualizar.module.css */
+/* --- Variáveis Globais para fácil customização --- */
+:root {
+    --primary-color: #007bff;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --light-gray: #f8f9fa;
+    --medium-gray: #dee2e6;
+    --dark-gray: #343a40;
+    --text-color: #212529;
+    --border-radius: 6px;
+    --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
 
+/* --- Layout Principal --- */
 .container {
-    padding: 2rem;
-    background-color: var(--gray-50);
-    height: 100vh;
+    padding: 24px;
+    background-color: var(--light-gray);
     display: flex;
     flex-direction: column;
+    gap: 20px;
+    height: 100vh;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
-    flex-shrink: 0;
 }
 
 .header h1 {
+    font-size: 24px;
+    color: var(--dark-gray);
     margin: 0;
-    color: var(--neutral-800);
 }
 
-.actions {
+/* --- Card de Filtros --- */
+.filterCard {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    display: grid;
+    grid-template-columns: 2fr 1fr 1.5fr auto;
+    gap: 20px;
+    align-items: flex-end;
+}
+
+.formGroup {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.searchInput {
-    padding: 0.6rem 1rem;
-    border-radius: var(--border-radius-md);
-    border: 1px solid var(--gray-300);
-    width: 300px;
-    font-size: 0.9rem;
+.formGroup label {
+    font-weight: 500;
+    font-size: 14px;
+    color: #495057;
 }
 
-.btnPrimary {
-    padding: 0.6rem 1.5rem;
-    border: none;
-    border-radius: var(--border-radius-md);
-    background-color: var(--primary-green-600);
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition-normal);
-}
-.btnPrimary:hover {
-    background-color: var(--primary-green-700);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+.formGroup input[type="text"],
+.formGroup select {
+    padding: 8px 12px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.formGroup input[type="text"]:focus,
+.formGroup select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.radioGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+}
+
+.radioGroup input[type="radio"] {
+    margin-right: 4px;
+}
+
+.filterActions {
+    display: flex;
+    gap: 10px;
+}
+
+/* --- Tabela de Dados --- */
 .tableContainer {
+    background-color: #fff;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
     flex-grow: 1;
-    overflow-y: auto; /* Garante que apenas a tabela role, não a página inteira */
-    background-color: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* CORREÇÃO: Força o container a respeitar os limites do flexbox */
+    overflow-x: auto;
+    overflow-y: auto;
 }
 
 .table {
@@ -65,52 +112,138 @@
 }
 
 .table th, .table td {
-    padding: 1rem;
+    padding: 12px 16px;
     text-align: left;
-    border-bottom: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--medium-gray);
+    white-space: nowrap; 
 }
 
 .table th {
-    background-color: var(--gray-100);
+    background-color: var(--success-color);
+    color: #fff;
+    font-size: 13px;
     font-weight: 600;
-    color: var(--neutral-600);
+    text-transform: uppercase;
     position: sticky;
     top: 0;
+    z-index: 1; 
 }
 
-.table tr:last-child td {
-    border-bottom: none;
+.table tbody tr:nth-child(even) {
+    background-color: var(--light-gray);
 }
 
-.table tr:hover {
-    background-color: var(--primary-green-50);
+.table tbody tr:hover {
+    background-color: #e9ecef;
 }
+
+/* --- Estados da Tabela --- */
+.loadingState, .emptyState {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+    font-size: 16px;
+}
+
+.errorBanner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border-bottom: 1px solid #f5c6cb;
+}
+
+/* --- Badges e Estilos Condicionais --- */
+.badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    background-color: #6c757d; 
+}
+.badge.success { background-color: var(--success-color); }
+.badge.danger { background-color: var(--danger-color); }
+.badge.warning { background-color: #665100; color: #fff; }
+
+.vencido {
+    color: var(--danger-color) !important;
+    font-weight: 700;
+}
+
+/* --- Botões --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s, opacity 0.2s;
+}
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.btnPrimary { background-color: var(--primary-color); color: #fff; }
+.btnPrimary:hover:not(:disabled) { background-color: #0056b3; }
+.btnSuccess { background-color: var(--success-color); color: #fff; }
+.btnSuccess:hover:not(:disabled) { background-color: #1e7e34; }
 
 .actionButtons {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
 }
-
-.btnEdit, .btnDelete {
-    padding: 0.4rem 0.8rem;
-    border: none;
-    border-radius: var(--border-radius-sm);
-    color: white;
-    font-weight: 500;
+.btnIcon {
+    padding: 6px;
+    border-radius: var(--border-radius);
+    background-color: transparent;
+    border: 1px solid transparent;
     cursor: pointer;
-    transition: var(--transition-fast);
+    transition: background-color 0.2s, color 0.2s;
 }
+.btnEdit { color: #545b62; }
+.btnEdit:hover { background-color: #e2e6ea; color: #000; }
+.btnDelete { color: var(--danger-color); }
+.btnDelete:hover { background-color: #f8d7da; }
 
-.btnEdit {
-    background-color: #f59e0b; /* Laranja */
+/* --- Footer e Paginação --- */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 16px;
+    border-top: 1px solid var(--medium-gray);
 }
-.btnEdit:hover {
-    background-color: #d97706;
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-
-.btnDelete {
-    background-color: #ef4444; /* Vermelho */
+.pagination span {
+    font-size: 14px;
+    color: #495057;
 }
-.btnDelete:hover {
-    background-color: #dc2626;
+.pagination button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    background-color: #fff;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.pagination button:hover:not(:disabled) {
+    background-color: #e9ecef;
+}
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

@@ -4,7 +4,7 @@ use tauri::{command, AppHandle};
 use tauri_plugin_opener::OpenerExt;
 use crate::config::get_api_url;
 use crate::model::api_response::ApiResponse;
-use crate::model::fornecedor::{FornecedorDetalhado, SalvarFornecedorPayload, FornecedorListagem};
+use crate::model::fornecedor::{FornecedorDetalhado, SalvarFornecedorPayload, FornecedorListagem, QualificacaoListagem, RespostaPaginada};
 use std::path::Path;
 
 // --- Comandos CRUD (Sem alterações) ---
@@ -161,20 +161,86 @@ pub async fn listar_categorias_fornecedor_tauri(
 #[command]
 pub async fn listar_fornecedores_tauri(
     app_handle: AppHandle,
-) -> Result<ApiResponse<Vec<FornecedorListagem>>, ApiResponse<()>> {
+    filtro_texto: Option<String>,
+    categoria_id: Option<u32>,
+    qualificado: Option<i8>,
+    pagina: u32,
+    por_pagina: u32,
+) -> Result<ApiResponse<RespostaPaginada>, ApiResponse<()>> {
     let client = reqwest::Client::new();
     let api_url = get_api_url(&app_handle);
-    let url = format!("{}/qualidade/fornecedores", api_url);
 
-    match client.get(&url).send().await {
+    // Constrói a URL com os parâmetros de query
+    let mut params = vec![
+        ("pagina".to_string(), pagina.to_string()),
+        ("por_pagina".to_string(), por_pagina.to_string()),
+    ];
+    if let Some(texto) = filtro_texto {
+        if !texto.is_empty() {
+            params.push(("filtro_texto".to_string(), texto));
+        }
+    }
+    if let Some(id) = categoria_id {
+        params.push(("categoria_id".to_string(), id.to_string()));
+    }
+    if let Some(q) = qualificado {
+        params.push(("qualificado".to_string(), q.to_string()));
+    }
+
+    // Usamos a crate `url` para construir a query string de forma segura
+    let url = reqwest::Url::parse_with_params(&format!("{}/qualidade/fornecedores", api_url), &params)
+        .map_err(|e| ApiResponse::error(format!("URL inválida: {}", e)))?;
+
+    match client.get(url).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                match response.json::<Vec<FornecedorListagem>>().await {
+                match response.json::<RespostaPaginada>().await {
                     Ok(data) => Ok(ApiResponse::success("Lista de fornecedores carregada.".to_string(), Some(data))),
                     Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da lista: {}", e))),
                 }
             } else {
-                Err(ApiResponse::error("Falha ao buscar lista de fornecedores da API.".to_string()))
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("Falha ao buscar lista da API: {}", err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão: {}", e))),
+    }
+}
+
+#[command]
+pub async fn listar_qualificacoes_tauri(
+    app_handle: AppHandle,
+    ano: Option<String>,
+    fornecedor_id: Option<u32>,
+) -> Result<ApiResponse<Vec<QualificacaoListagem>>, ApiResponse<()>> {
+    let client = reqwest::Client::new();
+    let api_url = get_api_url(&app_handle);
+    let base_url = format!("{}/qualidade/fornecedores/qualificacoes", api_url);
+
+    // Constrói os parâmetros da query
+    let mut params = Vec::new();
+    if let Some(a) = ano {
+        if !a.is_empty() {
+            params.push(("ano".to_string(), a));
+        }
+    }
+    if let Some(id) = fornecedor_id {
+        params.push(("fornecedor_id".to_string(), id.to_string()));
+    }
+
+    let url = reqwest::Url::parse_with_params(&base_url, &params)
+        .map_err(|e| ApiResponse::error(format!("URL inválida: {}", e)))?;
+
+    match client.get(url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                match response.json::<Vec<QualificacaoListagem>>().await {
+                    Ok(data) => Ok(ApiResponse::success("Lista de qualificações carregada.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da lista: {}", e))),
+                }
+            } else {
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("Falha ao buscar lista de qualificações da API: {}", err_body)))
             }
         },
         Err(e) => Err(ApiResponse::error(format!("Erro de conexão: {}", e))),
