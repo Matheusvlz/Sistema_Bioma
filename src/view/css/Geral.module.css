@@ -10,7 +10,7 @@
   --primary-lightest: #e0e7ff;
   
   /* Gradientes */
-  --gradient-primary: linear-gradient(135deg, #29c629 0%, #29c629 100%);
+  --gradient-primary: linear-gradient(135deg, #2f6f2f 0%, #29c629 100%);
   --gradient-hover: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
   
   /* Cores neutras */
