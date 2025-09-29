@@ -12,7 +12,7 @@ const AddIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height=
 
 // --- Interfaces ---
 interface Pacote { id: number; nome: string | null; legislacao: number | null; }
-interface PacoteCompleto { id: number; nome: string | null; legislacao: number | null; parametros: number[]; }
+interface PacoteCompleto { id: number; nome: string | null; legislacao: number | null; parametros: number[]; parametros_texto: string[] | null;}
 interface Legislacao { id: number; nome: string; }
 interface ApiResponse<T> { success: boolean; data?: T; message?: string; }
 interface Message { type: 'success' | 'error'; text: string; }

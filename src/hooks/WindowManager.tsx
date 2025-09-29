@@ -1,5 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { availableMonitors } from '@tauri-apps/api/window'
+import { ICadastrarAmostraInstance } from '../view/laboratorio/CadastrarAmostra';
 
 export interface WindowConfig {
   label: string;
@@ -735,6 +736,43 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
     });
   }
 
+
+         static async openVisualizarColeta(memory_instance?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'selecionar-coletas',
+      title: 'Selecionar Coletas',
+      url: '/#/selecionar-coletas',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: memory_instance
+    });
+  }
+
+         static async openCopiar(memory_instance?: any): Promise<WebviewWindow> {
+     return this.openWindow({
+      label: 'visualizar-amostras-cadastro',
+      title: 'Visualizar Dados',
+      url: '/#/visualizar-amostras-cadastro',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: memory_instance
+    });
+  }
+
+
+         static async openVisualizarSelecaoParametros(memory_instance?: ICadastrarAmostraInstance): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'selecionar-parametros',
+      title: 'Selecionar Parametros',
+      url: '/#/selecionar-parametros',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: memory_instance
+    });
+  }
 
 
 

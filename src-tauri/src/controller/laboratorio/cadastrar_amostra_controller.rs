@@ -225,7 +225,7 @@ pub struct AmostraColeta {
   pub id: Option<u32>,
   pub coletaid: Option<u32>,
   pub hora: Option<String>,
-  pub identificacao: Option<u32>, // Note: The original code had a syntax error here
+  pub identificacao: Option<String>, // Note: The original code had a syntax error here
   pub complemento: Option<String>,
   pub ponto: Option<String>,
   pub coletadopor: Option<String>,
@@ -411,6 +411,17 @@ fn preparar_dados_para_api(dados: &CadastroAmostraCompletaRequest) -> serde_json
         }).collect::<Vec<_>>()
     });
     
+     if let Some(ref coleta) = dados.coleta {
+        // Mapeia a estrutura de AmostraColeta para um array de objetos JSON
+        payload["coleta"] = serde_json::Value::Array(
+            coleta.iter().map(|item_coleta| {
+                serde_json::json!({
+                    "id": item_coleta.id,
+              
+                })
+            }).collect()
+        );
+    }
     // Adicionar campos condicionais se necessário
     if dados.dados_gerais.tipo_relatorio == 3 {
         if let Some(ref principio_ativo) = dados.dados_gerais.principio_ativo {
@@ -464,6 +475,39 @@ pub async fn buscar_parametros(
     legislacao_id: u32,
 ) -> Result<ParametroResponse, String> {
     let endpoint = format!("parametros/{}", legislacao_id);
+    let client = reqwest::Client::new();
+    let url = format!("{}/{}", get_api_url(&app_handle), endpoint);
+
+    let res = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Erro de conexão com o servidor: {:?}", e))?;
+
+    let status = res.status();
+    let body_text = res
+        .text()
+        .await
+        .map_err(|e| format!("Erro ao ler resposta do servidor: {:?}", e))?;
+
+    if body_text.is_empty() {
+        return Err(format!(
+            "Resposta vazia do servidor (Status: {}) - URL: {}",
+            status, url
+        ));
+    }
+
+    serde_json::from_str::<ParametroResponse>(&body_text)
+        .map_err(|e| format!("Erro ao parsear JSON: {}", e))
+}
+
+
+#[command]
+pub async fn buscar_parametros_by_id(
+    app_handle: AppHandle,
+    parametro_id: u32,
+) -> Result<ParametroResponse, String> {
+    let endpoint = format!("parametros/byid{}", parametro_id);
     let client = reqwest::Client::new();
     let url = format!("{}/{}", get_api_url(&app_handle), endpoint);
 
@@ -605,6 +649,17 @@ pub async fn cadastrar_amostra_completa(
     // --- 3. Tratar a resposta da API ---
     let status = response.status();
     println!("Status da resposta: {}", status);
+
+    if let Some(amostras_coleta) = &dados_cadastro.coleta {
+    if !amostras_coleta.is_empty() {
+        println!("tem conteudo");
+      
+    } else {
+        println!("a coleta esta vazia");
+    }
+} else {
+    println!("payload.coleta é None");
+}
     
     // Apenas tenta parsear o JSON se o status for de sucesso (2xx)
     if status.is_success() {

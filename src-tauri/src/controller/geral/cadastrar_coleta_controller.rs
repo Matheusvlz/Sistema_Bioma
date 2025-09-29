@@ -49,9 +49,32 @@ pub struct Equipamentos {
     pub registro: Option<String>,
 }
 
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Cliente {
+    pub id: Option<u32>,
+    pub fantasia: Option<String>,
+    pub razao: Option<String>,
+    pub documento: Option<String>,
+    pub cidade: Option<String>,
+    pub uf: Option<String>,
+    pub telefone: Option<String>,
+    pub email: Option<String>,
+    pub endereco: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClienteResponse {
+    pub success: bool,
+    pub data: Option<Vec<Cliente>>,
+    pub message: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColetaCompleta {
-    pub coleta: Option<Vec<AmostraColeta>>,
+    // Mude de Vec<AmostraColeta> para ColetaData
+    pub coleta: ColetaData, 
     pub amostras: Vec<AmostraData>,
     pub equipamentos: Vec<Equipamentos>,
 }
@@ -72,7 +95,7 @@ pub struct ColetaData {
     pub pre_cadastrado: Option<bool>,
     pub observacao: Option<String>,
     pub registro: Option<String>,
-    pub idcliente: Option<u32>,
+    pub idcliente: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -123,6 +146,7 @@ pub struct UpdatePayload {
     pub numero: u32,
 }
 
+
 #[command]
 pub async fn buscar_coleta_referente(app_handle: AppHandle, id_coleta: u32) -> ColetaResponse {
     let client = Client::new();
@@ -150,9 +174,18 @@ pub async fn buscar_coleta_referente(app_handle: AppHandle, id_coleta: u32) -> C
             };
         }
     };
-
+    
+    // Parse the JSON response into your ColetaResponse struct
     match res.json::<ColetaResponse>().await {
-        Ok(response) => response,
+        Ok(response) => {
+            // Check if the data field exists and contains the client ID
+            if let Some(coleta_completa) = &response.data {
+                println!(" id do cliente: {}", coleta_completa.coleta.idcliente);
+            } else {
+                println!("No data found in the response.");
+            }
+            response // Return the parsed response
+        },
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
             ColetaResponse {
@@ -228,4 +261,57 @@ pub async fn atualizar_numero_amostra(app_handle: AppHandle, id_amostra: u32, no
             }
         }
     }
+}
+
+#[command]
+pub async fn buscar_cliente_referente(app_handle: AppHandle, id: u32) -> ClienteResponse {
+    let client = Client::new();
+    let url_base = get_api_url(&app_handle);
+    let full_url = format!("{}/get_cliente_by_id/{}", url_base, id); 
+
+    println!("Enviando requisição GET para: {}", full_url);
+
+    let res = match client.get(&full_url).send().await {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return ClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    let status = res.status();
+    if !status.is_success() {
+        let error_body = match res.text().await {
+            Ok(body) => body,
+            Err(_) => "Não foi possível ler o corpo da resposta".to_string(),
+        };
+
+        let message = format!("Erro do servidor: Status {} - {}", status, error_body);
+        println!("{}", message);
+        return ClienteResponse {
+            success: false,
+            data: None,
+            message: Some(message),
+        };
+    }
+
+    match res.json::<ClienteResponse>().await {
+        Ok(response) => {
+            println!("Resposta recebida: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            ClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta do servidor.".to_string()),
+            }
+        }
+    }
+    
 }

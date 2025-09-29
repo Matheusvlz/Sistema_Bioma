@@ -64,6 +64,13 @@ import { CadastrarPacote } from '../view/geral/CadastrarPacote';
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
 import Visualizar_Manutencao from '../view/frota/Visualizar_Manutencao';
 import LocalizacaoTempoReal from '../view/frota/Localizacao_Tempo_Real';
+
+import SelecionarColetasView from '../view/laboratorio/SelecionarColetasView';
+
+import VisualizarAmostraView from '../view/laboratorio/VisualizarAmostraView';
+
+import SelecionarParametrosView from '../view/laboratorio/SelecionarParametrosView';
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -155,18 +162,21 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false},
 
 
-
-
-
-
-
-
   // Administração
   'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
-  'cadastrar-usuarios-admin': { component: <CadastrarUsuario />, hasLayout: false },
+  'cadastrar-usuarios-admin': { component: <CadastrarUsuario itemParaEdicao={null} onSalvar={function (): void {throw new Error('Function not implemented.'); } } onCancelar={function (): void { throw new Error('Function not implemented.'); } } />, hasLayout: false },
   'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
   'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
   'admin-historico': { component: <VisualizarHistorico />, hasLayout: false },
+
+  //LAB
+  'selecionar-parametros': { component: <SelecionarParametrosView />, hasLayout: false },
+
+  
+  'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },
+  'visualizar-amostras-cadastro': { component: <VisualizarAmostraView  />, hasLayout: false },
+
+
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
