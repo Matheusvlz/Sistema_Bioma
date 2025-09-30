@@ -324,6 +324,17 @@ const handleItemClick = useCallback((itemName: string) => {
         WindowManager.openCadastrarFornecedor();
         break;
 
+      case "Cadastrar Pesquisa":
+        console.log("Ação: Abrir tela de cadastro de pesquisa!");
+        WindowManager.openCadastrarPesquisa();
+        break;
+
+      case "Visualizar Pesquisa":
+        console.log("Ação: Abrir tela de cadastro de pesquisa!");
+        WindowManager.openGerenciarPesquisas();
+        break;
+
+
       case "Visualizar Pesquisa":
         console.log("Ação: Mostrar resultados das pesquisas de satisfação!");
         // TODO: Adicionar lógica para carregar e exibir os dados da pesquisa.

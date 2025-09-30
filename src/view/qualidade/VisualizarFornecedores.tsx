@@ -131,7 +131,7 @@ const VisualizarFornecedores: React.FC = () => {
     };
     
     // --- Handlers de Callback do Formulário ---
-    const handleFormSave = (savedData: FornecedorDetalhado) => {
+    const handleFormSave = (_savedData: FornecedorDetalhado) => {
         setIsFormOpen(false);
         const paginaParaRecarregar = editingId ? paginaAtual : totalPaginas > 0 ? totalPaginas : 1;
         carregarDados(paginaParaRecarregar); 

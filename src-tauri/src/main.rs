@@ -254,7 +254,19 @@ use controller::qualidade::fornecedor_controller::{
     listar_qualificacoes_tauri,
 };
 
-
+use controller::qualidade::pesquisa_controller::{
+    listar_modelos_pesquisa_tauri,
+    listar_itens_por_modelo_tauri,
+    cadastrar_pesquisa_tauri,
+    editar_pesquisa_tauri,
+    // ADIÇÕES ABAIXO:
+    buscar_pesquisa_por_id_tauri,
+    listar_pesquisas_tauri,
+    atualizar_status_pesquisa_tauri,
+    listar_destinatarios_tauri,
+    obter_resultados_por_item_tauri,
+    salvar_analise_critica_tauri,
+};
 
 
 
@@ -532,8 +544,18 @@ fn main() {
             editar_fornecedor_tauri,
             deletar_fornecedor_tauri,
             listar_categorias_fornecedor_tauri,
-             listar_fornecedores_tauri, 
-             listar_qualificacoes_tauri,
+            listar_fornecedores_tauri, 
+            listar_qualificacoes_tauri,
+            listar_modelos_pesquisa_tauri,
+            listar_itens_por_modelo_tauri,
+            cadastrar_pesquisa_tauri,
+            editar_pesquisa_tauri,
+            buscar_pesquisa_por_id_tauri,
+            listar_pesquisas_tauri,
+            atualizar_status_pesquisa_tauri,
+            listar_destinatarios_tauri,
+            obter_resultados_por_item_tauri,
+            salvar_analise_critica_tauri,
             
 
             // Comandos do Módulo de Administração de Usuários

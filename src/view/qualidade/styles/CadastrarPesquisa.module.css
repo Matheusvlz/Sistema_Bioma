@@ -1,0 +1,161 @@
+/* --- Base do Componente --- */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Alinha no topo */
+  padding: 2rem;
+  background-color: #f4f7fa; /* Um cinza bem claro para o fundo da página */
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.form {
+  background-color: #ffffff;
+  padding: 2.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* Espaçamento entre os grupos de formulário */
+}
+
+.form h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  color: #2c3e50;
+  text-align: center;
+}
+
+/* --- Grupos de Formulário e Linhas --- */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.formGroup label {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #34495e;
+  font-size: 0.9rem;
+}
+
+.formGroup input,
+.formGroup select {
+  padding: 0.8rem 1rem;
+  border: 1px solid #bdc3c7;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formGroup input:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.row {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* --- Seção de Itens do Modelo --- */
+.itemsSection {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ecf0f1;
+  border-radius: 4px;
+}
+
+.itemsSection h4 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.itemsList {
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 10px; /* Espaço para a barra de rolagem */
+}
+
+.itemsList ul {
+  list-style-type: disc;
+  padding-left: 20px;
+  margin: 0;
+}
+
+.itemsList li {
+  padding: 0.3rem 0;
+  color: #34495e;
+  border-bottom: 1px solid #ecf0f1;
+}
+
+.itemsList li:last-child {
+  border-bottom: none;
+}
+
+.itemsList p {
+  color: #7f8c8d;
+  font-style: italic;
+}
+
+/* --- Mensagens de Feedback --- */
+.error,
+.success {
+  padding: 1rem;
+  border-radius: 4px; 
+  margin-bottom: 0.5rem;
+  text-align: center;
+  font-weight: 500;
+  cursor: pointer; /* Permite clicar para dispensar a mensagem */
+}
+
+.error {
+  background-color: #fbeae5;
+  color: #c0392b;
+  border: 1px solid #e74c3c;
+}
+
+.success {
+  background-color: #e8f6ef;
+  color: #27ae60;
+  border: 1px solid #2ecc71;
+}
+
+/* --- Botões de Ação --- */
+.actions {
+  display: flex;
+  justify-content: flex-end; /* Alinha botões à direita */
+  gap: 1rem;
+  margin-top: 1.5rem;
+  border-top: 1px solid #ecf0f1;
+  padding-top: 1.5rem;
+}
+
+.btnPrimary {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #27ae60; /* Verde para ação principal */
+  color: white;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: #229954;
+}
+
+.btnPrimary:disabled {
+  background-color: #95a5a6;
+  cursor: not-allowed;
+}

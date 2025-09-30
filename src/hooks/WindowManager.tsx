@@ -799,6 +799,33 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
     });
   }
 
+  static async openGerenciarPesquisas(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'qualidade-pesquisas',
+    title: 'Gerenciar Pesquisas de Qualidade',
+    url: '/#/qualidade-pesquisas',
+    width: 900,
+    height: 750,
+    center: true,
+    allowMultiple: false,
+  });
+}
+
+  static async openCadastrarPesquisa(pesquisaId?: number): Promise<WebviewWindow> {
+    const url = pesquisaId 
+      ? `/#/qualidade-pesquisa-formulario?id=${pesquisaId}` 
+      : '/#/qualidade-pesquisa-formulario';
+    return this.openWindow({
+      label: pesquisaId ? `qualidade-pesquisa-formulario-${pesquisaId}` : 'qualidade-pesquisa-formulario',
+      title: pesquisaId ? 'Editar Pesquisa de Qualidade' : 'Cadastrar Nova Pesquisa de Qualidade',
+      url: url,
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: pesquisaId ? true : false, // Permite múltiplas janelas apenas para novo cadastro
+    });
+  }
+
   static async openCadastrarFornecedor(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'qualidade-fornecedor-form-novo',
