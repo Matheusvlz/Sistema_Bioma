@@ -66,6 +66,7 @@ import VisualizarQualificacoes from '../view/qualidade/VisualizarQualificacoes';
 import VisualizarPesquisas from '../view/qualidade/VisualizarPesquisas';
 import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
 import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
+import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -195,7 +196,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'visualizar-qualificacoes': { component: <VisualizarQualificacoes />, hasLayout: false },
   'qualidade-pesquisas': { component: <VisualizarPesquisas />, hasLayout: false },
   'qualidade-pesquisa-formulario': { component: <FormularioPesquisa />, hasLayout: false },
-  'qualidade-pesquisa-resultados': { component: <VisualizarResultadosPesquisa pesquisaId={0} />, hasLayout: false },
+  'qualidade-pesquisa-resultados': { component: <VisualizarResultadosPesquisa />, hasLayout: false },
+  'qualidade-estoque': { component: <GerenciarEstoque />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

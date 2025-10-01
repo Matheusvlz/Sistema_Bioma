@@ -1,5 +1,5 @@
 // Em: src-tauri/src/model/estoque.rs
-
+use bigdecimal::BigDecimal;
 use serde::{Serialize, Deserialize};
 use chrono::{NaiveDate, NaiveTime};
 
@@ -11,9 +11,10 @@ pub struct EstoqueItemDetalhado {
     pub nome: String,
     pub minimo: i32,
     pub ativo: bool,
-    pub unidade_id: u32,
-    pub unidade_sigla: Option<String>,
-    pub saldo_atual: Option<i64>,
+    pub unidade: String,
+    // --- CORREÇÃO ---
+    // Alterado de Option<i64> para Option<BigDecimal>
+    pub saldo_atual: Option<BigDecimal>,
 }
 
 // Struct para receber um registro de movimentação da API
@@ -52,9 +53,10 @@ pub struct PaginatedEstoqueResponse {
 #[allow(non_snake_case)]
 pub struct EstoqueItemPayload {
     pub nome: String,
-    pub unidade_id: u32,
+    // pub unidade_id: u32, // <-- REMOVER
+    pub unidade: String, // <-- CORREÇÃO
     pub minimo: i32,
-    pub ativo: Option<bool>, // Ativo é opcional pois não existe no form de criação
+    pub ativo: Option<bool>,
 }
 
 // Struct para ENVIAR dados de um NOVO item para a API REST
@@ -62,7 +64,8 @@ pub struct EstoqueItemPayload {
 #[allow(non_snake_case)]
 pub struct NovoEstoqueItemApiPayload {
     pub nome: String,
-    pub unidade_id: u32,
+    // pub unidade_id: u32, // <-- REMOVER
+    pub unidade: String, // <-- CORREÇÃO
     pub minimo: i32,
 }
 
@@ -71,7 +74,8 @@ pub struct NovoEstoqueItemApiPayload {
 #[allow(non_snake_case)]
 pub struct AtualizacaoEstoqueItemApiPayload {
     pub nome: String,
-    pub unidade_id: u32,
+    // pub unidade_id: u32, // <-- REMOVER
+    pub unidade: String, // <-- CORREÇÃO
     pub minimo: i32,
     pub ativo: bool,
 }

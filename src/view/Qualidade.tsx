@@ -329,6 +329,10 @@ const handleItemClick = useCallback((itemName: string) => {
         WindowManager.openCadastrarPesquisa();
         break;
 
+      case 'Gerenciar':
+      WindowManager.openGerenciarEstoque();
+      break;
+
       case "Visualizar Pesquisa":
         console.log("Ação: Abrir tela de cadastro de pesquisa!");
         WindowManager.openGerenciarPesquisas();

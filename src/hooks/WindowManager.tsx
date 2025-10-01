@@ -839,6 +839,18 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
     });
 }
 
+  static async openGerenciarEstoque(): Promise<WebviewWindow> {
+    return this.openWindow({
+        label: 'qualidade-estoque',
+        title: 'Gerenciar Estoque',
+        url: '/#/qualidade-estoque',
+        width: 1200,
+        height: 800,
+        center: true,
+        allowMultiple: false,
+    });
+}
+
   static async openCadastrarFornecedor(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'qualidade-fornecedor-form-novo',

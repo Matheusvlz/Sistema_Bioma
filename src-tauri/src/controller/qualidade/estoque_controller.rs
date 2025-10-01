@@ -1,5 +1,5 @@
 // Em: src-tauri/src/controllers/qualidade/estoque_controller.rs
-
+use serde_json;
 use tauri::{command, AppHandle, State};
 use reqwest::Client;
 use crate::model::api_response::ApiResponse;
@@ -68,7 +68,7 @@ pub async fn criar_estoque_item_tauri(
 
     let api_payload = NovoEstoqueItemApiPayload {
         nome: payload.nome,
-        unidade_id: payload.unidade_id,
+        unidade: payload.unidade, // <-- CORREÇÃO
         minimo: payload.minimo,
     };
 
@@ -101,7 +101,7 @@ pub async fn editar_estoque_item_tauri(
 
     let api_payload = AtualizacaoEstoqueItemApiPayload {
         nome: payload.nome,
-        unidade_id: payload.unidade_id,
+        unidade: payload.unidade, // <-- CORREÇÃO
         minimo: payload.minimo,
         ativo: payload.ativo.unwrap_or(true),
     };
@@ -182,19 +182,49 @@ pub async fn listar_unidades_compra_tauri(
 ) -> Result<ApiResponse<Vec<DropdownOption>>, ApiResponse<()>> {
     let client = Client::new();
     let api_url = get_api_url(&app_handle);
-    let url = format!("{}/qualidade/unidades-compra", api_url);
+    let url = format!("{}/qualidade/estoque/unidades-compra", api_url);
+
+    // --- ESPIÃO DEFINITIVO (LADO TAURI) ---
+    println!(">>> TAURI: Chamando API em: {}", url);
 
     match client.get(&url).send().await {
         Ok(response) => {
+            println!(">>> TAURI: Resposta da API recebida com status: {}", response.status());
+
             if response.status().is_success() {
-                match response.json::<Vec<DropdownOption>>().await {
-                    Ok(data) => Ok(ApiResponse::success("Unidades carregadas.".to_string(), Some(data))),
-                    Err(e) => Err(ApiResponse::error(format!("Erro no JSON de unidades: {}", e))),
+                // Primeiro, lemos a resposta como TEXTO para ver o conteúdo bruto.
+                match response.text().await {
+                    Ok(text_body) => {
+                        println!(">>> TAURI: Corpo da resposta (TEXTO BRUTO):\n---\n{}\n---", text_body);
+
+                        // Agora, tentamos "traduzir" o texto que acabamos de imprimir para a nossa struct.
+                        match serde_json::from_str::<Vec<DropdownOption>>(&text_body) {
+                            Ok(data) => {
+                                println!(">>> TAURI: JSON parseado com sucesso.");
+                                Ok(ApiResponse::success("Unidades carregadas.".to_string(), Some(data)))
+                            },
+                            Err(e) => {
+                                println!(">>> TAURI: ERRO CRÍTICO AO PARSEAR JSON: {:?}", e);
+                                let error_message = format!("Erro no JSON de unidades: {}. Resposta recebida: {}", e, text_body);
+                                Err(ApiResponse::error(error_message))
+                            }
+                        }
+                    },
+                    Err(e) => {
+                        println!(">>> TAURI: ERRO ao ler o corpo da resposta como texto: {:?}", e);
+                        Err(ApiResponse::error(format!("Erro ao ler corpo da resposta: {}", e)))
+                    }
                 }
             } else {
-                Err(ApiResponse::error("Falha ao buscar unidades.".to_string()))
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                println!(">>> TAURI: API retornou erro {} com corpo: {}", status, err_body);
+                Err(ApiResponse::error(format!("Falha ao buscar unidades. API retornou erro ({}) {}", status, err_body)))
             }
         },
-        Err(e) => Err(ApiResponse::error(format!("Erro de conexão: {}", e))),
+        Err(e) => {
+            println!(">>> TAURI: Erro de conexão com a API: {:?}", e);
+            Err(ApiResponse::error(format!("Erro de conexão ao buscar unidades: {}", e)))
+        }
     }
 }
