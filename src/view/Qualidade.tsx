@@ -192,8 +192,7 @@ export const Qualidade: React.FC = memo(() => {
       color: styles["bg-green-500"],
       category: "estoque",
       items: [
-        { name: "Cadastrar", icon: Plus, description: "Adicionar itens ao estoque" },
-        { name: "Gerenciar", icon: Settings, description: "Gerenciar estoque existente" }
+        { name: "Gerenciar Estoque", icon: Settings, description: "  Visualize, adicione e edite o estoque" }
       ]
     },
     {
@@ -329,7 +328,7 @@ const handleItemClick = useCallback((itemName: string) => {
         WindowManager.openCadastrarPesquisa();
         break;
 
-      case 'Gerenciar':
+      case 'Gerenciar Estoque':
       WindowManager.openGerenciarEstoque();
       break;
 
