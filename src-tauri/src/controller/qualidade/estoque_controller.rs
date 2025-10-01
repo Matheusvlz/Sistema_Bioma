@@ -8,7 +8,7 @@ use crate::model::estoque::{
     EstoqueItemPayload, NovoEstoqueItemApiPayload, AtualizacaoEstoqueItemApiPayload,
     EstoqueRegistroPayload
 };
-use crate::model::dropdown_options::DropdownOption;
+use crate::model::dropdown_options::DropdownOption2;
 use crate::config::get_api_url;
 
 #[command]
@@ -179,7 +179,7 @@ pub async fn criar_estoque_registro_tauri(
 #[command]
 pub async fn listar_unidades_compra_tauri(
     app_handle: AppHandle
-) -> Result<ApiResponse<Vec<DropdownOption>>, ApiResponse<()>> {
+) -> Result<ApiResponse<Vec<DropdownOption2>>, ApiResponse<()>> {
     let client = Client::new();
     let api_url = get_api_url(&app_handle);
     let url = format!("{}/qualidade/estoque/unidades-compra", api_url);
@@ -198,7 +198,7 @@ pub async fn listar_unidades_compra_tauri(
                         println!(">>> TAURI: Corpo da resposta (TEXTO BRUTO):\n---\n{}\n---", text_body);
 
                         // Agora, tentamos "traduzir" o texto que acabamos de imprimir para a nossa struct.
-                        match serde_json::from_str::<Vec<DropdownOption>>(&text_body) {
+                        match serde_json::from_str::<Vec<DropdownOption2>>(&text_body) {
                             Ok(data) => {
                                 println!(">>> TAURI: JSON parseado com sucesso.");
                                 Ok(ApiResponse::success("Unidades carregadas.".to_string(), Some(data)))
