@@ -826,6 +826,19 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
     });
   }
 
+  static async openResultadosPesquisa(pesquisaId: number): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: `qualidade-pesquisa-resultados-${pesquisaId}`,
+      title: `Resultados da Pesquisa #${pesquisaId}`,
+      url: `/#/qualidade-pesquisa-resultados`,
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: true, // Permite abrir resultados de várias pesquisas
+      state: { pesquisaId: pesquisaId },
+    });
+}
+
   static async openCadastrarFornecedor(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'qualidade-fornecedor-form-novo',

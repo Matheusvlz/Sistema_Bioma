@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import styles from './styles/VisualizarPesquisas.module.css';
+import { WindowManager } from '../../hooks/WindowManager';
 
 // --- Tipagens (mantidas no arquivo, conforme sua preferência) ---
 interface ApiResponse<T> {
@@ -45,6 +46,10 @@ const VisualizarPesquisas: React.FC = () => {
     data: '',
     finalizada: "false", // Padrão: "false" (Não finalizadas), "true" (Finalizadas), "all" (Todos)
   });
+
+  const handleVisualizar = (id: number) => {
+    WindowManager.openResultadosPesquisa(id);
+};
 
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [totalPaginas, setTotalPaginas] = useState(1);
@@ -189,7 +194,7 @@ const VisualizarPesquisas: React.FC = () => {
                   </td>
                   <td className={styles.actions}>
                     <button onClick={() => handleEditar(p.id)} disabled={p.finalizada} title={p.finalizada ? "Não é possível editar uma pesquisa finalizada" : "Editar Pesquisa"}>✏️</button>
-                    <button title="Visualizar/Enviar Respostas">👁️</button>
+                    <button onClick={() => handleVisualizar(p.id)} title="Visualizar Resultados">👁️</button>
                     <button onClick={() => handleAlternarStatus(p)} title={p.finalizada ? "Reativar Pesquisa" : "Finalizar Pesquisa"}>
                       {p.finalizada ? '🟢' : '🔴'}
                     </button>

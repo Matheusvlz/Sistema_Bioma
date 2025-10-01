@@ -268,6 +268,15 @@ use controller::qualidade::pesquisa_controller::{
     salvar_analise_critica_tauri,
 };
 
+use controller::qualidade::estoque_controller::{
+    listar_estoque_items_tauri,
+    criar_estoque_item_tauri,
+    editar_estoque_item_tauri,
+    buscar_estoque_item_detalhado_tauri,
+    criar_estoque_registro_tauri,
+    listar_unidades_compra_tauri,
+};
+
 
 
 
@@ -556,7 +565,12 @@ fn main() {
             listar_destinatarios_tauri,
             obter_resultados_por_item_tauri,
             salvar_analise_critica_tauri,
-            
+            listar_estoque_items_tauri,
+            criar_estoque_item_tauri,
+            editar_estoque_item_tauri,
+            buscar_estoque_item_detalhado_tauri,
+            criar_estoque_registro_tauri,
+            listar_unidades_compra_tauri,
 
             // Comandos do Módulo de Administração de Usuários
             listar_usuarios_admin_command,
