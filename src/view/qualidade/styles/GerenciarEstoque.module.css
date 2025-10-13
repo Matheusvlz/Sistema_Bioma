@@ -1,0 +1,291 @@
+/* --- src/view/qualidade/css/GerenciarEstoque.module.css --- */
+
+/* Variáveis de Tema: O Coração do Design "Qualidade Verde" */
+:root {
+    --verde-principal: #28a745;
+    --verde-escuro: #218838;
+    --verde-claro: #e9f5ec;
+    --fundo-geral: #f4f7f6;
+    --fundo-painel: #ffffff;
+    --texto-principal: #333;
+    --texto-secundario: #6c757d;
+    --cor-borda: #dee2e6;
+    --cor-erro: #dc3545;
+    --sombra-suave: 0 2px 8px rgba(0, 0, 0, 0.06);
+    --raio-borda: 6px;
+}
+
+/* Container Principal */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--fundo-geral);
+    color: var(--texto-principal);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: var(--fundo-painel);
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: var(--verde-principal);
+}
+
+/* Mensagens de Feedback */
+.error, .success {
+    padding: 1rem;
+    margin: 1rem 1.5rem 0;
+    border-radius: var(--raio-borda);
+    color: #fff;
+    text-align: center;
+}
+
+.error { background-color: var(--cor-erro); }
+.success { background-color: var(--verde-principal); }
+
+/* Seção de Filtros */
+.filters {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: var(--fundo-painel);
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.filters input[type="text"] {
+    flex-grow: 1;
+}
+
+.filters label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+/* Layout Principal (Lista e Detalhes) */
+.mainContent {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden; /* Evita que os painéis causem scroll na página inteira */
+}
+
+.listPane {
+    flex: 0 0 350px;
+    border-right: 1px solid var(--cor-borda);
+    background-color: var(--fundo-painel);
+    overflow-y: auto;
+    padding-top: 1rem;
+}
+
+.listPane ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.listPane li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--cor-borda);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.listPane li:hover {
+    background-color: var(--verde-claro);
+}
+
+.listPane li.active {
+    background-color: var(--verde-principal);
+    color: white;
+    border-left: 4px solid var(--verde-escuro);
+}
+
+.listPane li.active small {
+    color: white;
+}
+
+.listPane li span {
+    font-weight: 500;
+}
+
+.listPane li small {
+    color: var(--texto-secundario);
+}
+
+.detailsPane {
+    flex-grow: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    color: var(--texto-secundario);
+    font-size: 1.2rem;
+}
+
+/* Seções de Formulários */
+.formSection {
+    background-color: var(--fundo-painel);
+    padding: 1.5rem;
+    border-radius: var(--raio-borda);
+    box-shadow: var(--sombra-suave);
+    margin-bottom: 2rem;
+}
+
+.formSection h3 {
+    margin-top: 0;
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--verde-escuro);
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Estilos de inputs, selects e botões */
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: var(--raio-borda);
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--verde-principal);
+    box-shadow: 0 0 0 2px var(--verde-claro);
+}
+
+.buttonPrimary, .buttonSecondary {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--raio-borda);
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s;
+}
+.buttonPrimary:hover, .buttonSecondary:hover {
+    transform: translateY(-1px);
+}
+.buttonPrimary {
+    background-color: var(--verde-principal);
+    color: white;
+}
+.buttonPrimary:hover {
+    background-color: var(--verde-escuro);
+}
+.buttonSecondary {
+    background-color: #e9ecef;
+    color: var(--texto-principal);
+}
+
+.movimentoForm {
+    display: grid;
+    grid-template-columns: 1fr 1fr 100px 120px 2fr auto;
+    gap: 1rem;
+    align-items: center;
+}
+.movimentoForm button {
+    height: 100%;
+    background-color: var(--verde-principal);
+    color: white;
+    border:none;
+    border-radius: var(--raio-borda);
+    cursor: pointer;
+}
+
+/* Tabela de Histórico */
+.historyTable {
+    margin-top: 2rem;
+}
+.historyTable h3 {
+    margin-top: 0;
+    color: var(--verde-escuro);
+}
+
+.historyTable table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--fundo-painel);
+    box-shadow: var(--sombra-suave);
+    border-radius: var(--raio-borda);
+    overflow: hidden;
+}
+
+.historyTable th, .historyTable td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.historyTable th {
+    background-color: var(--fundo-geral);
+}
+.historyTable tr:last-child td {
+    border-bottom: none;
+}
+.entrada { color: var(--verde-principal); font-weight: 500; }
+.saida { color: var(--cor-erro); font-weight: 500; }
+
+
+/* Formulário Modal/Página Nova */
+.modalForm {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: var(--fundo-painel);
+    padding: 2rem;
+    border-radius: var(--raio-borda);
+    box-shadow: var(--sombra-suave);
+}
+.modalForm label {
+    display: block;
+    margin-bottom: 1.5rem;
+}
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+/* Spinner de Carregamento */
+.spinner {
+    border: 4px solid var(--verde-claro);
+    border-top: 4px solid var(--verde-principal);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 4rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

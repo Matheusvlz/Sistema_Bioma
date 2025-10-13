@@ -311,7 +311,7 @@ export const Administracao = memo(() => {
             value: "2",
             change: "+1",
             icon: AlertTriangle,
-            iconBg: { backgroundColor: '#0e5a0eff' },
+            iconBg: { backgroundColor: '#0e5a0eff   ' },
             changeBg: { backgroundColor: '#fecaca', color: '#991b1b' },
             trendColor: '#ef4444'
         }

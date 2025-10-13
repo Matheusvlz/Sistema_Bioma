@@ -192,8 +192,7 @@ export const Qualidade: React.FC = memo(() => {
       color: styles["bg-green-500"],
       category: "estoque",
       items: [
-        { name: "Cadastrar", icon: Plus, description: "Adicionar itens ao estoque" },
-        { name: "Gerenciar", icon: Settings, description: "Gerenciar estoque existente" }
+        { name: "Gerenciar Estoque", icon: Settings, description: "  Visualize, adicione e edite o estoque" }
       ]
     },
     {
@@ -323,6 +322,21 @@ const handleItemClick = useCallback((itemName: string) => {
         console.log("Ação: Abrir tela de cadastro de fornecedor!");
         WindowManager.openCadastrarFornecedor();
         break;
+
+      case "Cadastrar Pesquisa":
+        console.log("Ação: Abrir tela de cadastro de pesquisa!");
+        WindowManager.openCadastrarPesquisa();
+        break;
+
+      case 'Gerenciar Estoque':
+      WindowManager.openGerenciarEstoque();
+      break;
+
+      case "Visualizar Pesquisa":
+        console.log("Ação: Abrir tela de cadastro de pesquisa!");
+        WindowManager.openGerenciarPesquisas();
+        break;
+
 
       case "Visualizar Pesquisa":
         console.log("Ação: Mostrar resultados das pesquisas de satisfação!");

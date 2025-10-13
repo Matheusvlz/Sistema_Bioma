@@ -1,0 +1,207 @@
+.container {
+    padding: 2rem;
+    background-color: #f8f9fa;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    color: #343a40;
+}
+
+/* --- Barra de Filtros --- */
+.filterBar {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.filterBar input,
+.filterBar select {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    flex-grow: 1;
+}
+
+/* --- Tabela de Dados --- */
+.tableContainer {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden;
+    flex-grow: 1; /* Faz a tabela ocupar o espaço disponível */
+    display: flex;
+    flex-direction: column;
+}
+
+.tableContainer table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tableContainer th,
+.tableContainer td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.tableContainer th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.tableContainer td {
+    color: #212529;
+}
+
+.tableContainer tr:last-child td {
+    border-bottom: none;
+}
+
+.tableContainer tr:hover {
+    background-color: #f1f3f5;
+}
+
+.noResults {
+    text-align: center !important;
+    padding: 3rem !important;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* --- Status Badges --- */
+.statusAtiva, .statusFinalizada {
+    padding: 0.25em 0.6em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 10px;
+    color: #fff;
+}
+.statusAtiva {
+    background-color: #28a745; /* Verde */
+}
+.statusFinalizada {
+    background-color: #dc3545; /* Vermelho */
+}
+
+/* --- Botões de Ação na Tabela --- */
+.actions {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+.actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.2rem;
+    transition: transform 0.2s;
+}
+.actions button:hover {
+    transform: scale(1.2);
+}
+.actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+/* --- Botões Principais --- */
+.buttonPrimary, .buttonSecondary {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.buttonPrimary {
+    color: #fff;
+    background-color: #007bff;
+}
+.buttonPrimary:hover {
+    background-color: #0056b3;
+}
+.buttonSecondary {
+    color: #343a40;
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+}
+.buttonSecondary:hover {
+    background-color: #dae0e5;
+}
+
+/* --- Paginação --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.pagination button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    background-color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.pagination button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+.pagination span {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* --- Loading e Erro --- */
+.spinner {
+    margin: 3rem auto;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.error {
+    padding: 1rem;
+    border-radius: 4px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    text-align: center;
+}

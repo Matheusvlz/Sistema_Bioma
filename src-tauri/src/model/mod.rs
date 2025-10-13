@@ -40,3 +40,5 @@ pub mod setor;
 pub mod historico;
 pub mod amostra_personalizavel;
 pub mod fornecedor;
+pub mod pesquisa;
+pub mod estoque;

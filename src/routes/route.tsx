@@ -63,6 +63,10 @@ import PersonalizarAmostra from '../view/laboratorio/PersonalizarAmostra';
 import FormularioFornecedor from '../view/qualidade/FormularioFornecedor';
 import VisualizarFornecedores from '../view/qualidade/VisualizarFornecedores';
 import VisualizarQualificacoes from '../view/qualidade/VisualizarQualificacoes';
+import VisualizarPesquisas from '../view/qualidade/VisualizarPesquisas';
+import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
+import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
+import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -199,6 +203,10 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'qualidade-fornecedor-form': { component: <FormularioFornecedor />, hasLayout: false },
   'visualizar-fornecedores': { component: <VisualizarFornecedores />, hasLayout: false },
   'visualizar-qualificacoes': { component: <VisualizarQualificacoes />, hasLayout: false },
+  'qualidade-pesquisas': { component: <VisualizarPesquisas />, hasLayout: false },
+  'qualidade-pesquisa-formulario': { component: <FormularioPesquisa />, hasLayout: false },
+  'qualidade-pesquisa-resultados': { component: <VisualizarResultadosPesquisa />, hasLayout: false },
+  'qualidade-estoque': { component: <GerenciarEstoque />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

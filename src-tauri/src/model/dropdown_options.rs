@@ -29,3 +29,13 @@ pub struct PopOption {
     pub lqi: Option<String>,
     pub lqs: Option<String>,
 }
+
+
+
+#[derive(Debug, Serialize, Deserialize, Clone)] // Adicionado Clone para consistência
+#[allow(non_snake_case)]
+pub struct DropdownOption2 {
+    pub id: String, // GARANTA QUE ESTÁ COMO String
+    pub nome: String,
+}
+
