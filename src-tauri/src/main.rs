@@ -206,8 +206,11 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_orcamentos, 
     cadastrar_amostra_completa,
     buscar_pg,
-    buscar_certificado
+    buscar_certificado,
+    buscar_parametros_by_id
 };
+
+use controller::laboratorio::buscar_coleta::{buscar_coletas_e_amostras_client_command};
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
@@ -316,7 +319,7 @@ use controller::frota::viagem_controller::{criar_frota_viagem, buscar_viagens, d
 // --- Importações do Sistema ---
 use controller::frota::manutencao_controller::{deletar_tipo_manutencao, buscar_tipos_manutencao, atualizar_frota_manutencao, buscar_manutencoes, criar_frota_manutencao, criar_tipo_manutencao, deletar_frota_manutencao};
 use controller::frota::abastecimento_controller::{deletar_frota_abastecimento, criar_frota_abastecimento, atualizar_frota_abastecimento, buscar_abastecimento, buscar_abastecimento_filtrado};
-use controller::geral::cadastrar_coleta_controller::{buscar_coleta_referente, atualizar_numero_amostra};
+use controller::geral::cadastrar_coleta_controller::{buscar_coleta_referente, atualizar_numero_amostra, buscar_cliente_referente};
 use std::env;
 use crate::config::get_ws_url;
 
@@ -641,7 +644,10 @@ fn main() {
             criar_tipo_manutencao,
             deletar_frota_manutencao,
             buscar_coleta_referente,
-            atualizar_numero_amostra
+            atualizar_numero_amostra,
+            buscar_cliente_referente,
+            buscar_parametros_by_id,
+            buscar_coletas_e_amostras_client_command
 
         ])
         .run(tauri::generate_context!())

@@ -1,5 +1,6 @@
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { availableMonitors } from '@tauri-apps/api/window'
+import { ICadastrarAmostraInstance } from '../view/laboratorio/CadastrarAmostra';
 
 export interface WindowConfig {
   label: string;
@@ -303,14 +304,15 @@ export class WindowManager {
       allowMultiple: true
     });
   }
-  static async openCadastrarAmostra(): Promise<WebviewWindow> {
+  static async openCadastrarAmostra(cadastrar?: any): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'cadastrar-amostra',
       title: 'Cadastrar Amostra',
       url: '/#/cadastrar-amostra',
       width: 1200,
       height: 600,
-      allowMultiple: true
+      allowMultiple: true,
+      data: cadastrar
     });
   }
     static async openVisualizarAmostas(): Promise<WebviewWindow> {
@@ -748,6 +750,48 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
     });
   }
 
+
+static async openVisualizarColeta(memory_instance?: any, selectedClientId?: number | null): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'selecionar-coletas',
+      title: 'Selecionar Coletas',
+      url: '/#/selecionar-coletas',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: { // <-- Encapasulando os dados em um único objeto
+        // A instância para comunicação de volta
+        parentInstance: memory_instance, 
+        // O ID do cliente, se necessário para carregar as coletas
+        clientId: selectedClientId 
+      }
+    });
+  }
+
+         static async openCopiar(memory_instance?: any): Promise<WebviewWindow> {
+     return this.openWindow({
+      label: 'visualizar-amostras-cadastro',
+      title: 'Visualizar Dados',
+      url: '/#/visualizar-amostras-cadastro',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: memory_instance
+    });
+  }
+
+
+         static async openVisualizarSelecaoParametros(memory_instance?: ICadastrarAmostraInstance): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'selecionar-parametros',
+      title: 'Selecionar Parametros',
+      url: '/#/selecionar-parametros',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: memory_instance
+    });
+  }
 
 
 

@@ -4,10 +4,12 @@ import { invoke } from "@tauri-apps/api/core";
 import styles from './css/CadastrarColeta.module.css';
 import { listen } from '@tauri-apps/api/event';
 import { emit } from '@tauri-apps/api/event';
+import { WindowManager } from '../../hooks/WindowManager';
 
 // Interfaces para os dados do backend
 interface ColetaData {
   numero?: number;
+  idcliente?: number;
   prefixo?: string;
   data_coleta?: string;
   responsavel_coleta?: string;
@@ -23,6 +25,18 @@ interface ColetaData {
   registro?: string;
 }
 
+interface CustomAmostra
+{
+  type: String;
+  data_content: DataContent;
+
+}
+
+interface DataContent
+{
+  amostra: Amostra[];
+  coleta: Coleta;
+}
  interface SingleAmostraResponse {
     success: boolean;
     data: AmostraData | null; // Use null for optional data
@@ -82,6 +96,7 @@ interface ColetaResponse {
 // Interface para os dados da Coleta (formato do frontend)
 interface Coleta {
   id?: number;
+  idcliente?: number;
   dataRegistro: string;
   reciboColeta: string;
   cliente: string;
@@ -115,19 +130,21 @@ interface Amostra {
 }
 
 const CadastrarColeta: React.FC = () => {
-  const [coleta, setColeta] = useState<Coleta>({
-    id: 0,
-    dataRegistro: new Date().toISOString().split('T')[0],
-    reciboColeta: '',
-    cliente: '',
-    dataColeta: '',
-    acompanhante: '',
-    documento: '',
-    cargo: '',
-    coletor: '',
-    observacao: '',
-    equipamentos: []
-  });
+   const [coleta, setColeta] = useState<Coleta>({
+        // Initial state
+        id: 0,
+        idcliente: 0, // This is a number
+        dataRegistro: new Date().toISOString().split('T')[0],
+        reciboColeta: '',
+        cliente: '',
+        dataColeta: '',
+        acompanhante: '',
+        documento: '',
+        cargo: '',
+        coletor: '',
+        observacao: '',
+        equipamentos: []
+    });
 
   const [amostras, setAmostras] = useState<Amostra[]>([]);
   const [loading, setLoading] = useState(false);
@@ -147,21 +164,22 @@ const CadastrarColeta: React.FC = () => {
   const [equipamentosDisponiveis, setEquipamentosDisponiveis] = useState<string[]>([]);
 
   // Função para converter dados do backend para formato do frontend
-  const convertColetaData = (data: ColetaCompleta): Coleta => {
-    return {
-      id: data.coleta.numero,
-      dataRegistro: data.coleta.registro || new Date().toISOString().split('T')[0],
-      reciboColeta: data.coleta.prefixo || '',
-      cliente: data.coleta.cliente || '',
-      dataColeta: data.coleta.data_coleta || '',
-      acompanhante: data.coleta.acompanhante || '',
-      documento: data.coleta.acompanhante_doc || '',
-      cargo: data.coleta.acompanhante_cargo || '',
-      coletor: data.coleta.coletor || '',
-      observacao: data.coleta.observacao || '',
-      equipamentos: data.equipamentos.map(eq => eq.registro || eq.nome || '').filter(Boolean)
+   const convertColetaData = (data: ColetaCompleta): Coleta => {
+        return {
+            id: data.coleta.numero,
+            idcliente: data.coleta.idcliente, // Ensure this value is properly mapped
+            dataRegistro: data.coleta.registro || new Date().toISOString().split('T')[0],
+            reciboColeta: data.coleta.prefixo || '',
+            cliente: data.coleta.cliente || '',
+            dataColeta: data.coleta.data_coleta || '',
+            acompanhante: data.coleta.acompanhante || '',
+            documento: data.coleta.acompanhante_doc || '',
+            cargo: data.coleta.acompanhante_cargo || '',
+            coletor: data.coleta.coletor || '',
+            observacao: data.coleta.observacao || '',
+            equipamentos: data.equipamentos.map(eq => eq.registro || eq.nome || '').filter(Boolean)
+        };
     };
-  };
 
   // Função para converter amostras do backend para formato do frontend
 // file: CadastrarColeta.tsx
@@ -188,52 +206,55 @@ const convertAmostrasData = (amostrasData: AmostraData[]): Amostra[] => {
 };
 
   // Função para buscar dados da coleta
-  const getColetaData = async (idColeta: number) => {
-    if (!idColeta) {
-      console.error('ID da coleta não fornecido');
-      return;
-    }
+ const getColetaData = async (idColeta: number) => {
+        if (!idColeta) {
+            console.error('ID da coleta não fornecido');
+            return;
+        }
 
-    setLoading(true);
-    try {
-      console.log('Buscando coleta com ID:', idColeta);
-      const response = await invoke<ColetaResponse>("buscar_coleta_referente", {
-        idColeta: idColeta
-      });
+        setLoading(true);
+        try {
+            console.log('Buscando coleta com ID:', idColeta);
+            const response = await invoke<ColetaResponse>("buscar_coleta_referente", {
+                idColeta: idColeta
+            });
 
-      console.log('Resposta do backend:', response);
+            console.log('Resposta do backend:', response);
 
-      if (response.success && response.data) {
-        const coletaData = convertColetaData(response.data);
-        const amostrasData = convertAmostrasData(response.data.amostras);
-        
-        setColetaOriginal(response.data);
-        setColeta(coletaData);
-        setAmostras(amostrasData);
-        setEquipamentosDisponiveis(response.data.equipamentos.map(eq => eq.registro || eq.nome || '').filter(Boolean));
-        
-        setMessage({ text: 'Coleta carregada com sucesso!', type: 'success' });
-        
-        // --- LÓGICA ATUALIZADA: Verifica se alguma amostra é duplicata ---
-        const hasAnyDuplicate = response.data.amostras.some(amostra => amostra.duplicata === true);
-        setHasDuplicate(hasAnyDuplicate);
+            if (response.success && response.data) {
+                const coletaData = convertColetaData(response.data);
+                const amostrasData = convertAmostrasData(response.data.amostras);
 
-      } else {
-        setMessage({ 
-          text: response.message || 'Erro ao carregar coleta', 
-          type: 'error' 
-        });
-      }
-    } catch (error) {
-      console.error('Erro ao buscar coleta:', error);
-      setMessage({ 
-        text: 'Erro de comunicação com o backend', 
-        type: 'error' 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+                setColetaOriginal(response.data);
+
+                // This is the key change: update the state with the new data
+                setColeta(coletaData);
+                setAmostras(amostrasData);
+                setEquipamentosDisponiveis(response.data.equipamentos.map(eq => eq.registro || eq.nome || '').filter(Boolean));
+
+                // The alert should be moved to a useEffect hook to run AFTER state updates
+              // alert(coletaData.idcliente); // REMOVE THIS LINE
+
+                setMessage({ text: 'Coleta carregada com sucesso!', type: 'success' });
+
+                const hasAnyDuplicate = response.data.amostras.some(amostra => amostra.duplicata === true);
+                setHasDuplicate(hasAnyDuplicate);
+            } else {
+                setMessage({
+                    text: response.message || 'Erro ao carregar coleta',
+                    type: 'error'
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao buscar coleta:', error);
+            setMessage({
+                text: 'Erro de comunicação com o backend',
+                type: 'error'
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
 
   const handleInputChange = (field: keyof Coleta, value: string) => {
     setColeta(prev => ({
@@ -281,37 +302,41 @@ const convertAmostrasData = (amostrasData: AmostraData[]): Amostra[] => {
     ));
   };
 
-  const handleCadastrarAmostras = () => {
-
+const handleCadastrarAmostras = () => {
     if (selectedAmostras.size === 0) {
-        alert("Nenhuma amostra selecionada para cadastrar.");
+        setMessage({ text: "Nenhuma amostra selecionada para cadastrar.", type: 'error' });
         return;
     }
 
-    let alertMessage = "Amostras selecionadas para cadastro:\n\n";
+    // Filtra apenas as amostras selecionadas
+    const amostrasParaCadastro = Array.from(selectedAmostras).map(index => amostras[index]);
 
-    selectedAmostras.forEach(index => {
-        const amostra = amostras[index];
-        alertMessage += `--- Amostra #${amostra.coletaId || 'NOVA-' + (index + 1)} ---\n`;
-        alertMessage += `Hora: ${amostra.hora}\n`;
-        alertMessage += `Identificação: ${amostra.identificacao} - ${amostra.complemento}\n`;
-        alertMessage += `Ponto: ${amostra.ponto}\n`;
-        alertMessage += `Coletado por: ${amostra.coletadoPor}\n`;
-        alertMessage += `Condições Ambientais: ${amostra.condicoesAmbientais}\n`;
-        alertMessage += `Vazão: ${amostra.vazao}\n`;
-        alertMessage += `pH: ${amostra.ph}\n`;
-        alertMessage += `Cloro: ${amostra.cloro}\n`;
-        alertMessage += `Temperatura: ${amostra.temperatura}\n`;
-        alertMessage += `Cor: ${amostra.cor}\n`;
-        alertMessage += `Turbidez: ${amostra.turbidez}\n`;
-        alertMessage += `SDT: ${amostra.sdt}\n`;
-        alertMessage += `Condutividade: ${amostra.condutividade}\n\n`;
-    });
+    // Cria o objeto CustomAmostra com a estrutura correta
+    const cadastrarData: CustomAmostra = {
+        type: "cadastrar_coleta",
+        data_content: {
+            amostra: amostrasParaCadastro,
+            coleta: coleta
+        }
+    };
 
-    alert(alertMessage);
-
+    // Chama o WindowManager para abrir a janela CadastrarAmostra
+    try {
+        WindowManager.openCadastrarAmostra(cadastrarData);
+        // alert(JSON.stringify(cadastrarData));
+        // Mensagem de sucesso
+        setMessage({ 
+            text: `${amostrasParaCadastro.length} amostra(s) enviada(s) para cadastro.`, 
+            type: 'success' 
+        });
+    } catch (error) {
+        console.error('Erro ao abrir janela CadastrarAmostra:', error);
+        setMessage({ 
+            text: 'Erro ao abrir janela de cadastro de amostras.', 
+            type: 'error' 
+        });
+    }
 };
-
 
 // file: CadastrarColeta.tsx
 const handleCadastrarNumero = async () => {

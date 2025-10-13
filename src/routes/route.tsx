@@ -73,6 +73,13 @@ import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
 import Visualizar_Manutencao from '../view/frota/Visualizar_Manutencao';
 import LocalizacaoTempoReal from '../view/frota/Localizacao_Tempo_Real';
+
+import SelecionarColetasView from '../view/laboratorio/SelecionarColetasView';
+
+import VisualizarAmostraView from '../view/laboratorio/VisualizarAmostraView';
+
+import SelecionarParametrosView from '../view/laboratorio/SelecionarParametrosView';
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -166,12 +173,6 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'lab-personalizar-amostra': { component: <PersonalizarAmostra />, hasLayout: false },
 
 
-
-
-
-
-
-
   // Administração
   //'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
   'relatorio-analise': { component: <RelatorioAnalisePage />, hasLayout: false },
@@ -179,6 +180,14 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
   'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
   'admin-historico': { component: <VisualizarHistorico />, hasLayout: false },
+
+  //LAB
+  'selecionar-parametros': { component: <SelecionarParametrosView />, hasLayout: false },
+
+  
+  'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },
+  'visualizar-amostras-cadastro': { component: <VisualizarAmostraView  />, hasLayout: false },
+
 
 
 

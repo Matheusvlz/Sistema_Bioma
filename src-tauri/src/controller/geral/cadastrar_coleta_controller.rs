@@ -11,25 +11,6 @@ pub struct ColetaRequest {
     pub visualizacao: Option<bool>, 
 }
 
-// Estrutura para os dados da coleta principal
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ColetaData {
-    pub numero: Option<u32>,
-    pub prefixo: Option<String>,
-    pub data_coleta: Option<String>,
-    pub responsavel_coleta: Option<String>,
-    pub plano_amostragem: Option<String>,
-    pub cliente: Option<String>,
-    pub acompanhante: Option<String>,
-    pub acompanhante_doc: Option<String>,
-    pub acompanhante_cargo: Option<String>,
-    pub coletor: Option<String>,
-    pub fantasia: Option<String>,
-    pub pre_cadastrado: Option<bool>,
-    pub observacao: Option<String>,
-    pub registro: Option<String>,
-}
-
 // Estrutura para os dados das amostras
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AmostraData {
@@ -68,11 +49,53 @@ pub struct Equipamentos {
     pub registro: Option<String>,
 }
 
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Cliente {
+    pub id: Option<u32>,
+    pub fantasia: Option<String>,
+    pub razao: Option<String>,
+    pub documento: Option<String>,
+    pub cidade: Option<String>,
+    pub uf: Option<String>,
+    pub telefone: Option<String>,
+    pub email: Option<String>,
+    pub endereco: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClienteResponse {
+    pub success: bool,
+    pub data: Option<Vec<Cliente>>,
+    pub message: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ColetaCompleta {
-    pub coleta: ColetaData,
+    // Mude de Vec<AmostraColeta> para ColetaData
+    pub coleta: ColetaData, 
     pub amostras: Vec<AmostraData>,
-    pub equipamentos: Vec<Equipamentos>
+    pub equipamentos: Vec<Equipamentos>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ColetaData {
+    pub numero: Option<u32>,
+    pub prefixo: Option<String>,
+    pub data_coleta: Option<String>,
+    pub responsavel_coleta: Option<String>,
+    pub plano_amostragem: Option<String>,
+    pub cliente: Option<String>,
+    pub acompanhante: Option<String>,
+    pub acompanhante_doc: Option<String>,
+    pub acompanhante_cargo: Option<String>,
+    pub coletor: Option<String>,
+    pub fantasia: Option<String>,
+    pub pre_cadastrado: Option<bool>,
+    pub observacao: Option<String>,
+    pub registro: Option<String>,
+    pub idcliente: u32,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -89,10 +112,40 @@ pub struct SingleAmostraResponse {
     pub message: Option<String>,
 }
 
+// Fixed struct with proper union type using an enum
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AmostraColeta {
+    pub id: Option<u32>,
+    pub coletaid: Option<u32>,
+    pub hora: Option<String>,
+    pub identificacao: Option<IdentificacaoType>,
+    pub complemento: Option<String>,
+    pub ponto: Option<String>,
+    pub coletadopor: Option<String>,
+    pub condicoesambientais: Option<String>,
+    pub vazao: Option<String>,
+    pub ph: Option<String>,
+    pub cloro: Option<String>,
+    pub temperatura: Option<String>,
+    pub cor: Option<String>,
+    pub turbidez: Option<String>,
+    pub sdt: Option<String>,
+    pub condutividade: Option<String>,
+}
+
+// Enum to handle the union type for identificacao
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum IdentificacaoType {
+    Number(u32),
+    Text(String),
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdatePayload {
     pub numero: u32,
 }
+
 
 #[command]
 pub async fn buscar_coleta_referente(app_handle: AppHandle, id_coleta: u32) -> ColetaResponse {
@@ -121,9 +174,18 @@ pub async fn buscar_coleta_referente(app_handle: AppHandle, id_coleta: u32) -> C
             };
         }
     };
-
+    
+    // Parse the JSON response into your ColetaResponse struct
     match res.json::<ColetaResponse>().await {
-        Ok(response) => response,
+        Ok(response) => {
+            // Check if the data field exists and contains the client ID
+            if let Some(coleta_completa) = &response.data {
+                println!(" id do cliente: {}", coleta_completa.coleta.idcliente);
+            } else {
+                println!("No data found in the response.");
+            }
+            response // Return the parsed response
+        },
         Err(e) => {
             println!("Erro ao parsear JSON: {:?}", e);
             ColetaResponse {
@@ -199,4 +261,57 @@ pub async fn atualizar_numero_amostra(app_handle: AppHandle, id_amostra: u32, no
             }
         }
     }
+}
+
+#[command]
+pub async fn buscar_cliente_referente(app_handle: AppHandle, id: u32) -> ClienteResponse {
+    let client = Client::new();
+    let url_base = get_api_url(&app_handle);
+    let full_url = format!("{}/get_cliente_by_id/{}", url_base, id); 
+
+    println!("Enviando requisição GET para: {}", full_url);
+
+    let res = match client.get(&full_url).send().await {
+        Ok(res) => res,
+        Err(e) => {
+            println!("Erro de conexão: {:?}", e);
+            return ClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro de conexão com o servidor".to_string()),
+            };
+        }
+    };
+
+    let status = res.status();
+    if !status.is_success() {
+        let error_body = match res.text().await {
+            Ok(body) => body,
+            Err(_) => "Não foi possível ler o corpo da resposta".to_string(),
+        };
+
+        let message = format!("Erro do servidor: Status {} - {}", status, error_body);
+        println!("{}", message);
+        return ClienteResponse {
+            success: false,
+            data: None,
+            message: Some(message),
+        };
+    }
+
+    match res.json::<ClienteResponse>().await {
+        Ok(response) => {
+            println!("Resposta recebida: {:?}", response);
+            response
+        }
+        Err(e) => {
+            println!("Erro ao parsear JSON: {:?}", e);
+            ClienteResponse {
+                success: false,
+                data: None,
+                message: Some("Erro ao processar resposta do servidor.".to_string()),
+            }
+        }
+    }
+    
 }

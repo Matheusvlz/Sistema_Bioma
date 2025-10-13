@@ -1,12 +1,65 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Sidebar from './Sidebar';
-import { TestTubeDiagonal, ClipboardPen, Plus, Search, X, RefreshCcw, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { TestTubeDiagonal, ClipboardPen, Plus, Search, X, RefreshCcw, ChevronDown, CheckCircle, XCircle, Copy, MapPin, Calendar, Clock, Settings, Filter, Trash2, Edit  } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import { ParametrosSelector } from './ParametrosSelector';
+import { listen } from '@tauri-apps/api/event';
+import { emit } from '@tauri-apps/api/event';
+
+
+import { WindowManager } from '../../hooks/WindowManager';
+
 // Ícones simples usando SVG
 const PlusIcon = () => <Plus size={14} />;
 const SearchIcon = () => <Search size={14} />;
 const XIcon = () => <X size={14} />;
+
+// Interfaces para os dados da coleta
+interface DataContent {
+  amostra: AmostraData[];
+  coleta: Coleta;
+}
+interface SimplifiedParametro {
+  id: number;
+  nome: string;
+  categoria: string;
+  unidade: string;
+}
+
+// Interface para os dados da Amostra (formato do frontend)
+interface AmostraData {
+  id?: number;
+  coletaId?: number;
+  hora: string;
+  identificacao: string | number; // CORREÇÃO: Aceita tanto string quanto number
+  complemento: string;
+  ponto: string;
+  coletadoPor: string;
+  condicoesAmbientais: string;
+  vazao: string;
+  ph: string;
+  cloro: string;
+  temperatura: string;
+  cor: string;
+  turbidez: string;
+  sdt: string;
+  condutividade: string;
+}
+
+interface Coleta {
+  id?: number;
+  idcliente: number;
+  dataRegistro: string;
+  reciboColeta: string;
+  cliente: string;
+  dataColeta: string;
+  acompanhante: string;
+  documento: string;
+  cargo: string;
+  coletor: string;
+  observacao: string;
+  equipamentos: string[];
+}
 
 // Interface para definir uma amostra
 interface Amostra {
@@ -24,7 +77,12 @@ interface Amostra {
   checkedDisponiveis: number[];
   checkedSelecionados: number[];
 }
+interface CustomAmostra
+{
+  type: String;
+  data_content: any;
 
+}
 interface CustomSelectProps<T> {
   options: T[];
   value: string;
@@ -35,6 +93,13 @@ interface CustomSelectProps<T> {
   label?: string;
   style?: React.CSSProperties;
   disabled?: boolean;
+}
+
+interface SimplifiedParametro {
+  id: number;
+  nome: string;
+  categoria: string;
+  unidade: string;
 }
 
 // Componente CustomSelect reutilizável
@@ -50,6 +115,7 @@ function CustomSelect<T extends Record<string, any>>({
   disabled = false
 }: CustomSelectProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +127,7 @@ function CustomSelect<T extends Record<string, any>>({
     );
   }, [options, searchQuery, displayKey]);
 
+  
   // Atualizar o valor de exibição quando o valor selecionado mudar
   useEffect(() => {
     if (value) {
@@ -74,6 +141,11 @@ function CustomSelect<T extends Record<string, any>>({
       setSearchQuery('');
     }
   }, [value, options, displayKey, valueKey]);
+
+  // Método para processar dados da interface DataContent
+
+
+   
 
   // Fechar dropdown quando clicar fora
   useEffect(() => {
@@ -180,6 +252,234 @@ function CustomSelect<T extends Record<string, any>>({
       borderBottom: '1px solid #f1f5f9',
       fontSize: '12px',
       transition: 'background-color 0.2s ease'
+    },
+      overlay: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.6)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      backdropFilter: 'blur(4px)'
+    },
+    modal: {
+      backgroundColor: 'white',
+      borderRadius: '16px',
+      boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+      maxHeight: '90vh',
+      overflowY: 'auto' as const,
+      position: 'relative' as const,
+      border: '1px solid #e5e7eb',
+      animation: 'modalSlideIn 0.3s ease-out'
+    },
+    modalLarge: {
+      width: '90%',
+      maxWidth: '800px',
+    },
+    modalMedium: {
+      width: '90%',
+      maxWidth: '600px',
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '24px 24px 16px 24px',
+      borderBottom: '1px solid #e5e7eb',
+      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+      borderRadius: '16px 16px 0 0',
+      color: 'white'
+    },
+    headerTitle: {
+      fontSize: '24px',
+      fontWeight: '700',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px'
+    },
+    closeButton: {
+      background: 'rgba(255, 255, 255, 0.2)',
+      border: 'none',
+      borderRadius: '50%',
+      width: '40px',
+      height: '40px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      color: 'white',
+      transition: 'all 0.2s ease',
+      fontSize: '20px'
+    },
+    body: {
+      padding: '24px'
+    },
+    section: {
+      marginBottom: '32px'
+    },
+    sectionTitle: {
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: '16px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+      gap: '16px'
+    },
+    card: {
+      border: '1px solid #e5e7eb',
+      borderRadius: '12px',
+      padding: '20px',
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+      background: 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)'
+    },
+    cardActive: {
+      borderColor: '#059669',
+      backgroundColor: '#f0fdf4',
+      transform: 'translateY(-2px)',
+      boxShadow: '0 8px 25px rgba(5, 150, 105, 0.15)'
+    },
+    cardTitle: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: '8px'
+    },
+    cardDescription: {
+      fontSize: '14px',
+      color: '#6b7280',
+      lineHeight: '1.5'
+    },
+    searchContainer: {
+      position: 'relative' as const,
+      marginBottom: '20px'
+    },
+    searchInput: {
+      width: '100%',
+      padding: '12px 16px 12px 48px',
+      border: '2px solid #e5e7eb',
+      borderRadius: '12px',
+      fontSize: '14px',
+      outline: 'none',
+      transition: 'all 0.2s ease',
+      boxSizing: 'border-box' as const
+    },
+    searchIcon: {
+      position: 'absolute' as const,
+      left: '16px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#6b7280'
+    },
+    parameterGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+      gap: '12px',
+      maxHeight: '400px',
+      overflowY: 'auto' as const,
+      padding: '8px'
+    },
+    parameterItem: {
+      border: '2px solid #e5e7eb',
+      borderRadius: '10px',
+      padding: '16px',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      backgroundColor: 'white'
+    },
+    parameterItemSelected: {
+      borderColor: '#059669',
+      backgroundColor: '#f0fdf4',
+      transform: 'scale(1.02)'
+    },
+    parameterName: {
+      fontSize: '14px',
+      fontWeight: '600',
+      color: '#1f2937',
+      marginBottom: '4px'
+    },
+    parameterDetails: {
+      fontSize: '12px',
+      color: '#6b7280'
+    },
+    primaryButton: {
+      backgroundColor: '#059669',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    secondaryButton: {
+      backgroundColor: '#f3f4f6',
+      color: '#374151',
+      border: 'none',
+      borderRadius: '8px',
+      padding: '12px 24px',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease'
+    },
+    buttonGroup: {
+      display: 'flex',
+      gap: '12px',
+      justifyContent: 'flex-end',
+      paddingTop: '24px',
+      borderTop: '1px solid #e5e7eb',
+      marginTop: '24px'
+    },
+    selectedCounter: {
+      backgroundColor: '#059669',
+      color: 'white',
+      borderRadius: '20px',
+      padding: '8px 16px',
+      fontSize: '12px',
+      fontWeight: '600',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '8px'
+    },
+    formGroup: {
+      marginBottom: '20px'
+    },
+    select: {
+      width: '100%',
+      padding: '12px',
+      border: '2px solid #e5e7eb',
+      borderRadius: '8px',
+      fontSize: '14px',
+      outline: 'none',
+      backgroundColor: 'white',
+      cursor: 'pointer',
+      boxSizing: 'border-box' as const
+    },
+    textarea: {
+      width: '100%',
+      padding: '12px',
+      border: '2px solid #e5e7eb',
+      borderRadius: '8px',
+      fontSize: '14px',
+      outline: 'none',
+      minHeight: '100px',
+      resize: 'vertical' as const,
+      boxSizing: 'border-box' as const
     },
     optionHover: {
       backgroundColor: '#f8fafc'
@@ -317,7 +617,6 @@ interface ClienteResponse {
   success: boolean;
   data?: Cliente[];
   message?: string;
-  total?: number;
 }
 
 // Interface ajustada para garantir que o email esteja disponível
@@ -361,6 +660,42 @@ const getCurrentTime = (): string => {
   return now.toTimeString().slice(0, 5);
 };
 
+  const handleConfirmarParametros = (pacote: string, legislacao: string) => {
+    console.log('Parâmetros selecionados:', { pacote, legislacao });
+    // Aqui você pode implementar a lógica para processar os parâmetros selecionados
+  };
+
+  // Handlers para Modal de Coleta
+  const handleSelecionarAmostras = () => {
+    console.log('Selecionar amostras clicado');
+    // Aqui você pode implementar a lógica para selecionar amostras
+  };
+
+  // Handlers para Modal de Visualizar Amostra
+  const handleLimpar = () => {
+    console.log('Limpar clicado');
+  };
+
+  const handleImprimir = () => {
+    console.log('Imprimir clicado');
+  };
+
+  const handleGerarControleQualidade = () => {
+    console.log('Gerar controle de qualidade clicado');
+  };
+
+  const handleGerarDadosAmostragem = () => {
+    console.log('Gerar dados de amostragem clicado');
+  };
+
+  const handleBuscar = () => {
+    console.log('Buscar clicado');
+  };
+
+
+ const [modalParametrosOpen, setModalParametrosOpen] = useState(false);
+  const [modalColetaOpen, setModalColetaOpen] = useState(false);
+  const [modalVisualizarOpen, setModalVisualizarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('cadastro');
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [selectedClient, setSelectedClient] = useState('');
@@ -396,6 +731,8 @@ const getCurrentTime = (): string => {
   const [solicitantes, setSolicitantes] = useState<SolicitanteComEmail[]>([]);
   const [setores, setSetores] = useState<Categoria[]>([]);
   const [orcamentos, setOrcamentos] = useState<OrcamentoComItens[]>([]);
+
+
     const [orcamentoItems, setOrcamentoItems] = useState<OrcamentoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -432,6 +769,7 @@ const [areaAmostradaValue, setAreaAmostradaValue] = useState('');
   const [metodologiaSearchQuery, setMetodologiaSearchQuery] = useState('');
   const [selectedAvailable, setSelectedAvailable] = useState<number[]>([]);
   const [selectedChosen, setSelectedChosen] = useState<number[]>([]);
+  const [amostrascoleta, setAmostraColeta] = useState<AmostraData[]>([]);
   // Add these to your component's state declarations
   const [startTime, setStartTime] = useState(getCurrentTime());
   const [collectTime, setCollectTime] = useState(getCurrentTime());
@@ -466,7 +804,8 @@ const [dataLimpeza, setDataLimpeza] = useState('');
 const [momentoLimpeza, setMomentoLimpeza] = useState('');
 const [tempoDecorrido, setTempoDecorrido] = useState('');
 const [unidadeTempoDecorrido, setUnidadeTempoDecorrido] = useState('minutos');
-
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null); 
+  // CORREÇÃO: Novo estado para ID do cliente
 // Estados para campos condicionais IN 60
 const [protocoloCliente, setProtocoloCliente] = useState('');
 const [remessaCliente, setRemessaCliente] = useState('');
@@ -477,6 +816,45 @@ const [remessaCliente, setRemessaCliente] = useState('');
   const [activeAmostraTab, setActiveAmostraTab] = useState(1);
   
   const [activeSampleSidebarTab, setActiveSampleSidebarTab] = useState('dados');
+
+    const [activeModal, setActiveModal] = useState<string>('');
+  const [selectedItems, setSelectedItems] = useState<SimplifiedParametro[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Dados de exemplo
+  const parametros = [
+    { id: 1, nome: 'pH', categoria: 'Físico-Químico', unidade: 'unidades pH' },
+    { id: 2, nome: 'Turbidez', categoria: 'Físico-Químico', unidade: 'NTU' },
+    { id: 3, nome: 'Cloro Residual', categoria: 'Químico', unidade: 'mg/L' },
+    { id: 4, nome: 'Coliformes Totais', categoria: 'Microbiológico', unidade: 'UFC/100mL' },
+    { id: 5, nome: 'E. coli', categoria: 'Microbiológico', unidade: 'UFC/100mL' },
+    { id: 6, nome: 'Ferro Total', categoria: 'Metais', unidade: 'mg/L' },
+    { id: 7, nome: 'Manganês', categoria: 'Metais', unidade: 'mg/L' },
+    { id: 8, nome: 'Fluoreto', categoria: 'Químico', unidade: 'mg/L' },
+  ];
+
+  const closeModal = () => {
+    setActiveModal('');
+    setSelectedItems([]);
+    setSearchTerm('');
+  };
+
+ const handleItemSelect = (item: SimplifiedParametro) => {
+  setSelectedItems(prev => {
+    // TypeScript now knows 'prev' is a Parametro[]
+    const isSelected = prev.find(p => p.id === item.id);
+    if (isSelected) {
+      return prev.filter(p => p.id !== item.id);
+    } else {
+      return [...prev, item];
+    }
+  });
+};
+
+  const filteredParametros = parametros.filter(param =>
+    param.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    param.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
     useEffect(() => {
     if (!loading && categorias.length > 0 && !category) {
@@ -515,7 +893,179 @@ const [remessaCliente, setRemessaCliente] = useState('');
     }
   }, [loading, relatorios, selectedReportType]);
 
+  useEffect(() => {
+    const unlisten = listen('parametros-selecionados', async (event) => {
+      console.log('Parâmetros selecionados recebidos da janela filha:', event.payload);
+      
+      // Extrair dados do evento
+      const { pacoteIds, legislacaoId, pacoteNome } = event.payload as {
+        pacoteIds: number[];
+        legislacaoId: number | null;
+        pacoteNome: string;
+      };
+     // alert(pacoteNome);
+      
+      // Executar a lógica de ajuste de parâmetros
+        // handleAjustarParametros(pacoteIds, legislacaoId);
 
+      
+      setarLegislcao(pacoteIds,legislacaoId );
+      // Opcional: mostrar mensagem de confirmação
+      console.log(`Pacote "${pacoteNome}" aplicado com sucesso na janela principal!`);
+    });
+    
+    return () => {
+      unlisten.then(f => f());
+    };
+  }, []);
+    
+
+   useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    const setupListener = async () => {
+      try {
+        unlisten = await listen('window-data', (event) => {
+          console.log('Dados recebidos da janela pai:', event.payload);
+          const received = event.payload as CustomAmostra;
+        
+          switch(received.type) {
+            case "editar":
+              break;
+            case "cadastrar_amostra":
+              break;
+            case "cadastrar_coleta":
+              renderDataColeta(received.data_content);
+              break;
+            default:
+              break;
+          }
+        });
+
+        await emit('window-ready');
+      } catch (error) {
+        alert("erro");
+        console.error('Erro ao configurar listener:', error);
+      }
+    };
+
+    setupListener();
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, []);
+    
+
+   const renderDataColeta = (dataContent: DataContent) => {
+    const { amostra, coleta } = dataContent;
+    
+
+   // alert(JSON.stringify(amostra));
+
+  
+    setSelectedClientId(coleta.idcliente);
+    
+    const buscarClientePorId = async (clienteId: number) => {
+   
+      try {
+        const response: ClienteResponse = await invoke('buscar_cliente_referente', {
+          id: clienteId
+        });
+
+
+      //  alert(JSON.stringify(response));
+        if (response.success && response.data && response.data.length > 0) {
+          const clienteEncontrado = response.data[0];
+          setSelectedClienteObj(clienteEncontrado);
+          setSelectedClient(clienteEncontrado.fantasia || clienteEncontrado.razao || '');
+            
+          // Carregar dados do cliente (solicitantes, orçamentos, etc.)
+          const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
+            clienteId: clienteEncontrado.id,
+          });
+          
+         
+        //  alert(JSON.stringify(dadosCliente.setor_portal));
+          setSolicitantes(dadosCliente.solicitantes);
+          setOrcamentos(dadosCliente.orcamentos);
+          setSetores(dadosCliente.setor_portal);
+        }
+      } catch (error) {
+        
+        console.error('Erro ao buscar cliente por ID:', error);
+      }
+    };
+
+    if (coleta.idcliente) {
+   //   alert(JSON.stringify(coleta.idcliente));
+      buscarClientePorId(coleta.idcliente);
+    }
+    
+    // Preencher dados da coleta na parte superior
+    setStartDate(coleta.dataRegistro);
+    setCollectDate(coleta.dataColeta);
+    setSelectedClient(coleta.cliente);
+    setCompanion(coleta.acompanhante);
+    setCollectorName(coleta.coletor);
+    
+    // Mapear equipamentos se necessário
+    if (coleta.equipamentos && coleta.equipamentos.length > 0) {
+      console.log('Equipamentos:', coleta.equipamentos);
+    }
+    
+const novasAmostras: Amostra[] = amostra.map((amostraData, index) => {
+  let identificacaoString = '';
+  
+  if (amostraData.identificacao) {
+    // Acessa o objeto identificacoes para buscar o valor correto da identificacao
+    const identificacaoObj = identificacoes.find(id =>
+      // Converta ambas as strings para maiúsculas para a comparação
+      id.id1.toUpperCase() === String(amostraData.identificacao).toUpperCase()
+    );
+    
+    // CORREÇÃO: Use o valor EXATO que está nas options do select
+    // Se encontrou o objeto, use o valor original (não convertido)
+    identificacaoString = identificacaoObj ? identificacaoObj.id1 : String(amostraData.identificacao);
+  }
+  
+  console.log('Valor setado na identificacao:', identificacaoString); // Para debug
+  
+  return {
+    id: amostraData.id || index + 1,
+    numero: amostraData.coletaId ? String(amostraData.coletaId) : '',
+    horaColeta: amostraData.hora || '',
+    identificacao: identificacaoString,
+    temperatura: amostraData.temperatura || '',
+    complemento: amostraData.complemento || '',
+    condicoesAmbientais: amostraData.condicoesAmbientais || '',
+    itemOrcamento: null,
+    parametrosDisponiveis: parametrosBase,
+    parametrosSelecionados: [],
+    checkedDisponiveis: [],
+    checkedSelecionados: [],
+  };
+});
+
+setAmostras(novasAmostras);
+    
+    setAmostraColeta(amostra);
+    // Atualizar estado das amostras
+
+    
+    // Definir a primeira amostra como ativa
+    if (novasAmostras.length > 0) {
+      setActiveAmostraTab(novasAmostras[0].id);
+    }
+    
+    console.log('Dados da coleta processados:', { 
+      coleta, 
+      amostras: novasAmostras, 
+      clienteId: coleta.idcliente
+    });
+  };
   // --- LÓGICA PARA EXTRAIR ANOS ÚNICOS E FILTRAR ORÇAMENTOS ---
   const availableYears = useMemo(() => {
     const years = new Set(orcamentos.map(o => o.ano));
@@ -897,23 +1447,33 @@ const styles: { [key: string]: React.CSSProperties } = {
     color: 'white',
     borderColor: '#059669',
   },
-   overlay: {
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    display: 'flex', justifyContent: 'center', alignItems: 'center',
-    zIndex: 999
-  },
-  modal: {
-    background: '#fff',
-    padding: '20px',
-    borderRadius: '10px',
-    width: '350px',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '8px'
-  },
+
+  overlay: {
+      position: 'fixed' as const,
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: 'rgba(0, 0, 0, 0.7)', // Fundo mais escuro
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 1000,
+      backdropFilter: 'blur(8px)', // Blur mais intenso
+      animation: 'fadeIn 0.3s ease-out'
+    },
+    modal: {
+      backgroundColor: 'white',
+      borderRadius: '20px', // Bordas mais arredondadas
+      boxShadow: '0 30px 60px rgba(0, 0, 0, 0.25)', // Sombra mais intensa
+      maxHeight: '95vh', // Altura máxima maior
+      overflowY: 'auto' as const,
+      position: 'relative' as const,
+      border: '1px solid #e5e7eb',
+      animation: 'modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)', // Animação mais suave
+      transform: 'scale(1)',
+      transition: 'all 0.3s ease'
+    },
 
   actions: {
     display: 'flex',
@@ -1237,6 +1797,192 @@ const styles: { [key: string]: React.CSSProperties } = {
       alignItems: 'center',
       padding: '0 20px',
       minWidth: '120px'
+    },
+   
+    inputContainer: {
+      position: 'relative',
+      display: 'flex',
+      alignItems: 'center'
+    },
+
+    inputFocused: {
+      borderColor: '#059669',
+      boxShadow: '0 0 0 1px #059669'
+    },
+    chevron: {
+      position: 'absolute',
+      right: '8px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#64748b',
+      pointerEvents: 'none',
+      transition: 'transform 0.2s ease'
+    },
+    chevronOpen: {
+      transform: 'translateY(-50%) rotate(180deg)'
+    },
+  
+    option: {
+      padding: '8px 12px',
+      cursor: 'pointer',
+      borderBottom: '1px solid #f1f5f9',
+      fontSize: '12px',
+      transition: 'background-color 0.2s ease'
+    },
+    // MODAIS CORRIGIDOS - TAMANHOS MAIORES E DESIGN MELHORADO
+   
+    // MODAL EXTRA GRANDE para Copiar e Coleta
+    modalExtraLarge: {
+      width: '95%',
+      maxWidth: '1200px', // Muito maior
+      minHeight: '80vh' // Altura mínima
+    },
+    // MODAL GRANDE para Parâmetros
+    modalLarge: {
+      width: '92%',
+      maxWidth: '1000px', // Maior que antes
+      minHeight: '75vh'
+    },
+    modalMedium: {
+      width: '90%',
+      maxWidth: '700px',
+      minHeight: '60vh'
+    },
+    header: {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '32px 32px 24px 32px', // Padding maior
+      borderBottom: '2px solid #e5e7eb', // Borda mais grossa
+      background: 'linear-gradient(135deg, #059669 0%, #047857 50%, #065f46 100%)', // Gradiente mais rico
+      borderRadius: '20px 20px 0 0',
+      color: 'white',
+      boxShadow: '0 4px 20px rgba(5, 150, 105, 0.3)' // Sombra colorida
+    },
+    headerTitle: {
+      fontSize: '28px', // Título maior
+      fontWeight: '800', // Mais negrito
+      display: 'flex',
+      alignItems: 'center',
+      gap: '16px', // Gap maior
+      textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)' // Sombra no texto
+    },
+    closeButton: {
+      background: 'rgba(255, 255, 255, 0.25)', // Fundo mais visível
+      border: 'none',
+      borderRadius: '50%',
+      width: '48px', // Botão maior
+      height: '48px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      cursor: 'pointer',
+      color: 'white',
+      transition: 'all 0.3s ease',
+      fontSize: '24px', // Ícone maior
+      backdropFilter: 'blur(10px)',
+      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+    },
+    body: {
+      padding: '32px', // Padding muito maior
+      fontSize: '16px' // Texto maior
+    },
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', // Colunas maiores
+      gap: '24px' // Gap maior
+    },
+    card: {
+      border: '2px solid #e5e7eb', // Borda mais grossa
+      borderRadius: '16px', // Mais arredondado
+      padding: '24px', // Padding maior
+      transition: 'all 0.3s ease',
+      cursor: 'pointer',
+      background: 'linear-gradient(135deg, #f9fafb 0%, #ffffff 100%)',
+      boxShadow: '0 4px 15px rgba(0, 0, 0, 0.05)' // Sombra sutil
+    },
+    cardActive: {
+      borderColor: '#059669',
+      backgroundColor: '#f0fdf4',
+      transform: 'translateY(-4px)', // Elevação maior
+      boxShadow: '0 12px 30px rgba(5, 150, 105, 0.2)' // Sombra mais intensa
+    },
+
+    cardDescription: {
+      fontSize: '15px', // Texto maior
+      color: '#6b7280',
+      lineHeight: '1.6'
+    },
+
+    searchIcon: {
+      position: 'absolute' as const,
+      left: '20px', // Posição ajustada
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#6b7280',
+      fontSize: '20px' // Ícone maior
+    },
+    parameterGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', // Itens maiores
+      gap: '16px',
+      maxHeight: '500px', // Altura maior
+      overflowY: 'auto' as const,
+      padding: '12px',
+      borderRadius: '12px',
+      backgroundColor: '#f8fafc'
+    },
+    parameterItem: {
+      border: '2px solid #e5e7eb',
+      borderRadius: '12px',
+      padding: '20px', // Padding maior
+      cursor: 'pointer',
+      transition: 'all 0.3s ease',
+      backgroundColor: 'white',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+    },
+    parameterItemSelected: {
+      borderColor: '#059669',
+      backgroundColor: '#f0fdf4',
+      transform: 'scale(1.02)',
+      boxShadow: '0 8px 25px rgba(5, 150, 105, 0.15)'
+    },
+    parameterName: {
+      fontSize: '16px', // Texto maior
+      fontWeight: '700',
+      color: '#1f2937',
+      marginBottom: '8px'
+    },
+    parameterDetails: {
+      fontSize: '14px', // Texto maior
+      color: '#6b7280'
+    },
+ 
+
+    selectedCounter: {
+      backgroundColor: '#059669',
+      color: 'white',
+      borderRadius: '25px', // Mais arredondado
+      padding: '12px 20px', // Padding maior
+      fontSize: '14px',
+      fontWeight: '700',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      boxShadow: '0 4px 15px rgba(5, 150, 105, 0.3)'
+    },
+    optionHover: {
+      backgroundColor: '#f8fafc'
+    },
+    optionSelected: {
+      backgroundColor: '#059669',
+      color: 'white'
+    },
+    noOptions: {
+      padding: '8px 12px',
+      fontSize: '12px',
+      color: '#64748b',
+      fontStyle: 'italic'
     }
   };
 
@@ -1328,6 +2074,7 @@ const ErrorModal = () => (
     try {
       setSelectedClienteObj(cliente);
       setSelectedClient(cliente.fantasia || cliente.razao || '');
+      setSelectedClientId(cliente.id); // CORREÇÃO: Setar o ID do cliente
       setShowDropdown(false);
       setSearchResults([]);
 
@@ -1350,6 +2097,7 @@ const ErrorModal = () => (
       setOrcamentos([]);
     }
   };
+
 
   const handleSolicitanteSelect = (solicitante: SolicitanteComEmail) => {
     setSelectedSolicitanteObj(solicitante);
@@ -1379,6 +2127,337 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
   }
 };
 
+
+const CopiarModal = () => (
+    <div style={styles.overlay} onClick={closeModal}>
+      <div style={{...styles.modal, ...styles.modalLarge}} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.header}>
+          <h2 style={styles.headerTitle}>
+            <Copy size={28} />
+            Copiar Configurações
+          </h2>
+          <button style={styles.closeButton} onClick={closeModal}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div style={styles.body}>
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>
+              <Settings size={20} />
+              Opções de Cópia
+            </h3>
+            <div style={styles.grid}>
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Dados do Cliente</h4>
+                <p style={styles.cardDescription}>
+                  Copia todas as informações do cliente, consultor e solicitante
+                </p>
+              </div>
+              
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Datas e Coleta</h4>
+                <p style={styles.cardDescription}>
+                  Copia configurações de datas, horários e procedimentos de coleta
+                </p>
+              </div>
+              
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Metodologias</h4>
+                <p style={styles.cardDescription}>
+                  Copia todas as metodologias e legislações selecionadas
+                </p>
+              </div>
+              
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Parâmetros</h4>
+                <p style={styles.cardDescription}>
+                  Copia todos os parâmetros de análise configurados
+                </p>
+              </div>
+              
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Orçamento</h4>
+                <p style={styles.cardDescription}>
+                  Copia configurações de orçamento e dados adicionais
+                </p>
+              </div>
+              
+              <div style={styles.card}>
+                <h4 style={styles.cardTitle}>Configurações Gerais</h4>
+                <p style={styles.cardDescription}>
+                  Copia relatório de ensaios, acreditação e categoria
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Destino da Cópia</h3>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Selecionar Amostra Destino</label>
+              <select style={styles.select}>
+                <option>Nova Amostra</option>
+                <option>Amostra 2</option>
+                <option>Amostra 3</option>
+                <option>Todas as Amostras</option>
+              </select>
+            </div>
+          </div>
+
+          <div style={styles.buttonGroup}>
+            <button style={styles.secondaryButton} onClick={closeModal}>
+              Cancelar
+            </button>
+            <button style={styles.primaryButton}>
+              <Copy size={16} />
+              Aplicar Cópia
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Modal Coleta
+  const ColetaModal = () => (
+    <div style={styles.overlay} onClick={closeModal}>
+      <div style={{...styles.modal, ...styles.modalLarge}} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.header}>
+          <h2 style={styles.headerTitle}>
+            <MapPin size={28} />
+            Informações de Coleta
+          </h2>
+          <button style={styles.closeButton} onClick={closeModal}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div style={styles.body}>
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>
+              <MapPin size={20} />
+              Local da Coleta
+            </h3>
+            <div style={styles.formGroup}>
+              <label style={styles.label}>Endereço Completo</label>
+              <input 
+                type="text" 
+                style={styles.input} 
+                placeholder="Digite o endereço completo do local de coleta"
+              />
+            </div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>CEP</label>
+                <input type="text" style={styles.input} placeholder="00000-000" />
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Coordenadas GPS</label>
+                <input type="text" style={styles.input} placeholder="Lat, Long" />
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>
+              <Calendar size={20} />
+              Programação da Coleta
+            </h3>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px'}}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Data Prevista</label>
+                <input type="date" style={styles.input} />
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Hora Prevista</label>
+                <input type="time" style={styles.input} />
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Status</label>
+                <select style={styles.select}>
+                  <option>Programada</option>
+                  <option>Em Andamento</option>
+                  <option>Concluída</option>
+                  <option>Cancelada</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Equipe de Coleta</h3>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Responsável Técnico</label>
+                <select style={styles.select}>
+                  <option>Selecione...</option>
+                  <option>João Silva</option>
+                  <option>Maria Santos</option>
+                  <option>Pedro Costa</option>
+                </select>
+              </div>
+              <div style={styles.formGroup}>
+                <label style={styles.label}>Coletor</label>
+                <select style={styles.select}>
+                  <option>Selecione...</option>
+                  <option>Ana Oliveira</option>
+                  <option>Carlos Lima</option>
+                  <option>Lucia Ferreira</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Observações</h3>
+            <div style={styles.formGroup}>
+              <textarea 
+                style={styles.textarea} 
+                placeholder="Informações adicionais sobre a coleta..."
+              />
+            </div>
+          </div>
+
+          <div style={styles.buttonGroup}>
+            <button style={styles.secondaryButton} onClick={closeModal}>
+              Cancelar
+            </button>
+            <button style={styles.primaryButton}>
+              <CheckCircle size={16} />
+              Salvar Coleta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Modal Selecionar Parâmetros
+  const ParametrosModal = () => (
+    <div style={styles.overlay} onClick={closeModal}>
+      <div style={{...styles.modal, ...styles.modalLarge}} onClick={(e) => e.stopPropagation()}>
+        <div style={styles.header}>
+          <h2 style={styles.headerTitle}>
+            <Filter size={28} />
+            Selecionar Parâmetros
+          </h2>
+          <button style={styles.closeButton} onClick={closeModal}>
+            <X size={20} />
+          </button>
+        </div>
+        
+        <div style={styles.body}>
+          <div style={styles.section}>
+            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px'}}>
+              <h3 style={styles.sectionTitle}>
+                <Settings size={20} />
+                Parâmetros Disponíveis
+              </h3>
+              {selectedItems.length > 0 && (
+                <div style={styles.selectedCounter}>
+                  <CheckCircle size={16} />
+                  {selectedItems.length} selecionados
+                </div>
+              )}
+            </div>
+            
+            <div style={styles.searchContainer}>
+              <Search style={styles.searchIcon} size={20} />
+              <input
+                type="text"
+                style={{
+                  ...styles.searchInput,
+                  borderColor: searchTerm ? '#059669' : '#e5e7eb'
+                }}
+                placeholder="    Buscar parâmetros..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div style={styles.parameterGrid}>
+              {filteredParametros.map(param => {
+                const isSelected = selectedItems.find(item => item.id === param.id);
+                return (
+                  <div
+                    key={param.id}
+                    style={{
+                      ...styles.parameterItem,
+                      ...(isSelected ? styles.parameterItemSelected : {})
+                    }}
+                    onClick={() => handleItemSelect(param)}
+                  >
+                    <div style={styles.parameterName}>{param.nome}</div>
+                    <div style={styles.parameterDetails}>
+                      {param.categoria} • {param.unidade}
+                    </div>
+                    {isSelected && (
+                      <div style={{display: 'flex', justifyContent: 'flex-end', marginTop: '8px'}}>
+                        <CheckCircle size={16} color="#059669" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={styles.section}>
+            <h3 style={styles.sectionTitle}>Ações Rápidas</h3>
+            <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+              <button 
+                style={styles.secondaryButton}
+                onClick={() => setSelectedItems([...parametros])}
+              >
+                <Plus size={16} />
+                Selecionar Todos
+              </button>
+              <button 
+                style={styles.secondaryButton}
+                onClick={() => setSelectedItems([])}
+              >
+                <Trash2 size={16} />
+                Limpar Seleção
+              </button>
+              <button 
+                style={styles.secondaryButton}
+                onClick={() => {
+                  const microbiologicos = parametros.filter(p => p.categoria === 'Microbiológico');
+                  setSelectedItems(microbiologicos);
+                }}
+              >
+                Microbiológicos
+              </button>
+              <button 
+                style={styles.secondaryButton}
+                onClick={() => {
+                  const fisicoquimicos = parametros.filter(p => p.categoria === 'Físico-Químico');
+                  setSelectedItems(fisicoquimicos);
+                }}
+              >
+                Físico-Químicos
+              </button>
+            </div>
+          </div>
+
+          <div style={styles.buttonGroup}>
+            <button style={styles.secondaryButton} onClick={closeModal}>
+              Cancelar
+            </button>
+            <button 
+              style={styles.primaryButton}
+              disabled={selectedItems.length === 0}
+            >
+              <CheckCircle size={16} />
+              Aplicar Seleção ({selectedItems.length})
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   async function buscarClientesDropdown(query: string): Promise<Cliente[]> {
     try {
       const response: ClienteResponse = await invoke('buscar_clientes_dropdown', {
@@ -1394,6 +2473,32 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
       return [];
     }
   }
+
+// Método principal que será chamado pela janela filha
+const handleAjustarParametros = (pacote: number[], legislacao: number | null) => {
+    console.log('Ajustando parâmetros:', { pacote, legislacao });
+    
+    const novosSelecionados = parametrosBase.filter(p => pacote.includes(p.id));
+    const novosDisponiveis = parametrosBase.filter(p => !pacote.includes(p.id));
+
+    setAmostras(amostrasAtuais => 
+      amostrasAtuais.map(amostra => ({
+        ...amostra, 
+        parametrosSelecionados: novosSelecionados,
+        parametrosDisponiveis: novosDisponiveis,
+        checkedDisponiveis: [],
+        checkedSelecionados: []
+      }))
+    );
+
+    // Atualizar legislação se fornecida
+    if (legislacao !== null) {
+      const legislacaoEncontrada = legislacoes.find(leg => leg.id === legislacao);
+      if (legislacaoEncontrada) {
+        setSelectedLegislacao(legislacaoEncontrada.nome);
+      }
+    }
+};
 
   const handleClientSearchChange = async (value: string) => {
     setSelectedClient(value);
@@ -1422,9 +2527,10 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
 
   // NOVO: Função refatorada para lidar com a mudança da legislação
   const handleLegislacaoChange = async (value: string, legislacao?: Categoria) => {
+    // O valor 'value' já é o nome da legislação, então setSelectedLegislacao(value) está correto.
     setSelectedLegislacao(value);
     
-      if (legislacao) {
+    if (legislacao) {
       try {
         const response = await invoke<ParametroResponse>("buscar_parametros", {
           legislacaoId: legislacao.id,
@@ -1467,12 +2573,71 @@ const handleOrcamentoSelect = async (orcamento: OrcamentoComItens) => {
   };
 
 
+    const setarLegislcao = async (pacoteIds: number[], legislacaoId?: number | null) => {
+    if (legislacaoId) {
+        try {
+            const response = await invoke<ParametroResponse>("buscar_parametros_by_id", {
+                parametroId: legislacaoId,
+            });
+            const novosParametrosBase = response.data || [];
 
+            // Filtra os parâmetros selecionados com base nos IDs do pacote e nos novos parâmetros base
+            const novosSelecionados = novosParametrosBase.filter(p => pacoteIds.includes(p.id));
+            // Os disponíveis são todos os novos parâmetros base que NÃO estão no pacote
+            const novosDisponiveis = novosParametrosBase.filter(p => !pacoteIds.includes(p.id));
 
+            setParametrosBase(novosParametrosBase);
+
+            setAmostras((prevAmostras) =>
+                prevAmostras.map((amostra) => ({
+                    ...amostra,
+                    parametrosDisponiveis: novosDisponiveis,
+                    parametrosSelecionados: novosSelecionados,
+                    checkedDisponiveis: [],
+                    checkedSelecionados: [],
+                }))
+            );
+
+            const legislacaoEncontrada = legislacoes.find(leg => leg.id === legislacaoId);
+            if (legislacaoEncontrada) {
+
+          
+                setSelectedLegislacao(legislacaoEncontrada.nome);
+            }
+
+            console.log("Parâmetros atualizados para todas as amostras:", novosParametrosBase);
+        } catch (error) {
+            console.error("Erro ao buscar parâmetros:", error);
+            setParametrosBase([]);
+            setAmostras((prevAmostras) =>
+                prevAmostras.map((amostra) => ({
+                    ...amostra,
+                    parametrosDisponiveis: [],
+                    parametrosSelecionados: [],
+                    checkedDisponiveis: [],
+                    checkedSelecionados: [],
+                }))
+            );
+        }
+    } else {
+        // Se nenhuma legislação for selecionada, limpa os parâmetros de todas as amostras
+        setParametrosBase([]);
+        setAmostras((prevAmostras) =>
+            prevAmostras.map((amostra) => ({
+                ...amostra,
+                parametrosDisponiveis: [],
+                parametrosSelecionados: [],
+                checkedDisponiveis: [],
+                checkedSelecionados: [],
+            }))
+        );
+    }
+};
 
   const handleClearSearch = () => {
     setSelectedClient('');
     setSelectedClienteObj(null);
+    setSelectedClientId(null); 
     setSearchResults([]);
     setShowDropdown(false);
     setSolicitantes([]);
@@ -1621,9 +2786,9 @@ const renderCadastroContent = () => (
         <div style={styles.cardHeader}>
             <h2 style={styles.cardTitle}>Configurações Gerais</h2>
             <div style={styles.buttonGroup}>
-                 <button style={styles.primaryButton}>Copiar</button>
-                 <button style={styles.primaryButton}>Coleta</button>
-                 <button style={styles.primaryButton}>Selecionar Parâmetros</button>
+              <button onClick={() => WindowManager.openCopiar(this)} style={styles.primaryButton}>Copiar</button>
+              <button onClick={() => WindowManager.openVisualizarColeta(this, selectedClientId)} style={styles.primaryButton}>Coleta</button>
+              <button onClick={() => WindowManager.openVisualizarSelecaoParametros(this)} style={styles.primaryButton}>Selecionar Parâmetros</button>
             </div>
         </div>
         <div style={styles.cardBody}>
@@ -1743,8 +2908,7 @@ const renderCadastroContent = () => (
                 </div>
                  <div style={styles.col6}>
                     <label style={styles.label}>E-mail do Solicitante</label>
-                    <input type="email" value={emailSolicitante} onChange={(e) => setEmailSolicitante(e.target.value)} style={selectedSolicitanteObj ? {...styles.input, ...styles.inputReadOnly} : styles.input} readOnly={!!selectedSolicitanteObj} placeholder="O e-mail será preenchido ao selecionar"/>
-                </div>
+                   <input type="email" value={emailSolicitante} style={{...styles.input, ...styles.inputReadOnly}} readOnly placeholder="E-mail será preenchido automaticamente"/>                </div>
             </div>
         </div>
       </div>
@@ -1774,12 +2938,14 @@ const renderCadastroContent = () => (
         </div>
         <div style={styles.col3}><label style={styles.label}>Coletado por</label><select value={collector} onChange={(e) => setCollector(e.target.value)} style={styles.select}><option>Cliente</option><option>Laboratório</option></select></div>
         <div style={styles.col3}><label style={styles.label}>Nome do Coletor</label><input type="text" value={collectorName} onChange={(e) => setCollectorName(e.target.value)} style={styles.input}/></div>
-        <div style={styles.col6}><label style={styles.label}>Procedimento de Amostragem</label><select value={samplingProcedure} onChange={(e) => setSamplingProcedure(e.target.value)} style={styles.select}>       <option value="">Selecione uma Opção</option>  {pgs.map((legislacao) => (
-                  
+        <div style={styles.col6}><label style={styles.label}>Procedimento de Amostragem</label>
+        <select value={samplingProcedure} onChange={(e) => setSamplingProcedure(e.target.value)} style={styles.select}>       <option value="">Selecione uma Opção</option> 
+                 {pgs.map((legislacao) => (
                   <option key={legislacao.id} value={legislacao.id}>
                     {legislacao.nome}
                   </option>
-                ))}</select></div>
+                ))}</select>
+                </div>
         <div style={styles.col6}><label style={styles.label}>Acompanhante</label><input type="text" value={companion} onChange={(e) => setCompanion(e.target.value)} style={styles.input}/></div>
     </div>
 </div>
@@ -1986,6 +3152,7 @@ const renderCadastroContent = () => (
                       value={selectedLegislacao}
                       onChange={handleLegislacaoChange}
                       displayKey="nome"
+                      valueKey="nome" // Adicionado valueKey para que o CustomSelect use o nome como valor
                       label="Legislação"
                       placeholder="Selecione uma legislação..."
                     />
@@ -2377,22 +3544,24 @@ const renderDadosContent = () => {
         </div>
       </div>
 
-      <div style={{...styles.grid12, marginTop: '16px'}}>
-        <div style={styles.col4}>
-          <label style={styles.label}>Identificação</label>
-          <select
-            value={amostraAtiva.identificacao}
-            onChange={(e) => atualizarAmostra(amostraAtiva.id, 'identificacao', e.target.value)}
-            style={styles.select}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
-          >
-              {identificacoes.map((legislacao) => (
-                <option key={legislacao.id} value={legislacao.id}>
-                  {legislacao.id1}
-                </option>
-              ))}
-          </select>
+        <div style={{...styles.grid12, marginTop: '16px'}}>
+          <div style={styles.col4}>
+            <label style={styles.label}>Identificação</label>
+            {/* CORREÇÃO: Select de identificação corrigido */}
+            <select
+  value={amostraAtiva.identificacao}
+  onChange={(e) => atualizarAmostra(amostraAtiva.id, 'identificacao', e.target.value)}
+  style={styles.select}
+  onFocus={handleInputFocus}
+  onBlur={handleInputBlur}
+>
+  <option value="">Selecione uma identificação</option>
+  {identificacoes.map((identificacao) => (
+    <option key={identificacao.id} value={identificacao.id1}>
+      {identificacao.id1}
+    </option>
+  ))}
+</select>
         </div>
         <div style={styles.col4}>
           <label style={styles.label}>Temperatura</label>
@@ -2542,7 +3711,7 @@ const renderDadosContent = () => {
       atualizarAmostra(amostraAtiva.id, campo, valor);
     };
 
-    return (
+ return (
       <div>
         <ParametrosSelector
           
@@ -2665,7 +3834,10 @@ const handleCadastrar = async () => {
       };
 
       return baseAmostra;
-    })
+    }),
+
+    coleta: amostrascoleta
+    
   };
 
   // Garantir que campos obrigatórios string não sejam undefined/null
@@ -2685,7 +3857,7 @@ const handleCadastrar = async () => {
     dadosCadastro.dados_gerais.laboratorio = "";
   }
 
-  alert(JSON.stringify(dadosCadastro, null, 2));
+ // alert(JSON.stringify(dadosCadastro, null, 2));
 
   try {
     await invoke('cadastrar_amostra_completa', { dadosCadastro: dadosCadastro });
@@ -2785,6 +3957,8 @@ const handleCadastrar = async () => {
 
   return (
     <div style={styles.container}>
+
+
            <Sidebar 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
@@ -2806,7 +3980,7 @@ const handleCadastrar = async () => {
       </div>
             {isOpen && (
         <div style={styles.overlay}>
-          <div style={styles.modal}>
+          <div style={{...styles.modal, ...styles.modalLarge}} >
             <h2 style={{ marginBottom: '10px' }}>Cadastrar Fornecedor</h2>
             
             <label>Nome</label>
@@ -2827,7 +4001,9 @@ const handleCadastrar = async () => {
             </div>
           </div>
         </div>
+
       )}
+
     </div>
     
   );
