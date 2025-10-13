@@ -184,10 +184,12 @@ use crate::controller::geral::calculo_controller::{
 
 use crate::controller::geral::analise_controller::{
     get_cidades_analise_command,
-    get_atividades_filtradas_command,
-    get_clientes_analise_command,  // <-- ADICIONAR
-    get_coletores_analise_command  // <-- ADICIONAR
+    get_clientes_analise_command,
+    get_coletores_analise_command,
+    get_analises_detalhadas_command,  // <-- ADICIONADO
+    get_analise_agregada_command,      // <-- ADICIONADO
 };
+
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -488,9 +490,10 @@ fn main() {
             deletar_calculo,
 
             get_cidades_analise_command,
-            get_atividades_filtradas_command,
-            get_clientes_analise_command, // <-- ADICIONAR
-            get_coletores_analise_command, // <-- ADICIONAR
+            get_clientes_analise_command,
+            get_coletores_analise_command,
+            get_analises_detalhadas_command,  
+            get_analise_agregada_command, 
             
             // Comandos de Laboratório
             buscar_checagem, 

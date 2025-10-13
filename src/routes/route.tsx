@@ -25,7 +25,8 @@ import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoPar
 import CadastrarColeta from '../view/geral/CadastrarColeta';
 import CalculoIDE from '../view/geral/CalculoIDE';
 
-import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
+//import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
+import RelatorioAnalisePage from '../view/administracao/RelatorioColetasColetores/RelatorioAnalisePage';
 import { CadastrarUsuario }   from '../view/administracao/CadastrarUsuarios';
 import { ListarUsuarios } from '../view/administracao/ListarUsuarios';
 import { GerenciarPermissoesSetor } from '../view/administracao/GerenciarPermissoesSetor';
@@ -172,7 +173,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
 
   // Administração
-  'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
+  //'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
+  'relatorio-analise': { component: <RelatorioAnalisePage />, hasLayout: false },
   'cadastrar-usuarios-admin': { component: <CadastrarUsuario itemParaEdicao={null} onSalvar={function (): void {throw new Error('Function not implemented.'); } } onCancelar={function (): void { throw new Error('Function not implemented.'); } } />, hasLayout: false },
   'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
   'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },

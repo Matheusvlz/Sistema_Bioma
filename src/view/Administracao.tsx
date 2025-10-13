@@ -360,8 +360,14 @@ export const Administracao = memo(() => {
                 console.log("Abrir tela para analisar desempenho dos coletores...");
                 break;
           
-            case 'Relatorio Coletores':
+           /* case 'Relatorio Coletores':
             WindowManager.openAnalisarColetores();
+            break;
+
+            */
+
+            case 'Relatorio Coletores':
+            WindowManager.openRelatorioAnalise(); // <-- Aponte para a nova função
             break;
 
             case 'Cadastrar Usuário': // Ou o nome exato que você usou no menu
