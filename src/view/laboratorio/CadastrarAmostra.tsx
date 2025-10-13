@@ -907,6 +907,8 @@ const [remessaCliente, setRemessaCliente] = useState('');
       
       // Executar a lógica de ajuste de parâmetros
         // handleAjustarParametros(pacoteIds, legislacaoId);
+
+      
       setarLegislcao(pacoteIds,legislacaoId );
       // Opcional: mostrar mensagem de confirmação
       console.log(`Pacote "${pacoteNome}" aplicado com sucesso na janela principal!`);
@@ -2525,9 +2527,10 @@ const handleAjustarParametros = (pacote: number[], legislacao: number | null) =>
 
   // NOVO: Função refatorada para lidar com a mudança da legislação
   const handleLegislacaoChange = async (value: string, legislacao?: Categoria) => {
+    // O valor 'value' já é o nome da legislação, então setSelectedLegislacao(value) está correto.
     setSelectedLegislacao(value);
     
-      if (legislacao) {
+    if (legislacao) {
       try {
         const response = await invoke<ParametroResponse>("buscar_parametros", {
           legislacaoId: legislacao.id,
@@ -2570,58 +2573,66 @@ const handleAjustarParametros = (pacote: number[], legislacao: number | null) =>
   };
 
 
-    const setarLegislcao = async (parametros: number[], legislacao?: number | null) => {
+    const setarLegislcao = async (pacoteIds: number[], legislacaoId?: number | null) => {
+    if (legislacaoId) {
+        try {
+            const response = await invoke<ParametroResponse>("buscar_parametros_by_id", {
+                parametroId: legislacaoId,
+            });
+            const novosParametrosBase = response.data || [];
 
-    
-      if (legislacao) {
-      try {
-        const response = await invoke<ParametroResponse>("buscar_parametros", {
-          legislacaoId: legislacao,
-        });
-        const novosParametros = response.data || [];
-        
-        setParametrosBase(novosParametros);
+            // Filtra os parâmetros selecionados com base nos IDs do pacote e nos novos parâmetros base
+            const novosSelecionados = novosParametrosBase.filter(p => pacoteIds.includes(p.id));
+            // Os disponíveis são todos os novos parâmetros base que NÃO estão no pacote
+            const novosDisponiveis = novosParametrosBase.filter(p => !pacoteIds.includes(p.id));
 
-        // Atualiza todas as amostras existentes com a nova lista de parâmetros
-        setAmostras((prevAmostras) =>
-          prevAmostras.map((amostra) => ({
-            ...amostra,
-            parametrosDisponiveis: novosParametros,
-            parametrosSelecionados: [], // Limpa seleções anteriores
-            checkedDisponiveis: [],
-            checkedSelecionados: [],
-          }))
-        );
+            setParametrosBase(novosParametrosBase);
 
-            if (legislacao !== null) {
-      const legislacaoEncontrada = legislacoes.find(leg => leg.id === legislacao);
-      if (legislacaoEncontrada) {
-        setSelectedLegislacao(legislacaoEncontrada.nome);
-      }
-    }
-    
-        console.log("Parâmetros atualizados para todas as amostras:", novosParametros);
-      } catch (error) {
-        console.error("Erro ao buscar parâmetros:", error);
+            setAmostras((prevAmostras) =>
+                prevAmostras.map((amostra) => ({
+                    ...amostra,
+                    parametrosDisponiveis: novosDisponiveis,
+                    parametrosSelecionados: novosSelecionados,
+                    checkedDisponiveis: [],
+                    checkedSelecionados: [],
+                }))
+            );
+
+            const legislacaoEncontrada = legislacoes.find(leg => leg.id === legislacaoId);
+            if (legislacaoEncontrada) {
+
+          
+                setSelectedLegislacao(legislacaoEncontrada.nome);
+            }
+
+            console.log("Parâmetros atualizados para todas as amostras:", novosParametrosBase);
+        } catch (error) {
+            console.error("Erro ao buscar parâmetros:", error);
+            setParametrosBase([]);
+            setAmostras((prevAmostras) =>
+                prevAmostras.map((amostra) => ({
+                    ...amostra,
+                    parametrosDisponiveis: [],
+                    parametrosSelecionados: [],
+                    checkedDisponiveis: [],
+                    checkedSelecionados: [],
+                }))
+            );
+        }
+    } else {
+        // Se nenhuma legislação for selecionada, limpa os parâmetros de todas as amostras
         setParametrosBase([]);
         setAmostras((prevAmostras) =>
-          prevAmostras.map((amostra) => ({ ...amostra, parametrosDisponiveis: [], parametrosSelecionados: [] }))
+            prevAmostras.map((amostra) => ({
+                ...amostra,
+                parametrosDisponiveis: [],
+                parametrosSelecionados: [],
+                checkedDisponiveis: [],
+                checkedSelecionados: [],
+            }))
         );
-      }
-    } else {
-      // Se nenhuma legislação for selecionada, limpa os parâmetros de todas as amostras
-      setParametrosBase([]);
-      setAmostras((prevAmostras) =>
-        prevAmostras.map((amostra) => ({
-          ...amostra,
-          parametrosDisponiveis: [],
-          parametrosSelecionados: [],
-          checkedDisponiveis: [],
-          checkedSelecionados: [],
-        }))
-      );
     }
-  };
+};
 
   const handleClearSearch = () => {
     setSelectedClient('');
@@ -2776,8 +2787,8 @@ const renderCadastroContent = () => (
             <h2 style={styles.cardTitle}>Configurações Gerais</h2>
             <div style={styles.buttonGroup}>
               <button onClick={() => WindowManager.openCopiar(this)} style={styles.primaryButton}>Copiar</button>
-<button onClick={() => WindowManager.openVisualizarColeta(this)} style={styles.primaryButton}>Coleta</button>
-<button onClick={() => WindowManager.openVisualizarSelecaoParametros(this)} style={styles.primaryButton}>Selecionar Parâmetros</button>
+              <button onClick={() => WindowManager.openVisualizarColeta(this, selectedClientId)} style={styles.primaryButton}>Coleta</button>
+              <button onClick={() => WindowManager.openVisualizarSelecaoParametros(this)} style={styles.primaryButton}>Selecionar Parâmetros</button>
             </div>
         </div>
         <div style={styles.cardBody}>
@@ -3141,6 +3152,7 @@ const renderCadastroContent = () => (
                       value={selectedLegislacao}
                       onChange={handleLegislacaoChange}
                       displayKey="nome"
+                      valueKey="nome" // Adicionado valueKey para que o CustomSelect use o nome como valor
                       label="Legislação"
                       placeholder="Selecione uma legislação..."
                     />

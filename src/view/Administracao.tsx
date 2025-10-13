@@ -232,7 +232,7 @@ export const Administracao = memo(() => {
             id: "usuarios",
             title: "Gestão de Usuários",
             icon: Users,
-            gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+            gradient: "linear-gradient(135deg, #0a2a0a 0%, #059669 100%)",
             category: "usuários",
             items: [
                 { name: "Cadastrar Usuário", icon: UserPlus, description: "Adicionar um novo usuário ao sistema" },
@@ -244,7 +244,7 @@ export const Administracao = memo(() => {
             id: "tarefas",
             title: "Monitoramento de Tarefas",
             icon: ClipboardCheck,
-            gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+            gradient: "linear-gradient(135deg, #0a2a0a 0%, #059669 100%)",
             category: "tarefas",
             items: [
                 { name: "Painel de Tarefas", icon: LayoutDashboard, description: "Visualizar o status atual das tarefas" },
@@ -256,7 +256,7 @@ export const Administracao = memo(() => {
             id: "coletores",
             title: "Análise de Coletores",
             icon: Bot,
-            gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+            gradient: "linear-gradient(135deg, #0a2a0a 0%, #059669 100%)",
             category: "automação",
             items: [
                 { name: "Relatorio Coletores", icon: TrendingUp, description: "Visualize e filtre coletores, cidades, e clientes" },
@@ -268,7 +268,7 @@ export const Administracao = memo(() => {
             id: "sistema",
             title: "Configurações do Sistema",
             icon: Settings,
-            gradient: "linear-gradient(135deg, #64748b 0%, #475569 100%)",
+            gradient: "linear-gradient(135deg, #0a2a0a 0%, #059669 100%)",
             category: "sistema",
             items: [
                 { name: "Configurações Gerais", icon: SlidersHorizontal, description: "Ajustar configurações globais" },
@@ -284,7 +284,7 @@ export const Administracao = memo(() => {
             value: "125",
             change: "+5",
             icon: Users,
-            iconBg: { backgroundColor: '#3b82f6' },
+            iconBg: { backgroundColor: '#0e5a0eff' },
             changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
             trendColor: '#10b981'
         },
@@ -293,7 +293,7 @@ export const Administracao = memo(() => {
             value: "32",
             change: "+12%",
             icon: ClipboardList,
-            iconBg: { backgroundColor: '#10b981' },
+            iconBg: { backgroundColor: '#0e5a0eff' },
             changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
             trendColor: '#10b981'
         },
@@ -302,7 +302,7 @@ export const Administracao = memo(() => {
             value: "8",
             change: "100%",
             icon: Bot,
-            iconBg: { backgroundColor: '#f59e0b' },
+            iconBg: { backgroundColor: '#0e5a0eff' },
             changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
             trendColor: '#10b981'
         },
@@ -311,7 +311,7 @@ export const Administracao = memo(() => {
             value: "2",
             change: "+1",
             icon: AlertTriangle,
-            iconBg: { backgroundColor: '#ef4444' },
+            iconBg: { backgroundColor: '#0e5a0eff' },
             changeBg: { backgroundColor: '#fecaca', color: '#991b1b' },
             trendColor: '#ef4444'
         }
@@ -417,7 +417,7 @@ export const Administracao = memo(() => {
                             <div style={{
                                 width: '48px',
                                 height: '48px',
-                                backgroundColor: '#475569',
+                                backgroundColor: '#0e5a0eff',
                                 borderRadius: '8px',
                                 display: 'flex',
                                 alignItems: 'center',

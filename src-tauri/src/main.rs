@@ -204,13 +204,19 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_orcamentos, 
     cadastrar_amostra_completa,
     buscar_pg,
-    buscar_certificado
+    buscar_certificado,
+    buscar_parametros_by_id
 };
+
+use controller::laboratorio::buscar_coleta::{buscar_coletas_e_amostras_client_command};
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
 
-
+use controller::laboratorio::amostra_personalizavel_controller::{
+    listar_amostras_por_faixa_tauri,
+    atualizar_amostras_em_lote_tauri
+};
 
 
 use controller::admin::setor_controller::{
@@ -241,7 +247,15 @@ use controller::qualidade::tauri_print_commands_controller::{
 use controller::qualidade::json_parser_controller::{save_template, list_templates, delete_template, decode_base64_to_json, update_template, get_template_by_id};
 
 
-
+use controller::qualidade::fornecedor_controller::{
+    buscar_fornecedor_detalhado_tauri,
+    cadastrar_fornecedor_tauri,
+    editar_fornecedor_tauri,
+    deletar_fornecedor_tauri,
+    listar_categorias_fornecedor_tauri,
+    listar_fornecedores_tauri,
+    listar_qualificacoes_tauri,
+};
 
 
 
@@ -307,6 +321,8 @@ fn main() {
 
             Ok(())
         })
+        .plugin(tauri_plugin_dialog::init()) // Inicializa o plugin de diálogo
+        .plugin(tauri_plugin_opener::init()) // Inicializa o plugin de abrir pastas/links
         .invoke_handler(tauri::generate_handler![
             // Comandos de Início e Notificações
             get_data_inicio,
@@ -483,6 +499,8 @@ fn main() {
             gerar_nova_planilha,
             buscar_pg,
             buscar_certificado,
+            listar_amostras_por_faixa_tauri,
+            atualizar_amostras_em_lote_tauri,
 
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,
@@ -512,6 +530,14 @@ fn main() {
             decode_base64_to_json,
             update_template,
             get_template_by_id,
+            buscar_fornecedor_detalhado_tauri,
+            cadastrar_fornecedor_tauri,
+            editar_fornecedor_tauri,
+            deletar_fornecedor_tauri,
+            listar_categorias_fornecedor_tauri,
+             listar_fornecedores_tauri, 
+             listar_qualificacoes_tauri,
+            
 
             // Comandos do Módulo de Administração de Usuários
             listar_usuarios_admin_command,
@@ -580,7 +606,9 @@ fn main() {
             deletar_frota_manutencao,
             buscar_coleta_referente,
             atualizar_numero_amostra,
-            buscar_cliente_referente
+            buscar_cliente_referente,
+            buscar_parametros_by_id,
+            buscar_coletas_e_amostras_client_command
 
         ])
         .run(tauri::generate_context!())

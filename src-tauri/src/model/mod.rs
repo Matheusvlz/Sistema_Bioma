@@ -38,3 +38,5 @@ pub mod analise;
 pub mod usuario_admin;
 pub mod setor;
 pub mod historico;
+pub mod amostra_personalizavel;
+pub mod fornecedor;

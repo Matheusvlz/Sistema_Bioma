@@ -5,17 +5,17 @@
   --background-end: #e2e8f0;   /* Slate 200 */
 
   /* Cores primárias para o tema de Relatórios */
-  --header-start: #0f172a; /* Slate 900 */
-  --header-end: #1e293b;   /* Slate 800 */
+  --header-start: #2d5b4c; /* Slate 900 */
+  --header-end: #264e41;   /* Slate 800 */
   --primary-text: #f8fafc; /* Slate 50 */
 
   /* Cores de acento para os cards de seção */
-  --accent-teal: #0d9488;  /* Teal 600 */
-  --accent-indigo: #4338ca; /* Indigo 700 */
+  --accent-teal: #264e41;  /* Teal 600 */
+  --accent-indigo: #264e41; /* Indigo 700 */
 
   /* Cores de status e feedback */
-  --success: #10b981;
-  --warning: #f59e0b;
+  --success: #2d5b4c;
+  --warning: #2d5b4c;
   --info: #3b82f6;
 
   /* Sombras e bordas */
@@ -323,10 +323,10 @@
 
 /* === CORES DOS HEADERS DOS CARDS === */
 .bg-teal-500 {
-  background: linear-gradient(135deg, #14b8a6, var(--accent-teal));
+  background: linear-gradient(135deg, #2d5b4c, var(--accent-teal));
 }
 .bg-indigo-500 {
-  background: linear-gradient(135deg, #6366f1, var(--accent-indigo));
+  background: linear-gradient(135deg, #2d5b4c, var(--accent-indigo));
 }
 
 /* === RESPONSIVIDADE === */

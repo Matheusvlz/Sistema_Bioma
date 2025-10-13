@@ -118,3 +118,26 @@ pub async fn deletar_parametro(id: u32) -> Result<ApiResponse<()>, ApiResponse<(
         Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
     }
 }
+
+
+#[command]
+pub async fn listar_parametros_by_id() -> Result<ApiResponse<Vec<Parametro>>, ApiResponse<()>> {
+    let client = Client::new();
+    let url = format!("{}/parametros", API_BASE_URL);
+    
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                match response.json::<Vec<Parametro>>().await {
+                    Ok(parametros) => Ok(ApiResponse::success("Parâmetros carregados com sucesso".to_string(), Some(parametros))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro ao processar JSON da API: {}", e))),
+                }
+            } else {
+                let status = response.status();
+                let err_body = response.text().await.unwrap_or_default();
+                Err(ApiResponse::error(format!("API retornou erro ({}) {}", status, err_body)))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
+    }
+}

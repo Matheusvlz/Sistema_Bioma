@@ -26,7 +26,7 @@ import CadastrarColeta from '../view/geral/CadastrarColeta';
 import CalculoIDE from '../view/geral/CalculoIDE';
 
 import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
-import { CadastrarUsuario }  from '../view/administracao/CadastrarUsuarios';
+import { CadastrarUsuario }   from '../view/administracao/CadastrarUsuarios';
 import { ListarUsuarios } from '../view/administracao/ListarUsuarios';
 import { GerenciarPermissoesSetor } from '../view/administracao/GerenciarPermissoesSetor';
 import { VisualizarHistorico } from '../view/administracao/VisualizarHistorico';
@@ -59,6 +59,10 @@ import { VisualizarLqIncerteza } from '../view/geral/VisualizarLqIncerteza';
 import GerenciarTecnicaEtapa from '../view/geral/GerenciarTecnicaEtapa';
 import { VisualizarPacotes } from '../view/geral/VisualizarPacotes';
 import { CadastrarPacote } from '../view/geral/CadastrarPacote';
+import PersonalizarAmostra from '../view/laboratorio/PersonalizarAmostra';
+import FormularioFornecedor from '../view/qualidade/FormularioFornecedor';
+import VisualizarFornecedores from '../view/qualidade/VisualizarFornecedores';
+import VisualizarQualificacoes from '../view/qualidade/VisualizarQualificacoes';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -161,6 +165,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'cadastrar-coleta': {component: <CadastrarColeta />, hasLayout: false},
 
+  'lab-personalizar-amostra': { component: <PersonalizarAmostra />, hasLayout: false },
+
 
   // Administração
   'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
@@ -177,6 +183,22 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'visualizar-amostras-cadastro': { component: <VisualizarAmostraView  />, hasLayout: false },
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+  // Qualidade
+  'qualidade-fornecedor-form': { component: <FormularioFornecedor />, hasLayout: false },
+  'visualizar-fornecedores': { component: <VisualizarFornecedores />, hasLayout: false },
+  'visualizar-qualificacoes': { component: <VisualizarQualificacoes />, hasLayout: false },
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

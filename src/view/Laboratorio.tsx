@@ -598,9 +598,10 @@ export const Laboratorio: React.FC = memo(() => {
         WindowManager.openCadastrarAmostra();
         break;
       
-      case "Personalizar":
-        console.log("Ação: Personalizar configurações!");
-        break;
+      case 'Personalizar':
+        console.log("Ação: Personalizar amostra!");
+      WindowManager.openPersonalizarAmostra();
+      break;
 
       case "Alterar categoria":
         console.log("Ação: Alterar categoria da amostra!");
@@ -623,6 +624,8 @@ export const Laboratorio: React.FC = memo(() => {
         console.log("Ação: Visualizar amostras!");
        WindowManager.openVisualizarAmostas();
         break;
+
+      
 
       // ... outros cases permanecem iguais
       default:

@@ -737,7 +737,7 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
   }
 
 
-         static async openVisualizarColeta(memory_instance?: any): Promise<WebviewWindow> {
+static async openVisualizarColeta(memory_instance?: any, selectedClientId?: number | null): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'selecionar-coletas',
       title: 'Selecionar Coletas',
@@ -745,7 +745,12 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
       width: 1200,
       height: 600,
       allowMultiple: true,
-      data: memory_instance
+      data: { // <-- Encapasulando os dados em um único objeto
+        // A instância para comunicação de volta
+        parentInstance: memory_instance, 
+        // O ID do cliente, se necessário para carregar as coletas
+        clientId: selectedClientId 
+      }
     });
   }
 
@@ -814,6 +819,54 @@ static async openGerenciarPermissoesSetor(): Promise<WebviewWindow> {
   });
 }
 
+static async openPersonalizarAmostra(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'lab-personalizar-amostra',
+      title: 'Personalizar Amostras',
+      url: '/#/lab-personalizar-amostra',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+  static async openVisualizarFornecedores(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-fornecedores',
+      title: 'Visualizar Fornecedores',
+      url: '/#/visualizar-fornecedores',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+  static async openCadastrarFornecedor(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'qualidade-fornecedor-form-novo',
+      title: 'Cadastrar Novo Fornecedor',
+      url: '/#/qualidade-fornecedor-form',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+  static async openVisualizarQualificacoes(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'visualizar-qualificacoes',
+      title: 'Visualizar Qualificações', 
+      url: '/#/visualizar-qualificacoes',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
 static async openVisualizarHistorico(): Promise<WebviewWindow> {
   return this.openWindow({
     label: 'admin-historico',
@@ -836,6 +889,9 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
       minWidth: 900,
       minHeight: 600,
     });
+
+
+    
 
     
 

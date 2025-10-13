@@ -39,7 +39,7 @@ pub struct ParametroResponse {
     pub message: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Parametro {
     pub id: u32,
     pub nome: String,
@@ -47,7 +47,7 @@ pub struct Parametro {
     pub grupo: String,
     pub tecnica_nome: String,
     pub unidade: String,
-    pub parametro_pop: u32, 
+    pub parametro_pop: u32,
     pub limite: String,
     pub certificado_pag: Option<u32>,
     pub codigo: String,
@@ -60,6 +60,10 @@ pub struct Parametro {
     pub n3: i32,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ParametroRequest {
+    pub parametros: Vec<u32>,
+}
 // Structs para a resposta da API de dados do cliente
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct OrcamentoItem {
@@ -501,23 +505,48 @@ pub async fn buscar_parametros(
         .map_err(|e| format!("Erro ao parsear JSON: {}", e))
 }
 
-
 #[command]
 pub async fn buscar_parametros_by_id(
     app_handle: AppHandle,
     parametro_id: u32,
 ) -> Result<ParametroResponse, String> {
-    let endpoint = format!("parametros/byid{}", parametro_id);
+    
+    // 1. Defina a URL FINAL correta: APENAS o endpoint base.
+    // O ID será enviado no corpo, não na URL.
+    let endpoint = "parametros/byid"; 
     let client = reqwest::Client::new();
     let url = format!("{}/{}", get_api_url(&app_handle), endpoint);
 
+    // 2. Crie o corpo JSON (Payload) para o método POST.
+    // Assume que você tem a struct ParametroRequest definida no Rust:
+    // #[derive(Debug, Serialize)] pub struct ParametroRequest { pub parametros: Vec<u32>, }
+    let payload = ParametroRequest {
+        parametros: vec![parametro_id], 
+    };
+
+    // 3. Mude a requisição para POST e anexe o corpo JSON.
     let res = client
-        .get(&url)
+        .post(&url) // 👈 MUDANÇA CRÍTICA: Agora é POST
+        .json(&payload) // 👈 MUDANÇA CRÍTICA: Envia o payload JSON
         .send()
         .await
         .map_err(|e| format!("Erro de conexão com o servidor: {:?}", e))?;
 
     let status = res.status();
+    
+    // ... (O restante do tratamento de status e parsing JSON permanece o mesmo)
+    if !status.is_success() {
+        let error_body = res
+            .text()
+            .await
+            .unwrap_or_else(|_| "Corpo de erro não pôde ser lido.".to_string());
+            
+        return Err(format!(
+            "Falha na requisição. Status: {}. Resposta do servidor: {}",
+            status, error_body
+        ));
+    }
+
     let body_text = res
         .text()
         .await
@@ -531,8 +560,9 @@ pub async fn buscar_parametros_by_id(
     }
 
     serde_json::from_str::<ParametroResponse>(&body_text)
-        .map_err(|e| format!("Erro ao parsear JSON: {}", e))
+        .map_err(|e| format!("Erro ao parsear JSON: {} (URL: {})", e, url))
 }
+
 
 #[command]
 pub async fn buscar_categoria_amostra(app_handle: AppHandle) -> Result<Vec<Categoria>, String> {

@@ -322,7 +322,7 @@ export const Frota: React.FC = memo(() => {
       id: "veiculos",
       title: "Gestão de Veículos",
       icon: Car,
-      gradient: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "veículos",
       items: [
         { name: "Cadastrar motorista", icon: UserCheck, description: "Cadastrar novo motorista" },
@@ -334,7 +334,7 @@ export const Frota: React.FC = memo(() => {
       id: "viagens",
       title: "Controle de Viagens",
       icon: Route,
-      gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "viagens",
       items: [
         { name: "Cadastrar viagem", icon: Plus, description: "Programar nova viagem" },
@@ -346,7 +346,7 @@ export const Frota: React.FC = memo(() => {
       id: "abastecimento",
       title: "Abastecimento",
       icon: Fuel,
-      gradient: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "combustível",
       items: [
         { name: "Cadastrar abastecimento", icon: Plus, description: "Registrar abastecimento" },
@@ -357,7 +357,7 @@ export const Frota: React.FC = memo(() => {
       id: "manutencao",
       title: "Manutenção",
       icon: Wrench,
-      gradient: "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "manutenção",
       items: [
         { name: "Cadastrar manutenção", icon: Plus, description: "Agendar manutenção" },
@@ -368,7 +368,7 @@ export const Frota: React.FC = memo(() => {
       id: "rastreamento",
       title: "Rastreamento",
       icon: Navigation,
-      gradient: "linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "monitoramento",
       items: [
         { name: "Localização em Tempo Real", icon: MapPin, description: "Ver localização atual dos veículos" },
@@ -380,7 +380,7 @@ export const Frota: React.FC = memo(() => {
       id: "relatorios",
       title: "Relatórios e Análises",
       icon: BarChart3,
-      gradient: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+      gradient: "linear-gradient(135deg, #5b995b 0%, #5b995b 100%)",
       category: "relatórios",
       items: [
         { name: "Consumo de Combustível", icon: Fuel, description: "Análise de consumo por veículo" },
@@ -396,7 +396,7 @@ export const Frota: React.FC = memo(() => {
       value: "45",
       change: "+3",
       icon: Truck,
-      iconBg: { backgroundColor: '#3b82f6' },
+      iconBg: { backgroundColor: '#5b995b' },
       changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
       trendColor: '#10b981'
     },
@@ -405,7 +405,7 @@ export const Frota: React.FC = memo(() => {
       value: "12",
       change: "+8%",
       icon: Route,
-      iconBg: { backgroundColor: '#10b981' },
+      iconBg: { backgroundColor: '#5b995b' },
       changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
       trendColor: '#10b981'
     },
@@ -414,7 +414,7 @@ export const Frota: React.FC = memo(() => {
       value: "7",
       change: "-2",
       icon: Wrench,
-      iconBg: { backgroundColor: '#f59e0b' },
+      iconBg: { backgroundColor: '#5b995b' },
       changeBg: { backgroundColor: '#fed7aa', color: '#9a3412' },
       trendColor: '#f59e0b'
     },
@@ -423,7 +423,7 @@ export const Frota: React.FC = memo(() => {
       value: "2.8k L",
       change: "-5%",
       icon: Fuel,
-      iconBg: { backgroundColor: '#8b5cf6' },
+      iconBg: { backgroundColor: '#5b995b' },
       changeBg: { backgroundColor: '#dcfce7', color: '#166534' },
       trendColor: '#10b981'
     },
@@ -432,7 +432,7 @@ export const Frota: React.FC = memo(() => {
       value: "3",
       change: "-1",
       icon: AlertTriangle,
-      iconBg: { backgroundColor: '#ef4444' },
+      iconBg: { backgroundColor: '#5b995b' },
       changeBg: { backgroundColor: '#fecaca', color: '#991b1b' },
       trendColor: '#ef4444'
     }
@@ -548,7 +548,7 @@ switch(itemName)
               <div style={{
                 width: '48px',
                 height: '48px',
-                backgroundColor: '#3b82f6',
+                backgroundColor: '#5b995b',
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
@@ -702,7 +702,7 @@ switch(itemName)
       }}>
         {/* Agendamentos do Dia - Seção especial no topo */}
    <div style={{
-          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+          background: 'linear-gradient(135deg, #355b35ff 0%, #355b35ff 100%)',
           borderRadius: '12px',
           padding: '24px',
           color: 'white',

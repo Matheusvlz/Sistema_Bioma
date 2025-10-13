@@ -16,7 +16,7 @@
         "maximized": true,
         "height": 600,
         "resizable": true,
-         "label": "main",
+        "label": "main",
         "title": "Sistema Bioma",
         "width": 800,
         "minWidth": 400,
@@ -49,8 +49,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["config.json"]
-  }
-  
-  
+    "resources": [
+      "config.json"
+    ]
+  },
+  "plugins": {
+  "dialog": null,
+  "shell": null
+}
+
 }

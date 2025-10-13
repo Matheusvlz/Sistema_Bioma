@@ -6,7 +6,7 @@
 
 /* Header */
 .qualidade-header {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #14a5b8 0%, #14a5b8 100%);
   color: white;
   padding: 2rem 0;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -587,22 +587,22 @@
 }
 
 .qualidade-clear-search-btn:hover {
-  background: #2563eb;
+  background: #14a5b8;
   transform: translateY(-1px);
 }
 
 /* Cores de fundo */
 .bg-blue-100 { background-color: #dbeafe; }
-.bg-blue-500 { background-color: #3b82f6; }
+.bg-blue-500 { background-color: #14a5b8; }
 .bg-green-100 { background-color: #dcfce7; }
-.bg-green-500 { background-color: #22c55e; }
-.bg-green-600 { background-color: #16a34a; }
+.bg-green-500 { background-color: #14a5b8; }
+.bg-green-600 { background-color: #14a5b8; }
 .bg-purple-100 { background-color: #f3e8ff; }
-.bg-purple-500 { background-color: #a855f7; }
+.bg-purple-500 { background-color: #14a5b8; }
 .bg-orange-100 { background-color: #fed7aa; }
-.bg-orange-500 { background-color: #f97316; }
+.bg-orange-500 { background-color: #14a5b8; }
 .bg-red-100 { background-color: #fee2e2; }
-.bg-red-500 { background-color: #ef4444; }
+.bg-red-500 { background-color: #14a5b8; }
 .bg-yellow-100 { background-color: #fef3c7; }
 .bg-gray-100 { background-color: #f3f4f6; }
 
