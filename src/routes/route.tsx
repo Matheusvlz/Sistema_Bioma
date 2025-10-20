@@ -69,6 +69,8 @@ import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
 import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
 import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 
+import VisualizarMateriaPrima from '../view/laboratorio/VisualizarMateriaPrima';
+
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
 import Visualizar_Manutencao from '../view/frota/Visualizar_Manutencao';
@@ -183,6 +185,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   //LAB
   'selecionar-parametros': { component: <SelecionarParametrosView />, hasLayout: false },
+  'cad-materia-prima': { component: <VisualizarMateriaPrima />, hasLayout: false },
 
   
   'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },

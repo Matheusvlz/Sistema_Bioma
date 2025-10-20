@@ -1,0 +1,228 @@
+/* src/view/laboratorio/styles/VisualizarMateriaPrima.module.css */
+
+.container {
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    background-color: #f8fafc;
+    min-height: 100vh;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.filters {
+    margin-bottom: 1.5rem;
+}
+
+.searchInput {
+    width: 100%;
+    max-width: 400px;
+    padding: 0.875rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    background: white;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #14a5b8;
+    box-shadow: 0 0 0 3px rgba(20, 165, 184, 0.15);
+}
+
+.searchInput:disabled {
+    background-color: #f3f4f6;
+    cursor: not-allowed;
+}
+
+.tableContainer {
+    background: rgb(255, 255, 255);
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    max-height: 50vh; /* Limita a altura a 50% da altura da tela */
+    overflow-y: auto; /* Adiciona scroll vertical quando necessário */
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.table thead {
+    background-color: #04b4c1;
+}
+
+.table th {
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+    padding: 1rem 1.5rem;
+    color: #374151;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background-color: #f9fafb;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.buttonEdit,
+.buttonDelete {
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.buttonEdit {
+    color: #3b82f6;
+}
+
+.buttonEdit:hover {
+    background-color: #dbeafe;
+    color: #2563eb;
+}
+
+.buttonDelete {
+    color: #ef4444;
+}
+
+.buttonDelete:hover {
+    background-color: #fee2e2;
+    color: #dc2626;
+}
+
+.buttonEdit:disabled,
+.buttonDelete:disabled {
+    color: #9ca3af;
+    background-color: transparent;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.empty,
+.loadingCell {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: #6b7280;
+    font-size: 1rem;
+}
+
+.spinner {
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #14a5b8;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 2rem;
+    color: #6b7280;
+}
+
+.pagination button {
+    padding: 0.6rem 1.2rem;
+    border: 1px solid #e2e8f0;
+    background-color: white;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error, .success {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+}
+
+.error {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.success {
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.buttonPrimary {
+    background: linear-gradient(135deg, #14a5b8 0%, #14a5b8 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(20, 165, 184, 0.2);
+}
+
+.buttonPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 165, 184, 0.3);
+}

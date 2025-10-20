@@ -42,3 +42,5 @@ pub mod amostra_personalizavel;
 pub mod fornecedor;
 pub mod pesquisa;
 pub mod estoque;
+pub mod materia_prima;
+pub mod materia_prima_options;

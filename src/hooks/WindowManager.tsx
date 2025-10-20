@@ -768,6 +768,19 @@ static async openVisualizarColeta(memory_instance?: any, selectedClientId?: numb
     });
   }
 
+
+  static async openGerenciarMateriaPrima(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cad-materia-prima',
+      title: 'Gerenciar Matérias-Primas',
+      url: '/#/cad-materia-prima',
+      width: 1024,
+      height: 768,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
          static async openCopiar(memory_instance?: any): Promise<WebviewWindow> {
      return this.openWindow({
       label: 'visualizar-amostras-cadastro',

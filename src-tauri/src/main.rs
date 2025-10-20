@@ -220,6 +220,15 @@ use controller::laboratorio::amostra_personalizavel_controller::{
     atualizar_amostras_em_lote_tauri
 };
 
+use controller::laboratorio::materia_prima_controller::{
+    listar_materia_prima_tauri,
+    cadastrar_materia_prima_tauri,
+    editar_materia_prima_tauri,
+    deletar_materia_prima_tauri,
+    listar_tipos_materia_prima_tauri,
+    listar_unidades_tauri, // <-- A função que estava causando o erro
+};
+
 
 use controller::admin::setor_controller::{
     listar_setores_command,
@@ -525,6 +534,12 @@ fn main() {
             buscar_certificado,
             listar_amostras_por_faixa_tauri,
             atualizar_amostras_em_lote_tauri,
+            listar_materia_prima_tauri,
+            cadastrar_materia_prima_tauri,
+            editar_materia_prima_tauri,
+            deletar_materia_prima_tauri,
+            listar_tipos_materia_prima_tauri,
+            listar_unidades_tauri,
 
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,
