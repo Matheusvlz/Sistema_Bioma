@@ -2,6 +2,15 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { availableMonitors } from '@tauri-apps/api/window'
 import { ICadastrarAmostraInstance } from '../view/laboratorio/CadastrarAmostra';
 
+interface ChecagemData {
+  id_grupo_edit?: number;
+  numero_ini?: number;
+  numero_fim?: number;
+}
+interface AmostraData {
+  idAnalise: number;
+  idUsuario: number;
+}
 export interface WindowConfig {
   label: string;
   title: string;
@@ -918,6 +927,48 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
       allowMultiple: false,
     });
   }
+    static async openAmostrasNaoIniciadas(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'amostra-details',
+      title: 'Amostras Não Iniciadas',
+      url: '/#/amostra-details',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: amostra
+    });
+  }
+
+
+      static async openResultados(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'resultado-cadastro',
+      title: 'Amostras Não Iniciadas',
+      url: '/#/resultado-cadastro',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: amostra
+    });
+  }
+
+   static async openChecagem(data_col: ChecagemData): Promise<WebviewWindow> {
+    let url = '/#/coleta-checagem';
+    
+
+    return this.openWindow({
+      label: 'coleta-checagem',
+      title: 'Checagem de Amostra',
+      url: url, // URL com os parâmetros de busca
+      width: 1280,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+      data: data_col
+    });
+  }
+
+  
 
 static async openVisualizarHistorico(): Promise<WebviewWindow> {
   return this.openWindow({
@@ -977,3 +1028,8 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
   }
 
 }
+
+
+
+
+

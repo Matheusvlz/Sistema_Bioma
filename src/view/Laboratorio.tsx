@@ -34,18 +34,36 @@ import {
   User,
   Building,
   RefreshCcw,
-  XCircle
+  XCircle,
+  ExternalLink
 
 } from "lucide-react";
 import { invoke } from '@tauri-apps/api/core';
 import styles from './css/Laboratorio.module.css';
 import { WindowManager } from '../hooks/WindowManager';
+
 // Interfaces para tipagem
 interface ChecagemItem {
+  id?: number;
+  id_grupo_edit?: number;
   fantasia?: string;
   razao?: string;
   max_numero: number;
   min_numero: number;
+}
+
+interface Usuario {
+  success: boolean;
+  id: number;
+  nome: string;
+  privilegio: string;
+  empresa?: string;
+  ativo: boolean;
+  nome_completo: string;
+  cargo: string;
+  numero_doc: string;
+  profile_photo?: string; 
+  dark_mode: boolean;
 }
 
 interface AmostraNaoIniciadaItem {
@@ -103,6 +121,12 @@ interface LaboratorioResponse {
   data?: any;
   message?: string;
   tipo: string;
+}
+
+interface ChecagemData {
+  id_grupo_edit?: number;
+  numero_ini?: number;
+  numero_fim?: number;
 }
 
 // Componente de Card otimizado com memo e click handler
@@ -401,7 +425,18 @@ export const Laboratorio: React.FC = memo(() => {
     carregarDados();
   }, []);
 
-  // Dados estáticos memoizados para melhor performance - Nova estrutura do laboratório
+  // Função para abrir janela de checagem
+  const abrirChecagem = useCallback((item: ChecagemItem) => {
+    const data: ChecagemData = {
+      id_grupo_edit: item.id_grupo_edit,
+      numero_ini: item.min_numero,
+      numero_fim: item.max_numero
+    };
+    
+    WindowManager.openChecagem(data);
+  }, []);
+
+  // Dados estáticos memoizados para melhor performance
   const menuSections = useMemo(() => [
     {
       id: "amostra",
@@ -550,7 +585,7 @@ export const Laboratorio: React.FC = memo(() => {
     registroInsumo.length
   ]);
 
-  // Filtrar seções baseado no termo de pesquisa - otimizado
+  // Filtrar seções baseado no termo de pesquisa
   const filteredSections = useMemo(() => {
     if (!searchTerm.trim()) return menuSections;
     
@@ -566,8 +601,6 @@ export const Laboratorio: React.FC = memo(() => {
       return titleMatch || categoryMatch || itemsMatch;
     });
   }, [searchTerm, menuSections]);
-
-
 
   // Callbacks otimizados
   const clearSearch = useCallback(() => {
@@ -587,47 +620,22 @@ export const Laboratorio: React.FC = memo(() => {
   }, []);
 
   const handleItemClick = useCallback((itemName: string) => {
-    // Usamos um switch para decidir o que fazer com base no nome do item
     switch (itemName) {
       case "Planilha":
-       WindowManager.openPlanilha();
+        WindowManager.openPlanilha();
         break;
-
       case "Cadastrar":
-        console.log("Ação: Cadastrar nova amostra!");
         WindowManager.openCadastrarAmostra();
         break;
-      
       case 'Personalizar':
-        console.log("Ação: Personalizar amostra!");
-      WindowManager.openPersonalizarAmostra();
-      break;
-
-      case "Alterar categoria":
-        console.log("Ação: Alterar categoria da amostra!");
+        WindowManager.openPersonalizarAmostra();
         break;
-
-      case "Gerar coleta":
-        console.log("Ação: Gerar processo de coleta!");
-        break;
-
-      case "Coleta":
-        console.log("Ação: Gerenciar coletas!");
-        break;
-
       case "Checagem":
-        console.log("Ação: Checagem de amostras!");
         openModal('checagem');
         break;
-
       case "Visualizar":
-        console.log("Ação: Visualizar amostras!");
-       WindowManager.openVisualizarAmostas();
+        WindowManager.openVisualizarAmostas();
         break;
-
-      
-
-      // ... outros cases permanecem iguais
       default:
         console.log(`Nenhuma ação definida para: ${itemName}`);
         break;
@@ -635,36 +643,113 @@ export const Laboratorio: React.FC = memo(() => {
   }, []);
 
   // Render functions para os modais
-  const renderChecagemItem = (item: ChecagemItem, index: number) => (
-    <div key={index} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <Building className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>{item.fantasia || 'N/A'}</h4>
-          <p>{item.razao || 'N/A'}</p>
+  const renderChecagemItem = (item: ChecagemItem, index: number) => {
+    console.log('Renderizando item:', item); // Debug
+    
+    return (
+      <div key={index} className={styles["item-card"]}>
+        <div className={styles["item-header"]}>
+          <div className={styles["item-icon"]}>
+            <Building size={20} />
+          </div>
+          <div className={styles["item-info"]}>
+            <h4>{item.fantasia || 'N/A'}</h4>
+            <p>{item.razao || 'N/A'}</p>
+          </div>
+        </div>
+        <div className={styles["item-details"]}>
+          <span>Min: {item.min_numero}</span>
+          <span>Max: {item.max_numero}</span>
+        </div>
+        <div className={styles["item-actions"]}>
+          <button 
+            className={styles["btn-open-checagem"]}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Botão clicado, abrindo checagem:', item);
+              abrirChecagem(item);
+            }}
+            title="Abrir checagem"
+            type="button"
+          >
+            <ExternalLink size={16} />
+            <span>Abrir Checagem</span>
+          </button>
         </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span>Min: {item.min_numero}</span>
-        <span>Max: {item.max_numero}</span>
-      </div>
-    </div>
-  );
+    );
+  };
+ const handleIniciarAnalise = useCallback(async (idAnalise: number) => {
+    try {
+        // 1. CHAME A FUNÇÃO ASSÍNCRONA COM AWAIT E DEFINA A TIPAGEM DE RETORNO
+        // O invoke retorna uma Promise<T>, onde T é o tipo esperado (Usuario)
+        const userResponse = await invoke('usuario_logado') as Usuario;
 
-  const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
-    <div key={item.id} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <TestTube className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>#{item.numero || 'N/A'}</h4>
-          <p>{item.identificacao || 'Sem identificação'}</p>
+        // 2. VERIFIQUE SE A REQUISIÇÃO FOI BEM SUCEDIDA E O ID EXISTE
+        if (!userResponse || !userResponse.id) {
+            console.error("Erro: ID do usuário logado não encontrado.");
+            // Você pode adicionar uma notificação ao usuário aqui
+            alert("Não foi possível identificar o usuário logado para iniciar a análise.");
+            return;
+        }
+
+        const idUsuario = userResponse.id; 
+        
+        // 3. CHAMA O MÉTODO DO WINDOWMANAGER (Certifique-se que o nome do método é 'openAmostraDetails')
+        WindowManager.openAmostrasNaoIniciadas({ 
+            idAnalise: idAnalise,
+            idUsuario: idUsuario 
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+        alert("Erro fatal ao carregar dados do usuário. Tente novamente.");
+    }
+
+    // Se desejar, você pode fechar o modal que lista as amostras
+    // closeModal('naoIniciadas'); 
+}, []);
+
+const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
+  <div key={item.id} className={styles["amostra-card"]}>
+    {/* Ícone e Conteúdo */}
+    <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
+      <div className={styles["amostra-card-icon"]}>
+        <TestTube />
+      </div>
+      
+      <div className={styles["amostra-card-content"]}>
+        <p className={styles["amostra-card-numero"]}>
+          <strong>#{item.numero}</strong> {item.identificacao}
+        </p>
+        
+        <p className={styles["amostra-card-identificacao"]}>
+          {item.fantasia || 'Sem informação'}
+        </p>
+        
+        <div className={styles["amostra-card-empresa"]}>
+          <span>🏢</span>
+          <strong>{item.razao || 'N/A'}</strong>
         </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span>{item.fantasia || item.razao || 'N/A'}</span>
-      </div>
     </div>
-  );
+
+    {/* Ações */}
+    <div className={styles["amostra-card-actions"]}>
+      <span className={styles["amostra-status-badge"]}>Pendente</span>
+      
+      <button
+        onClick={() => handleIniciarAnalise(item.id)}
+        className={styles["btn-iniciar"]}
+        title="Iniciar análise desta amostra"
+      >
+        <ExternalLink size={18} />
+        <span>Iniciar</span>
+      </button>
+    </div>
+  </div>
+);
 
   const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem) => (
     <div key={item.id} className={styles["item-card"]}>
@@ -780,13 +865,14 @@ export const Laboratorio: React.FC = memo(() => {
               >
                 <Search />
               </button>
-                 <button
-            className={styles["reload-button"]}
-            onClick={carregarDados}
-            title="Recarregar dados"
-          >  <RefreshCcw /> </button>
+              <button
+                className={styles["reload-button"]}
+                onClick={carregarDados}
+                title="Recarregar dados"
+              >
+                <RefreshCcw />
+              </button>
             </div>
-            
           </div>
         </div>
       </header>
@@ -925,17 +1011,28 @@ export const Laboratorio: React.FC = memo(() => {
         />
       </Modal>
 
-      <Modal
-        isOpen={modalStates.naoIniciadas}
-        onClose={() => closeModal('naoIniciadas')}
-        title="Amostras Não Iniciadas"
-      >
-        <ItemList
-          items={amostrasNaoIniciadas}
-          renderItem={renderAmostraNaoIniciadaItem}
-          emptyMessage="Nenhuma amostra não iniciada encontrada"
-        />
-      </Modal>
+<Modal
+  isOpen={modalStates.naoIniciadas}
+  onClose={() => closeModal('naoIniciadas')}
+  title="Amostras Não Iniciadas"
+>
+  <div className={styles["amostra-items-list"]}>
+    {amostrasNaoIniciadas.length === 0 ? (
+      <div className={styles["amostra-empty-state"]}>
+        <div className={styles["amostra-empty-icon"]}>
+          <TestTube size={80} />
+        </div>
+        <p className={styles["amostra-empty-text"]}>
+          Nenhuma amostra não iniciada encontrada
+        </p>
+      </div>
+    ) : (
+      <div className={styles["amostra-nao-iniciada-container"]}>
+        {amostrasNaoIniciadas.map(item => renderAmostraNaoIniciadaItem(item))}
+      </div>
+    )}
+  </div>
+</Modal>
 
       <Modal
         isOpen={modalStates.emAnalise}

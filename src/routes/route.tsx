@@ -78,7 +78,9 @@ import SelecionarColetasView from '../view/laboratorio/SelecionarColetasView';
 import VisualizarAmostraView from '../view/laboratorio/VisualizarAmostraView';
 
 import SelecionarParametrosView from '../view/laboratorio/SelecionarParametrosView';
-
+import ColetaChecagem from '../view/laboratorio/ColetaChecagem';
+import AmostraDetailView from '../view/laboratorio/AmostraDetailModal';
+import ResultadoCadastroView from '../view/laboratorio/ResultadoCadastroView';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -207,6 +209,15 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'qualidade-pesquisa-formulario': { component: <FormularioPesquisa />, hasLayout: false },
   'qualidade-pesquisa-resultados': { component: <VisualizarResultadosPesquisa />, hasLayout: false },
   'qualidade-estoque': { component: <GerenciarEstoque />, hasLayout: false },
+  'coleta-checagem': { component: <ColetaChecagem />, hasLayout: false },
+
+  'amostra-details': { component: <AmostraDetailView />, hasLayout: false},
+
+   'resultado-cadastro': { component: <ResultadoCadastroView />, hasLayout: false}
+
+  
+
+  
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;
