@@ -7,3 +7,4 @@ pub mod buscar_coleta;
 pub mod coleta_checagem_controller;
 pub mod amostra_controller;
 pub mod resultado_controller;
+pub mod materia_prima_controller;

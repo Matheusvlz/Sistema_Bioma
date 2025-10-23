@@ -633,6 +633,11 @@ export const Laboratorio: React.FC = memo(() => {
       case "Checagem":
         openModal('checagem');
         break;
+
+      case 'Cadastrar matéria-prima':
+        WindowManager.openGerenciarMateriaPrima();
+        break;
+
       case "Visualizar":
         WindowManager.openVisualizarAmostas();
         break;

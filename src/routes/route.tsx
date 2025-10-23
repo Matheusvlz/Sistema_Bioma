@@ -25,7 +25,8 @@ import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoPar
 import CadastrarColeta from '../view/geral/CadastrarColeta';
 import CalculoIDE from '../view/geral/CalculoIDE';
 
-import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
+//import AnaliseAtividadesPage from '../view/administracao/AnaliseAtividadesPage';
+import RelatorioAnalisePage from '../view/administracao/RelatorioColetasColetores/RelatorioAnalisePage';
 import { CadastrarUsuario }   from '../view/administracao/CadastrarUsuarios';
 import { ListarUsuarios } from '../view/administracao/ListarUsuarios';
 import { GerenciarPermissoesSetor } from '../view/administracao/GerenciarPermissoesSetor';
@@ -67,6 +68,8 @@ import VisualizarPesquisas from '../view/qualidade/VisualizarPesquisas';
 import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
 import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
 import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
+
+import VisualizarMateriaPrima from '../view/laboratorio/VisualizarMateriaPrima';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -175,7 +178,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
 
   // Administração
-  'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
+  //'analisar-coletores': { component: <AnaliseAtividadesPage />, hasLayout: false },
+  'relatorio-analise': { component: <RelatorioAnalisePage />, hasLayout: false },
   'cadastrar-usuarios-admin': { component: <CadastrarUsuario itemParaEdicao={null} onSalvar={function (): void {throw new Error('Function not implemented.'); } } onCancelar={function (): void { throw new Error('Function not implemented.'); } } />, hasLayout: false },
   'admin-usuarios': { component: <ListarUsuarios />, hasLayout: false },
   'admin-permissoes-setor': { component: <GerenciarPermissoesSetor />, hasLayout: false },
@@ -183,6 +187,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   //LAB
   'selecionar-parametros': { component: <SelecionarParametrosView />, hasLayout: false },
+  'cad-materia-prima': { component: <VisualizarMateriaPrima />, hasLayout: false },
 
   
   'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },

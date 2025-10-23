@@ -189,10 +189,12 @@ use crate::controller::geral::calculo_controller::{
 
 use crate::controller::geral::analise_controller::{
     get_cidades_analise_command,
-    get_atividades_filtradas_command,
-    get_clientes_analise_command,  // <-- ADICIONAR
-    get_coletores_analise_command  // <-- ADICIONAR
+    get_clientes_analise_command,
+    get_coletores_analise_command,
+    get_analises_detalhadas_command,  // <-- ADICIONADO
+    get_analise_agregada_command,      // <-- ADICIONADO
 };
+
 
 // Módulo: Laboratório
 use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
@@ -222,6 +224,15 @@ use controller::laboratorio::visualizar_amostra::{
 use controller::laboratorio::amostra_personalizavel_controller::{
     listar_amostras_por_faixa_tauri,
     atualizar_amostras_em_lote_tauri
+};
+
+use controller::laboratorio::materia_prima_controller::{
+    listar_materia_prima_tauri,
+    cadastrar_materia_prima_tauri,
+    editar_materia_prima_tauri,
+    deletar_materia_prima_tauri,
+    listar_tipos_materia_prima_tauri,
+    listar_unidades_tauri, // <-- A função que estava causando o erro
 };
 
 
@@ -497,9 +508,10 @@ fn main() {
             deletar_calculo,
 
             get_cidades_analise_command,
-            get_atividades_filtradas_command,
-            get_clientes_analise_command, // <-- ADICIONAR
-            get_coletores_analise_command, // <-- ADICIONAR
+            get_clientes_analise_command,
+            get_coletores_analise_command,
+            get_analises_detalhadas_command,  
+            get_analise_agregada_command, 
             
             // Comandos de Laboratório
             buscar_checagem, 
@@ -528,6 +540,12 @@ fn main() {
             buscar_certificado,
             listar_amostras_por_faixa_tauri,
             atualizar_amostras_em_lote_tauri,
+            listar_materia_prima_tauri,
+            cadastrar_materia_prima_tauri,
+            editar_materia_prima_tauri,
+            deletar_materia_prima_tauri,
+            listar_tipos_materia_prima_tauri,
+            listar_unidades_tauri,
 
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,

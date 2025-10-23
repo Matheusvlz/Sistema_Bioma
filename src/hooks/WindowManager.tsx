@@ -720,7 +720,7 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
         });
     }
 
-    static async openAnalisarColetores(): Promise<WebviewWindow> {
+    /*static async openAnalisarColetores(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'analisar-coletores',
       // MUDANÇA AQUI para consistência:
@@ -731,6 +731,20 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
       allowMultiple: false,
     });
   }
+    */
+
+  static async openRelatorioAnalise(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'relatorio-analise', // <-- DEVE ser igual à chave da rota em routes.tsx
+    title: 'Relatório de Análise Operacional', // <-- Novo título mais completo
+    url: '/#/relatorio-analise', // <-- DEVE ser igual à chave da rota
+    width: 1366, // Sugestão de um pouco mais de espaço
+    height: 768,
+    minWidth: 1280,
+    minHeight: 800,
+    allowMultiple: false,
+  });
+}
 
 
        static async openCadastrarColeta(coletaid?: number): Promise<WebviewWindow> {
@@ -760,6 +774,19 @@ static async openVisualizarColeta(memory_instance?: any, selectedClientId?: numb
         // O ID do cliente, se necessário para carregar as coletas
         clientId: selectedClientId 
       }
+    });
+  }
+
+
+  static async openGerenciarMateriaPrima(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'cad-materia-prima',
+      title: 'Gerenciar Matérias-Primas',
+      url: '/#/cad-materia-prima',
+      width: 1024,
+      height: 768,
+      center: true,
+      allowMultiple: false,
     });
   }
 
