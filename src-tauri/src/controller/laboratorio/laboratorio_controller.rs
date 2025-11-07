@@ -12,6 +12,18 @@ pub struct ChecagemItem {
     pub max_numero: u32,
     pub min_numero: u32,
 }
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SalvarTemperaturaResponse {
+    pub success: bool,
+    pub message: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct SalvarTemperaturaPayload {
+    id: u32,        // ID do grupo_doble
+    valor: String,  // Valor da temperatura digitado
+    id_usuario: u32, // ID do usuário logado
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct AmostraNaoIniciadaItem {
@@ -164,4 +176,51 @@ pub async fn buscar_amostras_bloqueadas() -> LaboratorioResponse {
 #[command]
 pub async fn buscar_registro_insumo() -> LaboratorioResponse {
     consulta_laboratorio("registro_insumo".to_string()).await
+}
+
+#[command]
+pub async fn salvar_temperatura_analise(
+    app_handle: AppHandle,
+    id: u32,
+    valor: String,
+    id_usuario: u32,
+) -> Result<SalvarTemperaturaResponse, String> {
+    
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+
+    let url = format!("{}/laboratorio/salvar-temperatura", api_url); 
+
+    let payload = SalvarTemperaturaPayload {
+        id,
+        valor,
+        id_usuario,
+    };
+    
+    println!("💾 Salvando temperatura: {:?}", payload);
+
+    match client.post(&url).json(&payload).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                     match response.json::<SalvarTemperaturaResponse>().await {
+                        Ok(response) => Ok(response),
+                        Err(e) => {
+                            println!("Erro ao parsear JSON de sucesso: {:?}", e);
+                            Err(e.to_string())
+                        }
+                    }
+                }
+                status => {
+                    let body = response.text().await.unwrap_or_default();
+                    eprintln!("Erro do servidor: {} - {}", status, body);
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => {
+             eprintln!("Erro de conexão: {}", e);
+            Err(format!("Erro de conexão: {}", e))
+        }
+    }
 }

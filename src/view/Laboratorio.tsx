@@ -35,13 +35,14 @@ import {
   Building,
   RefreshCcw,
   XCircle,
-  ExternalLink
+  ExternalLink,
+  Save
 
 } from "lucide-react";
 import { invoke } from '@tauri-apps/api/core';
 import styles from './css/Laboratorio.module.css';
 import { WindowManager } from '../hooks/WindowManager';
-
+import SalvarTemperaturaModal from './laboratorio/SalvarTemperaturaModal';
 // Interfaces para tipagem
 interface ChecagemItem {
   id?: number;
@@ -186,6 +187,8 @@ const Modal = memo(({ isOpen, onClose, title, children }: {
   );
 });
 
+
+
 // Componente para lista de itens genérica
 const ItemList = memo(({ items, renderItem, emptyMessage }: {
   items: any[];
@@ -279,6 +282,13 @@ export const Laboratorio: React.FC = memo(() => {
   const [amostrasBloqueadas, setAmostrasBloqueadas] = useState<AmostraBloqueadaItem[]>([]);
   const [registroInsumo, setRegistroInsumo] = useState<RegistroInsumoItem[]>([]);
 
+  // *** LINHA REMOVIDA ***
+  // O 'amostrasParaNavegacao' estava causando o bug.
+  // const amostrasParaNavegacao = useMemo(() => { ... }, []);
+const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: number | null }>({ 
+    isOpen: false, 
+    id: null 
+  });
   // Estados para modais
   const [modalStates, setModalStates] = useState({
     checagem: false,
@@ -685,26 +695,55 @@ export const Laboratorio: React.FC = memo(() => {
       </div>
     );
   };
- const handleIniciarAnalise = useCallback(async (idAnalise: number) => {
+
+  // =======================================================
+  // ============ INÍCIO DA CORREÇÃO ============
+  // =======================================================
+
+  const handleIniciarAnalise = useCallback(async (idAnalise: number) => {
     try {
-        // 1. CHAME A FUNÇÃO ASSÍNCRONA COM AWAIT E DEFINA A TIPAGEM DE RETORNO
-        // O invoke retorna uma Promise<T>, onde T é o tipo esperado (Usuario)
         const userResponse = await invoke('usuario_logado') as Usuario;
 
-        // 2. VERIFIQUE SE A REQUISIÇÃO FOI BEM SUCEDIDA E O ID EXISTE
         if (!userResponse || !userResponse.id) {
             console.error("Erro: ID do usuário logado não encontrado.");
-            // Você pode adicionar uma notificação ao usuário aqui
             alert("Não foi possível identificar o usuário logado para iniciar a análise.");
             return;
         }
 
         const idUsuario = userResponse.id; 
         
-        // 3. CHAMA O MÉTODO DO WINDOWMANAGER (Certifique-se que o nome do método é 'openAmostraDetails')
         WindowManager.openAmostrasNaoIniciadas({ 
             idAnalise: idAnalise,
-            idUsuario: idUsuario 
+            idUsuario: idUsuario ,
+            // *** CORREÇÃO 1: Passando a lista correta ***
+            arrayAmostras: amostrasNaoIniciadas 
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+        alert("Erro fatal ao carregar dados do usuário. Tente novamente.");
+    }
+    
+    // *** CORREÇÃO 2: Adicionando a dependência correta ***
+  }, [amostrasNaoIniciadas]);
+
+
+ const handleIniciarAnalise2 = useCallback(async (idAnalise: number) => {
+    try {
+        const userResponse = await invoke('usuario_logado') as Usuario;
+
+        if (!userResponse || !userResponse.id) {
+            console.error("Erro: ID do usuário logado não encontrado.");
+            alert("Não foi possível identificar o usuário logado para iniciar a análise.");
+            return;
+        }
+
+        const idUsuario = userResponse.id; 
+        
+        WindowManager.openAmostrasNaoIniciadas({ 
+            idAnalise: idAnalise,
+            idUsuario: idUsuario ,
+            arrayAmostras: amostrasEmAnalise
         });
 
     } catch (error) {
@@ -712,72 +751,129 @@ export const Laboratorio: React.FC = memo(() => {
         alert("Erro fatal ao carregar dados do usuário. Tente novamente.");
     }
 
-    // Se desejar, você pode fechar o modal que lista as amostras
-    // closeModal('naoIniciadas'); 
-}, []);
+    // *** CORREÇÃO 3: Adicionando a dependência correta ***
+  }, [amostrasEmAnalise]);
 
-const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
-  <div key={item.id} className={styles["amostra-card"]}>
-    {/* Ícone e Conteúdo */}
-    <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
-      <div className={styles["amostra-card-icon"]}>
-        <TestTube />
-      </div>
-      
-      <div className={styles["amostra-card-content"]}>
-        <p className={styles["amostra-card-numero"]}>
-          <strong>#{item.numero}</strong> {item.identificacao}
-        </p>
+  // =======================================================
+  // ============ FIM DA CORREÇÃO ============
+  // =======================================================
+
+
+  const handleOpenTabelaNaoIniciada = useCallback(() => {
+    WindowManager.openTabelaNaoIniciada();
+  }, []);
+
+  const handleOpenTabelaIniciada = useCallback(() => {
+    WindowManager.openTabelaIniciada();
+  }, []);
+
+
+  // openTabelaIniciada
+  const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
+    <div key={item.id} className={styles["amostra-card"]}>
+      {/* Ícone e Conteúdo */}
+      <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
+        <div className={styles["amostra-card-icon"]}>
+          <TestTube />
+        </div>
         
-        <p className={styles["amostra-card-identificacao"]}>
-          {item.fantasia || 'Sem informação'}
-        </p>
-        
-        <div className={styles["amostra-card-empresa"]}>
-          <span>🏢</span>
-          <strong>{item.razao || 'N/A'}</strong>
+        <div className={styles["amostra-card-content"]}>
+          <p className={styles["amostra-card-numero"]}>
+            <strong>#{item.numero}</strong> {item.identificacao}
+          </p>
+          
+          <p className={styles["amostra-card-identificacao"]}>
+            {item.fantasia || 'Sem informação'}
+          </p>
+          
+          <div className={styles["amostra-card-empresa"]}>
+            <span>🏢</span>
+            <strong>{item.razao || 'N/A'}</strong>
+          </div>
         </div>
       </div>
-    </div>
 
-    {/* Ações */}
-    <div className={styles["amostra-card-actions"]}>
-      <span className={styles["amostra-status-badge"]}>Pendente</span>
-      
-      <button
-        onClick={() => handleIniciarAnalise(item.id)}
-        className={styles["btn-iniciar"]}
-        title="Iniciar análise desta amostra"
-      >
-        <ExternalLink size={18} />
-        <span>Iniciar</span>
-      </button>
-    </div>
-  </div>
-);
-
-  const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem) => (
-    <div key={item.id} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <FlaskConical className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>#{item.numero || 'N/A'}</h4>
-          <p>{item.identificacao || 'Sem identificação'}</p>
-        </div>
-        {item.passou ? (
-          <CheckCircle className={`${styles["status-icon"]} ${styles["status-success"]}`} />
-        ) : (
-          <XCircle className={`${styles["status-icon"]} ${styles["status-error"]}`} />
-        )}
-      </div>
-      <div className={styles["item-details"]}>
-        <span><Clock /> {item.tempo || 'N/A'}</span>
-        <span>{item.fantasia || item.razao || 'N/A'}</span>
+      {/* Ações */}
+      <div className={styles["amostra-card-actions"]}>
+        <button 
+            onClick={handleOpenTabelaNaoIniciada} 
+            className={`${styles["btn-iniciar"]} ${styles["btn-pendente"]} ${styles["btn-swing"]}`} // Classes para estilo e ANIMAÇÃO
+            title="Abrir Tabela de Amostras Não Iniciadas" 
+            type="button"
+          >
+            <Clock size={18} />
+          
+          </button>
+        
+        <button
+          onClick={() => handleIniciarAnalise(item.id)}
+          className={styles["btn-iniciar"]}
+          title="Iniciar análise desta amostra"
+        >
+          <ExternalLink size={18} />
+          <span>Iniciar</span>
+        </button>
       </div>
     </div>
   );
 
-  const renderTemperaturaItem = (item: TemperaturaItem) => (
+  const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem) => (
+    <div key={item.id} className={styles["amostra-card"]}>
+      {/* Ícone e Conteúdo */}
+      <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
+        <div className={styles["amostra-card-icon"]} style={{ backgroundColor: '#dbeafe', color: '#1e40af' }}>
+          <FlaskConical />
+        </div>
+        
+        <div className={styles["amostra-card-content"]}>
+          <p className={styles["amostra-card-numero"]}>
+            <strong>#{item.numero}</strong> {item.identificacao}
+          </p>
+          
+          <p className={styles["amostra-card-identificacao"]}>
+            {item.fantasia || 'Sem informação'}
+          </p>
+          
+          <div className={styles["amostra-card-empresa"]}>
+            <span>🏢</span>
+            <strong>{item.razao || 'N/A'}</strong>
+          </div>
+          
+          {item.tempo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              <Clock size={14} />
+              <span>Tempo: {item.tempo}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ações */}
+      <div className={styles["amostra-card-actions"]}>
+       <button 
+            onClick={handleOpenTabelaIniciada} 
+            className={`${styles["btn-iniciar"]} ${styles["btn-pendente"]} ${styles["btn-swing"]}`} // Classes para estilo e ANIMAÇÃO
+            title="Abrir Tabela de Amostras Não Iniciadas" 
+            type="button"
+          >
+            <Clock size={18} />
+          
+          </button>
+        
+        <button
+          onClick={() => handleIniciarAnalise2(item.id)}
+          className={styles["btn-iniciar"]}
+          style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+          title="Abrir análise desta amostra"
+        >
+          <ExternalLink size={18} />
+          <span>Abrir</span>
+        </button>
+      </div>
+    </div>
+  );
+
+const renderTemperaturaItem = (item: TemperaturaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <Thermometer className={styles["item-icon"]} />
@@ -790,6 +886,22 @@ const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
         <span>Min: {item.min_numero || 'N/A'}</span>
         <span>Max: {item.max_numero || 'N/A'}</span>
       </div>
+      {/* ============ BOTÃO CORRIGIDO ============ */}
+      <div className={styles["item-actions"]}>
+        <button
+          className={styles["btn-open-checagem"]} // Reutilizando estilo
+          onClick={() => {
+            closeModal('temperatura'); // 1. FECHA o modal principal de temperatura
+            setTempModalState({ isOpen: true, id: item.id }); // 2. ABRE o modal de salvar
+          }}
+          title="Registrar Temperatura"
+          type="button"
+        >
+          <Save size={16} />
+          <span>Registrar</span>
+        </button>
+      </div>
+      {/* ========================================= */}
     </div>
   );
 
@@ -826,6 +938,10 @@ const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
     </div>
   );
 
+
+   const handleOpenAmostrasBloqueadas = useCallback(() => {
+    WindowManager.openAmostrasBloqueadas();
+  }, []);
   const renderRegistroInsumoItem = (item: RegistroInsumoItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
@@ -1038,7 +1154,15 @@ const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
     )}
   </div>
 </Modal>
-
+<SalvarTemperaturaModal
+        isOpen={tempModalState.isOpen}
+        id={tempModalState.id}
+        onClose={() => {
+          setTempModalState({ isOpen: false, id: null });
+          // Opcional: Recarregar dados se necessário
+          // carregarTemperatura(); 
+        }}
+      />
       <Modal
         isOpen={modalStates.emAnalise}
         onClose={() => closeModal('emAnalise')}
@@ -1080,6 +1204,17 @@ const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
         onClose={() => closeModal('bloqueadas')}
         title="Amostras Bloqueadas"
       >
+        <div style={{ marginBottom: '1rem' }}>
+          <button
+            className={styles["btn-open-checagem"]}
+            onClick={handleOpenAmostrasBloqueadas}
+            title="Abrir Tabela de Amostras Bloqueadas"
+            type="button"
+          >
+            <ExternalLink size={16} />
+            <span>Abrir Tabela Completa</span>
+          </button>
+        </div>
         <ItemList
           items={amostrasBloqueadas}
           renderItem={renderAmostraBloqueadaItem}

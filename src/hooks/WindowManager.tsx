@@ -1,3 +1,4 @@
+// WindowManager.tsx - CORRIGIDO
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { availableMonitors } from '@tauri-apps/api/window'
 import { ICadastrarAmostraInstance } from '../view/laboratorio/CadastrarAmostra';
@@ -22,6 +23,9 @@ export interface WindowConfig {
   center?: boolean;
   resizable?: boolean;
   maximized?: boolean;
+  // *** PROPRIEDADES ADICIONADAS ***
+  fullscreen?: boolean; // Adicionado para o modo tela cheia
+  // ******************************
   data?: any;
   allowMultiple?: boolean;
 }
@@ -68,7 +72,11 @@ export class WindowManager {
         decorations: true,
         alwaysOnTop: false,
         skipTaskbar: false,
-      });
+        // *** PROPRIEDADE ADICIONADA AQUI ***
+        fullscreen: config.fullscreen || false, // Passa a propriedade fullscreen
+ 
+        // **********************************
+    });
 
       await new Promise<void>((resolve, reject) => {
         webview.once('tauri://created', () => resolve());
@@ -962,9 +970,63 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
       width: 1200,
       height: 600,
       allowMultiple: true,
+      maximized: true,
       data: amostra
     });
   }
+
+
+static async openParametroResultado(dadosJanela?: any): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'parametro-resultado',
+    title: 'Resultado do Parâmetro',
+    url: '/#/parametro-resultado',
+    width: 1200,
+    height: 800,
+    // ============ MUDANÇA PRINCIPAL AQUI ============
+    allowMultiple: false, // Alterado de true para false
+    // ================================================
+    data: dadosJanela
+  });
+}
+
+static async openAmostrasBloqueadas(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'amostras-broqueadas',
+    title: 'Amostras Bloqueadas',
+    url: '/#/amostras-broqueadas',
+    width: 1200,
+    height: 800,
+    allowMultiple: false, 
+
+  });
+}
+
+
+
+
+static async openTabelaNaoIniciada(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'tabela-nao-iniciada',
+    title: 'Tabela Não Iniciada',
+    url: '/#/tabela-nao-iniciada',
+    width: 1200,
+    height: 800,
+    allowMultiple: true
+  });
+}
+
+
+static async openTabelaIniciada(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'tabela-iniciada',
+    title: 'Tabela Amostras Iniciadas',
+    url: '/#/tabela-iniciada',
+    width: 1200,
+    height: 800,
+    allowMultiple: true
+  });
+}
 
 
       static async openResultados(amostra?: any): Promise<WebviewWindow> {
@@ -1009,6 +1071,8 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
   });
 }
 
+
+
    static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
     // A API do Tauri para criar uma nova janela
     const webview = new WebviewWindow('rel-tecnica-etapa', {
@@ -1020,6 +1084,8 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
       minHeight: 600,
     });
 
+
+    
 
     
 
@@ -1055,8 +1121,3 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
   }
 
 }
-
-
-
-
-

@@ -84,6 +84,10 @@ import SelecionarParametrosView from '../view/laboratorio/SelecionarParametrosVi
 import ColetaChecagem from '../view/laboratorio/ColetaChecagem';
 import AmostraDetailView from '../view/laboratorio/AmostraDetailModal';
 import ResultadoCadastroView from '../view/laboratorio/ResultadoCadastroView';
+import ParametroResultadoView from '../view/laboratorio/parametro-resultado-view';
+import AmostrasNaoIniciadasView from '../view/laboratorio/TabelaAmostraNaoIniciada';
+import TabelaAmostraIniciada from '../view/laboratorio/TabelaAmostraIniciada';
+import {AmostrasBloqueadas }from '../view/laboratorio/AmostrasBloqueadas';
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -218,10 +222,12 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
   'amostra-details': { component: <AmostraDetailView />, hasLayout: false},
 
-   'resultado-cadastro': { component: <ResultadoCadastroView />, hasLayout: false}
+   'resultado-cadastro': { component: <ResultadoCadastroView />, hasLayout: false},
 
-  
-
+  'parametro-resultado': { component: <ParametroResultadoView />, hasLayout: false},
+  'tabela-nao-iniciada': { component: <AmostrasNaoIniciadasView />, hasLayout:false},
+  'tabela-iniciada': { component: <TabelaAmostraIniciada />, hasLayout:false},
+   'amostras-broqueadas': { component: <AmostrasBloqueadas />, hasLayout: false }
   
 };
 

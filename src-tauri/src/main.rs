@@ -35,7 +35,10 @@ use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
 };
 use controller::laboratorio::amostra_controller::{iniciar_amostra_analise, obter_detalhes_amostra, buscar_amostras_nao_iniciadas};
-use controller::laboratorio::resultado_controller::{buscar_resultados_amostra, salvar_resultado, vistar_resultado, remover_visto_resultado};
+use controller::laboratorio::resultado_controller::{buscar_resultados_amostra, salvar_resultado, vistar_resultado, remover_visto_resultado,  buscar_detalhes_resultado,
+    salvar_resultado_completo, alterar_pop_resultado, buscar_pops_alternativos};
+
+use controller::laboratorio::amostra_broqueada_controller::{buscar_historico_bloqueio, bloquear_amostras, desbloquear_amostras, listar_amostras_bloqueadas };
 
 
 use controller::geral::consultor_controller::{ show_cadastrados, cadastrar_consultor, editar_consultor, deletar_consultor }; 
@@ -197,7 +200,7 @@ use crate::controller::geral::analise_controller::{
 
 
 // Módulo: Laboratório
-use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
+use controller::laboratorio::laboratorio_controller::{ salvar_temperatura_analise, buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_tercerizado, 
     buscar_identificacao, 
@@ -676,7 +679,17 @@ fn main() {
             buscar_resultados_amostra, 
             salvar_resultado, 
             vistar_resultado, 
-            remover_visto_resultado
+            remover_visto_resultado,
+            buscar_detalhes_resultado,
+            salvar_resultado_completo,
+            alterar_pop_resultado, 
+            buscar_pops_alternativos,
+            salvar_temperatura_analise,
+            buscar_historico_bloqueio,
+            bloquear_amostras,
+            desbloquear_amostras,
+            listar_amostras_bloqueadas 
+            
 
         ])
         .run(tauri::generate_context!())

@@ -62,7 +62,7 @@ const AmostraResultadosView: React.FC = () => {
   const [selectedAmostra, setSelectedAmostra] = useState<AmostraResultado | null>(null);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [statusFilter, setStatusFilter] = useState<string>("todos");
-
+  
   // Carregar amostras iniciadas
   const carregarAmostras = useCallback(async () => {
     setLoading(true);
