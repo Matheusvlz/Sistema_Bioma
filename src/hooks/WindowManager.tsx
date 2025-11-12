@@ -1041,6 +1041,20 @@ static async openTabelaIniciada(): Promise<WebviewWindow> {
     });
   }
 
+      static async openResultadosParametros(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'amostras-mapa',
+      title: 'Amostras Parametros',
+      url: '/#/amostras-mapa',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: amostra
+    });
+  }
+
+
+  
    static async openChecagem(data_col: ChecagemData): Promise<WebviewWindow> {
     let url = '/#/coleta-checagem';
     

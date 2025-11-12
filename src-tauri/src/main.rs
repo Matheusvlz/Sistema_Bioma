@@ -35,7 +35,7 @@ use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
 };
 use controller::laboratorio::amostra_controller::{iniciar_amostra_analise, obter_detalhes_amostra, buscar_amostras_nao_iniciadas};
-use controller::laboratorio::resultado_controller::{buscar_resultados_amostra, salvar_resultado, vistar_resultado, remover_visto_resultado,  buscar_detalhes_resultado,
+use controller::laboratorio::resultado_controller::{solicitar_revisao, publicar_resultado, buscar_resultados_amostra, salvar_resultado, vistar_resultado, remover_visto_resultado, buscar_parametro_mapa,  buscar_detalhes_resultado,
     salvar_resultado_completo, alterar_pop_resultado, buscar_pops_alternativos};
 
 use controller::laboratorio::amostra_broqueada_controller::{buscar_historico_bloqueio, bloquear_amostras, desbloquear_amostras, listar_amostras_bloqueadas };
@@ -688,7 +688,10 @@ fn main() {
             buscar_historico_bloqueio,
             bloquear_amostras,
             desbloquear_amostras,
-            listar_amostras_bloqueadas 
+            listar_amostras_bloqueadas,
+            buscar_parametro_mapa,
+            solicitar_revisao, 
+            publicar_resultado
             
 
         ])

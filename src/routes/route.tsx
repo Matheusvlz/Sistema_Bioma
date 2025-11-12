@@ -84,6 +84,7 @@ import SelecionarParametrosView from '../view/laboratorio/SelecionarParametrosVi
 import ColetaChecagem from '../view/laboratorio/ColetaChecagem';
 import AmostraDetailView from '../view/laboratorio/AmostraDetailModal';
 import ResultadoCadastroView from '../view/laboratorio/ResultadoCadastroView';
+import ParametroMapaView from '../view/laboratorio/ParametroMapaView';
 import ParametroResultadoView from '../view/laboratorio/parametro-resultado-view';
 import AmostrasNaoIniciadasView from '../view/laboratorio/TabelaAmostraNaoIniciada';
 import TabelaAmostraIniciada from '../view/laboratorio/TabelaAmostraIniciada';
@@ -227,8 +228,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'parametro-resultado': { component: <ParametroResultadoView />, hasLayout: false},
   'tabela-nao-iniciada': { component: <AmostrasNaoIniciadasView />, hasLayout:false},
   'tabela-iniciada': { component: <TabelaAmostraIniciada />, hasLayout:false},
-   'amostras-broqueadas': { component: <AmostrasBloqueadas />, hasLayout: false }
-  
+  'amostras-broqueadas': { component: <AmostrasBloqueadas />, hasLayout: false },
+  'amostras-mapa': { component: <ParametroMapaView />, hasLayout: false }  
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

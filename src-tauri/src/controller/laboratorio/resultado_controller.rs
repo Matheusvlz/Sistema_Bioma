@@ -26,6 +26,7 @@ pub struct ResultadoItem {
     pub id_legislacao: u32,
     pub id_parametro: u32,
     pub id_legislacao_parametro: u32,
+    pub id_parametro_pop: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -48,6 +49,91 @@ pub struct AmostraResultadosResponse {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ParametroMapaInfo {
+    pub nome_parametro: Option<String>,
+    pub pop_info: Option<String>,
+    pub lq: Option<String>,
+    pub incerteza: Option<String>,
+    pub is_calculo: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MapaAmostraResultado {
+    pub has_report: bool,
+    pub id_grupo_doble: u32,
+    pub id_analise: u32,
+    pub id_resultado: u32,
+    pub id_cliente: u32,
+    pub numero_amostra: Option<String>,
+    pub identificacao: Option<String>,
+    pub complemento: Option<String>,
+    pub data_inicio: Option<String>,
+    pub hora_inicio: Option<String>,
+    pub data_termino: Option<String>,
+    pub hora_termino: Option<String>,
+    pub limite_min: Option<String>,
+    pub limite_simbolo: Option<String>,
+    pub limite_max: Option<String>,
+    pub limite_completo: Option<String>,
+    pub unidade: Option<String>,
+    pub resultado: Option<String>,
+    pub user_ini_id: Option<u32>,
+    pub user_ini_nome: Option<String>,
+    pub user_visto_id: Option<u32>,
+    pub user_visto_nome: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MapaEtapaDefinition {
+    pub id_etapa: u32,
+    pub descricao: Option<String>,
+    pub sequencia: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MapaEtapaValor {
+    pub id_resultado_etapa: u32,
+    pub id_analise: u32, 
+    pub id_etapa: u32,   
+    pub valor: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ParametroMapaResponse {
+    pub info: ParametroMapaInfo,
+    pub amostras: Vec<MapaAmostraResultado>,
+    pub etapas_definicao: Vec<MapaEtapaDefinition>,
+    pub etapas_valores: Vec<MapaEtapaValor>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SalvarMapaPayloadItem {
+    pub id_resultado: u32,
+    pub data_inicio: String,
+    pub hora_inicio: String,
+    pub data_termino: String,
+    pub hora_termino: String,
+    pub resultado: String,
+    pub etapas: Vec<EtapaPayload>, // Reusa EtapaPayload
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SalvarMapaPayload {
+    pub id_usuario: u32,
+    pub amostras: Vec<SalvarMapaPayloadItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VistarMapaPayloadItem {
+    pub id_resultado: u32,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct VistarMapaPayload {
+    pub id_usuario: u32,
+    pub amostras: Vec<VistarMapaPayloadItem>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ResultadoDetalhes {
     pub id: u32,
     pub id_analise: u32,
@@ -64,6 +150,7 @@ pub struct ResultadoDetalhes {
     pub analista: Option<String>,
     pub em_campo: bool,
     pub terceirizado: bool,
+    pub has_report: bool, // 💥 NOVO CAMPO (bool, não Option<bool> para simplificar no frontend)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -75,10 +162,15 @@ pub struct SalvarResultadoPayload {
     pub id_usuario: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct EtapaPayload {
     pub id: u32,
     pub valor: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SolicitarRevisaoPayload {
+    pub id_usuario: u32,
+    pub motivo: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -149,12 +241,64 @@ pub async fn buscar_detalhes_resultado(
         Ok(response) => {
             match response.status() {
                 reqwest::StatusCode::OK => {
-                    match response.json::<ResultadoDetalheResponse>().await {
-                        Ok(data) => {
+                    // O JSON da API virá com `has_report: Option<bool>`
+                    #[derive(Deserialize)]
+                    struct ApiDetalhesResponse {
+                        resultado: serde_json::Value, // Ler como valor genérico primeiro
+                        etapas: Vec<EtapaItem>,
+                    }
+                    
+                    #[derive(Deserialize)]
+                    struct ApiResultadoDetalhes {
+                         id: u32,
+                         id_analise: u32,
+                         nome_parametro: Option<String>,
+                         grupo_parametro: Option<String>,
+                         tecnica_nome: Option<String>,
+                         unidade: Option<String>,
+                         limite: Option<String>,
+                         resultado: Option<String>,
+                         data_inicio: Option<String>,
+                         hora_inicio: Option<String>,
+                         data_termino: Option<String>,
+                         hora_termino: Option<String>,
+                         analista: Option<String>,
+                         em_campo: bool,
+                         terceirizado: bool,
+                         has_report: Option<bool>, // 💥 Recebe como Option
+                    }
+
+                    match response.json::<ApiDetalhesResponse>().await {
+                        Ok(mut data) => {
+                            // Mapear o has_report de Option<bool> para bool (default false)
+                            let api_detalhes: ApiResultadoDetalhes = serde_json::from_value(data.resultado).map_err(|e| format!("Erro ao processar 'resultado': {}", e))?;
+
+                            let detalhes_front = ResultadoDetalhes {
+                                id: api_detalhes.id,
+                                id_analise: api_detalhes.id_analise,
+                                nome_parametro: api_detalhes.nome_parametro,
+                                grupo_parametro: api_detalhes.grupo_parametro,
+                                tecnica_nome: api_detalhes.tecnica_nome,
+                                unidade: api_detalhes.unidade,
+                                limite: api_detalhes.limite,
+                                resultado: api_detalhes.resultado,
+                                data_inicio: api_detalhes.data_inicio,
+                                hora_inicio: api_detalhes.hora_inicio,
+                                data_termino: api_detalhes.data_termino,
+                                hora_termino: api_detalhes.hora_termino,
+                                analista: api_detalhes.analista,
+                                em_campo: api_detalhes.em_campo,
+                                terceirizado: api_detalhes.terceirizado,
+                                has_report: api_detalhes.has_report.unwrap_or(false), // 💥 Converte para bool
+                            };
+                            
                             println!("✅ Detalhes carregados com sucesso");
                             Ok(ApiResponse {
                                 success: true,
-                                data: Some(data),
+                                data: Some(ResultadoDetalheResponse {
+                                    resultado: detalhes_front,
+                                    etapas: data.etapas,
+                                }),
                                 message: None,
                             })
                         }
@@ -164,6 +308,7 @@ pub async fn buscar_detalhes_resultado(
                         }
                     }
                 }
+                // ... (outros status codes)
                 reqwest::StatusCode::NOT_FOUND => {
                     Err("Resultado não encontrado".to_string())
                 }
@@ -176,6 +321,191 @@ pub async fn buscar_detalhes_resultado(
         }
         Err(e) => {
             eprintln!("Erro de conexão: {}", e);
+            Err(format!("Erro de conexão: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn buscar_parametro_mapa(
+    app_handle: AppHandle,
+    id_parametro_pop: u32,
+    // TODO: Adicionar filtros
+) -> Result<ApiResponse<ParametroMapaResponse>, String> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/parametro-mapa/{}", api_url, id_parametro_pop); // TODO: Adicionar query params
+
+    println!("📥 Buscando mapa do parametro ID: {}", id_parametro_pop);
+
+    match client.get(&url).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                    match response.json::<ParametroMapaResponse>().await {
+                        Ok(data) => {
+                            println!("✅ Mapa carregado com sucesso");
+                            Ok(ApiResponse {
+                                success: true,
+                                data: Some(data),
+                                message: None,
+                            })
+                        }
+                        Err(e) => Err(format!("Erro ao processar resposta: {}", e)),
+                    }
+                }
+                status => {
+                    let body = response.text().await.unwrap_or_default();
+                    eprintln!("Erro do servidor: {} - {}", status, body);
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => {
+            eprintln!("Erro de conexão: {}", e);
+            Err(format!("Erro de conexão: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn solicitar_revisao(
+    app_handle: AppHandle,
+    id_resultado: u32,
+    id_usuario: u32,
+    motivo: String,
+) -> Result<ApiResponse<()>, String> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/resultados/{}/solicitar-revisao", api_url, id_resultado);
+
+    let payload = SolicitarRevisaoPayload {
+        id_usuario,
+        motivo,
+    };
+
+    println!("ℹ️ Solicitando revisão: {:?}", payload);
+
+    match client.post(&url).json(&payload).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                    println!("✅ Revisão solicitada com sucesso");
+                    Ok(ApiResponse {
+                        success: true,
+                        data: None,
+                        message: Some("Revisão solicitada com sucesso!".to_string()),
+                    })
+                }
+                status => {
+                    let body = response.text().await.unwrap_or_default();
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => Err(format!("Erro de conexão: {}", e)),
+    }
+}
+// solicitar_revisao, publicar_resultado
+#[tauri::command]
+pub async fn publicar_resultado(
+    app_handle: AppHandle,
+    id_resultado: u32,
+) -> Result<ApiResponse<()>, String> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/resultados/{}/publicar", api_url, id_resultado);
+
+    println!("ℹ️ Publicando resultado: {}", id_resultado);
+
+    match client.post(&url).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                    println!("✅ Resultado publicado com sucesso");
+                    Ok(ApiResponse {
+                        success: true,
+                        data: None,
+                        message: Some("Resultado publicado com sucesso!".to_string()),
+                    })
+                }
+                status => {
+                    let body = response.text().await.unwrap_or_default();
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => Err(format!("Erro de conexão: {}", e)),
+    }
+}
+
+#[tauri::command]
+pub async fn salvar_mapa_parametro(
+    app_handle: AppHandle,
+    payload: SalvarMapaPayload,
+) -> Result<ApiResponse<()>, String> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/parametro-mapa/salvar", api_url);
+
+    println!("💾 Salvando mapa do parametro...");
+
+    match client.post(&url).json(&payload).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                    println!("✅ Mapa salvo com sucesso");
+                    Ok(ApiResponse {
+                        success: true,
+                        data: None,
+                        message: Some("Resultados salvos com sucesso!".to_string()),
+                    })
+                }
+                status => {
+                     let body = response.text().await.unwrap_or_default();
+                    eprintln!("Erro do servidor: {} - {}", status, body);
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => {
+             eprintln!("Erro de conexão: {}", e);
+            Err(format!("Erro de conexão: {}", e))
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn vistar_mapa_parametro(
+    app_handle: AppHandle,
+    payload: VistarMapaPayload,
+) -> Result<ApiResponse<()>, String> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/parametro-mapa/vistar", api_url);
+
+    println!("✅ Vistando mapa do parametro...");
+
+    match client.post(&url).json(&payload).send().await {
+        Ok(response) => {
+            match response.status() {
+                reqwest::StatusCode::OK => {
+                    println!("✅ Mapa vistado com sucesso");
+                    Ok(ApiResponse {
+                        success: true,
+                        data: None,
+                        message: Some("Resultados vistados com sucesso!".to_string()),
+                    })
+                }
+                status => {
+                    let body = response.text().await.unwrap_or_default();
+                    eprintln!("Erro do servidor: {} - {}", status, body);
+                    Err(format!("Erro do servidor: {} - {}", status, body))
+                }
+            }
+        }
+        Err(e) => {
+             eprintln!("Erro de conexão: {}", e);
             Err(format!("Erro de conexão: {}", e))
         }
     }

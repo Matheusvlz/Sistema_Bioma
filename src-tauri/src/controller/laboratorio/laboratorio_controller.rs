@@ -45,6 +45,8 @@ pub struct AmostraEmAnaliseItem {
     pub razao: Option<String>,
 }
 
+
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct TemperaturaItem {
     pub id: u32,
@@ -177,6 +179,15 @@ pub async fn buscar_amostras_bloqueadas() -> LaboratorioResponse {
 pub async fn buscar_registro_insumo() -> LaboratorioResponse {
     consulta_laboratorio("registro_insumo".to_string()).await
 }
+
+
+
+#[command]
+pub async fn buscar_amostras_disponiveis() -> LaboratorioResponse {
+    consulta_laboratorio("amostra_disponivel".to_string()).await
+}
+
+
 
 #[command]
 pub async fn salvar_temperatura_analise(

@@ -1,4 +1,4 @@
-// AmostraDetailModal.tsx - COMPLETO COM NAVEGAÇÃO
+// AmostraDetailModal.tsx - COMPLETO E CORRIGIDO (Versão 2.0 com interface faltante)
 import React, { useState, useEffect, useCallback } from "react";
 import {
   X,
@@ -14,8 +14,8 @@ import {
   FileText,
   Edit,
   Eye,
-  ChevronLeft, // ÍCONE ADICIONADO
-  ChevronRight, // ÍCONE ADICIONADO
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { listen, emit } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
@@ -54,6 +54,14 @@ interface WindowData {
   arrayAmostras: AmostraItem[]; // CORRIGIDO: Deve ser um array
 }
 
+// 💥 INTERFACE FALTANTE ADICIONADA PARA CORRIGIR O ERRO "ResultadosWindowData"
+interface ResultadosWindowData {
+  idAnalise: number;
+  idUsuario: number;
+  arrayAmostras: AmostraItem[];
+  focusResultadoId?: number; // Opcional, para focar em um resultado específico ao clicar no parâmetro
+}
+// ---------------------------------------------------------------------
 
 interface ResultadoItem {
   id: number;
@@ -124,8 +132,8 @@ const AmostraNaoIniciadaView: React.FC = () => {
   const [jaIniciada, setJaIniciada] = useState(false);
   
   // ============ ESTADOS DE NAVEGAÇÃO ============
-  const [amostrasEmAnalise, setAmostrasEmAnalise] = useState<AmostraItem[]>([]); // CORRIGIDO
-  const [indiceAtual, setIndiceAtual] = useState(0); // NOVO ESTADO
+  const [amostrasEmAnalise, setAmostrasEmAnalise] = useState<AmostraItem[]>([]); 
+  const [indiceAtual, setIndiceAtual] = useState(0); 
   // ============ FIM DOS ESTADOS DE NAVEGAÇÃO ============
 
   // ============ NOVOS ESTADOS PARA O MODAL POP ============
@@ -160,26 +168,27 @@ const AmostraNaoIniciadaView: React.FC = () => {
     setHoraInicio(valor);
   };
 
-  // Função original para abrir o cadastro de resultado
+  // Função MODIFICADA para abrir a tela de resultados no novo formato
   const abrirJanelaParametroResultado = useCallback(async (parametro: ResultadoItem) => {
     if (!windowData) return;
 
-    const dadosJanela = {
-      idAnalise: windowData.idAnalise, // Usa o idAnalise do windowData (que é atualizado)
-      idResultado: parametro.id,
+    // NOVO FORMATO DE DADOS ENVIADO
+    const dadosJanela: ResultadosWindowData = {
+      idAnalise: windowData.idAnalise, 
       idUsuario: windowData.idUsuario,
-      nomeParametro: parametro.nome_parametro,
+      arrayAmostras: amostrasEmAnalise, 
+      focusResultadoId: parametro.id, // O ID do resultado para focar na aba correta
     };
 
     try {
-      await WindowManager.openParametroResultado(dadosJanela);
+      // O nome da função de WindowManager pode ter mudado
+      await WindowManager.openParametroResultado(dadosJanela); 
     } catch (error) {
       console.error("Erro ao abrir janela de resultado:", error);
       setError("Erro ao abrir tela de resultado do parâmetro");
     }
-  }, [windowData]); // Depende do windowData atualizado
+  }, [windowData, amostrasEmAnalise]); 
 
-  // ============ FUNÇÃO MODIFICADA ============
   // Abre o MODAL de alteração de POP/Técnica
   const abrirModalAlterarPOP = useCallback((parametro: ResultadoItem) => {
     if (!windowData || !detalhes) return;
@@ -197,21 +206,27 @@ const AmostraNaoIniciadaView: React.FC = () => {
     setPopModalData(dadosJanela);
     setIsPopModalOpen(true);
   }, [windowData, detalhes]);
-  // ============ FIM DA MODIFICAÇÃO ============
 
-
+  // Função MODIFICADA para abrir a tela de resultados no novo formato
   const abrirJanelaResultados = useCallback(async () => {
     if (!windowData) return;
 
-    const dadosJanela: WindowData = {
+    // NOVO FORMATO DE DADOS ENVIADO
+    const dadosJanela: ResultadosWindowData = {
       idAnalise: windowData.idAnalise, // Usa o idAnalise do windowData (que é atualizado)
       idUsuario: windowData.idUsuario,
       arrayAmostras: amostrasEmAnalise, // Passa o array completo
     };
 
-    WindowManager.openResultados(dadosJanela);
+    try {
+      // O nome da função de WindowManager pode ter mudado
+      await WindowManager.openParametroResultado(dadosJanela);
+    } catch (error) {
+       console.error("Erro ao abrir janela de resultados:", error);
+       setError("Erro ao abrir tela de resultados");
+    }
     
-  }, [windowData, amostrasEmAnalise]); // Depende do windowData e da lista
+  }, [windowData, amostrasEmAnalise]); 
 
   const carregarDetalhes = useCallback(async (idAnalise: number) => {
     setLoading(true);
@@ -396,14 +411,12 @@ const AmostraNaoIniciadaView: React.FC = () => {
         unlisten();
       }
     };
-  }, [carregarDetalhes]); // Dependência estável (useCallback)
+  }, [carregarDetalhes]); 
 
   // ============ NOVO useEffect (Para navegação) ============
   // Dispara quando o índice atual muda (botões prox/ant)
-  // ESTA É A LÓGICA QUE RECARREGA OS DADOS
   useEffect(() => {
     // Evita rodar na montagem inicial (que é tratada pelo setupListener)
-    // Verifica se windowData já existe, o que indica que a carga inicial já ocorreu
     if (!windowData || amostrasEmAnalise.length === 0) {
       return;
     }
@@ -415,22 +428,17 @@ const AmostraNaoIniciadaView: React.FC = () => {
       if (amostraAtual && amostraAtual.id !== detalhes?.info.id_analise) {
         console.log(`Navegando para índice ${indiceAtual}, ID: ${amostraAtual.id}`);
         
-        // **AQUI A MÁGICA ACONTECE**
         // Carrega os detalhes da nova amostra
         carregarDetalhes(amostraAtual.id);
         
         // Atualiza o 'windowData' para refletir a amostra atual
-        // Isso é crucial para 'abrirJanelaParametroResultado' e 'abrirJanelaResultados'
         setWindowData(prevData => ({
           ...prevData!,
           idAnalise: amostraAtual.id,
         }));
       }
     }
-  }, [indiceAtual]); // Depende apenas do índiceAtual
-  // Nota: Não adicionar 'amostrasEmAnalise', 'carregarDetalhes', 'detalhes' ou 'windowData'
-  // para evitar loops ou execuções indesejadas. A lógica de navegação
-  // depende SOMENTE da mudança do 'indiceAtual'.
+  }, [indiceAtual, amostrasEmAnalise]); 
 
   // ============ NOVO useEffect (Pop Modal) ============
   // Escuta o evento de sucesso do modal de alteração de POP
@@ -458,7 +466,7 @@ const AmostraNaoIniciadaView: React.FC = () => {
         unlisten();
       }
     };
-  }, [windowData, carregarDetalhes]); // Adiciona dependências
+  }, [windowData, carregarDetalhes]); 
   // ============ FIM DO NOVO useEffect ============
 
 
@@ -767,8 +775,6 @@ const AmostraNaoIniciadaView: React.FC = () => {
                               <div className={styles.tableCell}>{param.limite}</div>
                             </div>
                           ))}
-   
-
                         </div>
                       )}
                     </div>
@@ -839,7 +845,6 @@ const AmostraNaoIniciadaView: React.FC = () => {
         </div>
       )}
 
-      
     </div>
   );
 };
