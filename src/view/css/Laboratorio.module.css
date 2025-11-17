@@ -850,3 +850,742 @@ item-list {
   position: relative;
   overflow: hidden;
 }
+/* Estilos para os cards de itens nos modais */
+.item-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.item-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-color: #3b82f6;
+}
+
+.item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.item-icon {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background: #eff6ff;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+}
+
+.item-info {
+  flex: 1;
+}
+
+.item-info h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.item-info p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.item-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.item-details span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Estilos para as ações do item (botões) */
+.item-actions {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+.btn-open-checagem {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+}
+
+.btn-open-checagem span {
+  color: white;
+}
+
+.btn-open-checagem svg {
+  color: white;
+  width: 16px;
+  height: 16px;
+}
+
+.btn-open-checagem:hover {
+  background: #2563eb !important;
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-open-checagem:active {
+  transform: translateY(0);
+}
+
+/* Status icons */
+.status-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+}
+
+.status-success {
+  color: #10b981;
+}
+
+.status-error {
+  color: #ef4444;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: #6b7280;
+}
+
+.empty-state p {
+  font-size: 16px;
+  margin: 0;
+}
+
+/* Item list container */
+.item-list {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.item-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.item-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.item-list::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.item-list::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.modal-close {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+  background: #e5e7eb;
+  color: #111827;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Reload button */
+.reload-button {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.reload-button:hover {
+  background: #f9fafb;
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.reload-button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.amostra-nao-iniciada-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+}
+
+/* CARD DO ITEM */
+.amostra-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafb 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.amostra-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 50%, #0891b2 100%);
+}
+
+.amostra-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
+  transform: translateY(-6px);
+  background: linear-gradient(135deg, #f0f9ff 0%, #f0f7ff 100%);
+}
+
+/* ICON DO CARD */
+.amostra-card-icon {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #dbeafe 0%, #cffafe 100%);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0369a1;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.1);
+}
+
+.amostra-card-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke-width: 1.5;
+}
+
+.amostra-card:hover .amostra-card-icon {
+  background: linear-gradient(135deg, #a5f3fc 0%, #7dd3fc 100%);
+  box-shadow: 0 6px 16px rgba(3, 105, 161, 0.2);
+  transform: scale(1.05);
+}
+
+/* CONTEÚDO DO CARD */
+.amostra-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.amostra-card-numero {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.amostra-card-numero strong {
+  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.amostra-card-identificacao {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 500;
+}
+
+.amostra-card-empresa {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(248, 250, 252, 0.5) 100%);
+  padding: 0.625rem 1rem;
+  border-radius: 10px;
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  width: fit-content;
+  font-weight: 500;
+}
+
+.amostra-card-empresa strong {
+  color: #374151;
+  font-weight: 700;
+}
+
+/* AÇÕES DO CARD */
+.amostra-card-actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 1rem;
+  border-left: 2px solid #e5e7eb;
+}
+
+/* BOTÃO INICIAR */
+.btn-iniciar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.btn-iniciar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-iniciar:hover::before {
+  left: 100%;
+}
+
+.btn-iniciar svg {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.3s ease;
+}
+
+.btn-iniciar:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-iniciar:hover svg {
+  transform: translateX(3px);
+}
+
+.btn-iniciar:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* BADGE STATUS */
+.amostra-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+  white-space: nowrap;
+}
+
+.amostra-status-badge::before {
+  content: '●';
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* CONTAINER DA LISTA */
+.amostra-items-list {
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.amostra-items-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.amostra-items-list::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 10px;
+}
+
+.amostra-items-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6 0%, #06b6d4 100%);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.amostra-items-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #2563eb 0%, #0891b2 100%);
+}
+
+/* ESTADO VAZIO */
+.amostra-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #9ca3af;
+}
+
+.amostra-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  opacity: 0.2;
+  color: #d1d5db;
+}
+
+.amostra-empty-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ANIMAÇÃO DE ENTRADA */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.amostra-card {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.amostra-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.amostra-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.amostra-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+.amostra-card:nth-child(n+4) {
+  animation-delay: 0.2s;
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 768px) {
+  .amostra-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .amostra-card-actions {
+    width: 100%;
+    border-left: none;
+    border-top: 2px solid #e5e7eb;
+    padding-left: 0;
+    padding-top: 1rem;
+    justify-content: flex-end;
+  }
+
+  .btn-iniciar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .amostra-items-list {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .amostra-card {
+    padding: 1.25rem;
+  }
+
+  .amostra-card-numero {
+    font-size: 0.95rem;
+  }
+
+  .btn-iniciar {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ... estilos existentes ... */
+
+/* Estilos para Ações em Amostra Card */
+.amostra-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Novo estilo para o botão Pendente (cinza) */
+.btn-pendente {
+  background: #6b7280 !important; /* Cinza */
+  border-color: #6b7280 !important;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3) !important;
+}
+
+.btn-pendente:hover {
+  background: #4b5563 !important;
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.4) !important;
+}
+
+/* ANIMAÇÃO 'swing' para o botão (solicitado pelo usuário) */
+@keyframes swing {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(1deg); }
+  30% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+  70% { transform: rotate(-0.5deg); }
+  90% { transform: rotate(0.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.btn-swing {
+  /* Garante que a transição seja suave antes e depois da animação */
+  transition: all 0.3s ease;
+}
+
+.btn-swing:hover {
+  /* Aplica a animação no hover para chamar atenção */
+  animation: swing 0.6s ease-in-out 2; /* Animação de balanço duas vezes */
+}
+/* ... (ESTILOS EXISTENTES ANTERIORES) ... */
+
+/* ... (continuação dos estilos) ... */
+
+/* Estilos de Analise Iniciada no modal de Não Iniciadas */
+.amostra-card-nao-iniciada .amostra-card-actions {
+  /* Alinha os botões Pendente e Iniciar */
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* ESTADO VAZIO */
+.amostra-empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #9ca3af;
+}
+
+.amostra-empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  opacity: 0.2;
+  color: #d1d5db;
+}
+
+.amostra-empty-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ANIMAÇÃO DE ENTRADA */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.amostra-card {
+  animation: slideInUp 0.4s ease-out;
+}
+
+.amostra-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.amostra-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.amostra-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+
+/* --- NOVOS ESTILOS PARA O BOTÃO SOLICITADO --- */
+
+/* Novo estilo para o botão Pendente/Analise Iniciada (cinza) */
+.btn-pendente {
+  background: #6b7280 !important; /* Cinza */
+  border-color: #6b7280 !important;
+  box-shadow: 0 4px 15px rgba(107, 114, 128, 0.3) !important;
+}
+
+.btn-pendente:hover {
+  background: #4b5563 !important;
+  box-shadow: 0 8px 25px rgba(107, 114, 128, 0.4) !important;
+}
+
+/* ANIMAÇÃO 'swing' para o botão (solicitado pelo usuário) */
+@keyframes swing {
+  0% { transform: rotate(0deg); }
+  10% { transform: rotate(1deg); }
+  30% { transform: rotate(-1deg); }
+  50% { transform: rotate(1deg); }
+  70% { transform: rotate(-0.5deg); }
+  90% { transform: rotate(0.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.btn-swing {
+  /* Garante que a transição seja suave antes e depois da animação */
+  transition: all 0.3s ease;
+}
+
+.btn-swing:hover {
+  /* Aplica a animação no hover para chamar atenção */
+  animation: swing 0.6s ease-in-out 2; /* Animação de balanço duas vezes */
+}

@@ -1,7 +1,17 @@
+// WindowManager.tsx - CORRIGIDO
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { availableMonitors } from '@tauri-apps/api/window'
 import { ICadastrarAmostraInstance } from '../view/laboratorio/CadastrarAmostra';
 
+interface ChecagemData {
+  id_grupo_edit?: number;
+  numero_ini?: number;
+  numero_fim?: number;
+}
+interface AmostraData {
+  idAnalise: number;
+  idUsuario: number;
+}
 export interface WindowConfig {
   label: string;
   title: string;
@@ -13,6 +23,9 @@ export interface WindowConfig {
   center?: boolean;
   resizable?: boolean;
   maximized?: boolean;
+  // *** PROPRIEDADES ADICIONADAS ***
+  fullscreen?: boolean; // Adicionado para o modo tela cheia
+  // ******************************
   data?: any;
   allowMultiple?: boolean;
 }
@@ -59,7 +72,11 @@ export class WindowManager {
         decorations: true,
         alwaysOnTop: false,
         skipTaskbar: false,
-      });
+        // *** PROPRIEDADE ADICIONADA AQUI ***
+        fullscreen: config.fullscreen || false, // Passa a propriedade fullscreen
+ 
+        // **********************************
+    });
 
       await new Promise<void>((resolve, reject) => {
         webview.once('tauri://created', () => resolve());
@@ -1008,6 +1025,116 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
       allowMultiple: false,
     });
   }
+    static async openAmostrasNaoIniciadas(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'amostra-details',
+      title: 'Amostras Não Iniciadas',
+      url: '/#/amostra-details',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      maximized: true,
+      data: amostra
+    });
+  }
+
+
+static async openParametroResultado(dadosJanela?: any): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'parametro-resultado',
+    title: 'Resultado do Parâmetro',
+    url: '/#/parametro-resultado',
+    width: 1200,
+    height: 800,
+    // ============ MUDANÇA PRINCIPAL AQUI ============
+    allowMultiple: false, // Alterado de true para false
+    // ================================================
+    data: dadosJanela
+  });
+}
+
+static async openAmostrasBloqueadas(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'amostras-broqueadas',
+    title: 'Amostras Bloqueadas',
+    url: '/#/amostras-broqueadas',
+    width: 1200,
+    height: 800,
+    allowMultiple: false, 
+
+  });
+}
+
+
+
+
+static async openTabelaNaoIniciada(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'tabela-nao-iniciada',
+    title: 'Tabela Não Iniciada',
+    url: '/#/tabela-nao-iniciada',
+    width: 1200,
+    height: 800,
+    allowMultiple: true
+  });
+}
+
+
+static async openTabelaIniciada(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'tabela-iniciada',
+    title: 'Tabela Amostras Iniciadas',
+    url: '/#/tabela-iniciada',
+    width: 1200,
+    height: 800,
+    allowMultiple: true
+  });
+}
+
+
+      static async openResultados(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'resultado-cadastro',
+      title: 'Amostras Não Iniciadas',
+      url: '/#/resultado-cadastro',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: amostra
+    });
+  }
+
+      static async openResultadosParametros(amostra?: any): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'amostras-mapa',
+      title: 'Amostras Parametros',
+      url: '/#/amostras-mapa',
+      width: 1200,
+      height: 600,
+      allowMultiple: true,
+      data: amostra
+    });
+  }
+
+
+  
+   static async openChecagem(data_col: ChecagemData): Promise<WebviewWindow> {
+    let url = '/#/coleta-checagem';
+    
+
+    return this.openWindow({
+      label: 'coleta-checagem',
+      title: 'Checagem de Amostra',
+      url: url, // URL com os parâmetros de busca
+      width: 1280,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+      data: data_col
+    });
+  }
+
+  
 
 static async openVisualizarHistorico(): Promise<WebviewWindow> {
   return this.openWindow({
@@ -1021,6 +1148,8 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
   });
 }
 
+
+
    static async openGerenciarTecnicaEtapa(): Promise<WebviewWindow> {
     // A API do Tauri para criar uma nova janela
     const webview = new WebviewWindow('rel-tecnica-etapa', {
@@ -1032,6 +1161,8 @@ static async openVisualizarHistorico(): Promise<WebviewWindow> {
       minHeight: 600,
     });
 
+
+    
 
     
 

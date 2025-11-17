@@ -10,3 +10,8 @@ pub mod insumo_registro_controller;
 pub mod parametro_insumo_controller;
 pub mod materia_prima_registro_controller;
 pub mod insumo_registro_2_controller;
+pub mod coleta_checagem_controller;
+pub mod amostra_controller;
+pub mod resultado_controller;
+pub mod materia_prima_controller;
+pub mod amostra_broqueada_controller;

@@ -34,18 +34,37 @@ import {
   User,
   Building,
   RefreshCcw,
-  XCircle
+  XCircle,
+  ExternalLink,
+  Save
 
 } from "lucide-react";
 import { invoke } from '@tauri-apps/api/core';
 import styles from './css/Laboratorio.module.css';
 import { WindowManager } from '../hooks/WindowManager';
+import SalvarTemperaturaModal from './laboratorio/SalvarTemperaturaModal';
 // Interfaces para tipagem
 interface ChecagemItem {
+  id?: number;
+  id_grupo_edit?: number;
   fantasia?: string;
   razao?: string;
   max_numero: number;
   min_numero: number;
+}
+
+interface Usuario {
+  success: boolean;
+  id: number;
+  nome: string;
+  privilegio: string;
+  empresa?: string;
+  ativo: boolean;
+  nome_completo: string;
+  cargo: string;
+  numero_doc: string;
+  profile_photo?: string; 
+  dark_mode: boolean;
 }
 
 interface AmostraNaoIniciadaItem {
@@ -105,6 +124,12 @@ interface LaboratorioResponse {
   tipo: string;
 }
 
+interface ChecagemData {
+  id_grupo_edit?: number;
+  numero_ini?: number;
+  numero_fim?: number;
+}
+
 // Componente de Card otimizado com memo e click handler
 const StatusCard = memo(({ card, onClick }: { card: any, onClick: () => void }) => (
   <div 
@@ -161,6 +186,8 @@ const Modal = memo(({ isOpen, onClose, title, children }: {
     </div>
   );
 });
+
+
 
 // Componente para lista de itens genérica
 const ItemList = memo(({ items, renderItem, emptyMessage }: {
@@ -255,6 +282,13 @@ export const Laboratorio: React.FC = memo(() => {
   const [amostrasBloqueadas, setAmostrasBloqueadas] = useState<AmostraBloqueadaItem[]>([]);
   const [registroInsumo, setRegistroInsumo] = useState<RegistroInsumoItem[]>([]);
 
+  // *** LINHA REMOVIDA ***
+  // O 'amostrasParaNavegacao' estava causando o bug.
+  // const amostrasParaNavegacao = useMemo(() => { ... }, []);
+const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: number | null }>({ 
+    isOpen: false, 
+    id: null 
+  });
   // Estados para modais
   const [modalStates, setModalStates] = useState({
     checagem: false,
@@ -401,7 +435,18 @@ export const Laboratorio: React.FC = memo(() => {
     carregarDados();
   }, []);
 
-  // Dados estáticos memoizados para melhor performance - Nova estrutura do laboratório
+  // Função para abrir janela de checagem
+  const abrirChecagem = useCallback((item: ChecagemItem) => {
+    const data: ChecagemData = {
+      id_grupo_edit: item.id_grupo_edit,
+      numero_ini: item.min_numero,
+      numero_fim: item.max_numero
+    };
+    
+    WindowManager.openChecagem(data);
+  }, []);
+
+  // Dados estáticos memoizados para melhor performance
   const menuSections = useMemo(() => [
     {
       id: "amostra",
@@ -550,7 +595,7 @@ export const Laboratorio: React.FC = memo(() => {
     registroInsumo.length
   ]);
 
-  // Filtrar seções baseado no termo de pesquisa - otimizado
+  // Filtrar seções baseado no termo de pesquisa
   const filteredSections = useMemo(() => {
     if (!searchTerm.trim()) return menuSections;
     
@@ -566,8 +611,6 @@ export const Laboratorio: React.FC = memo(() => {
       return titleMatch || categoryMatch || itemsMatch;
     });
   }, [searchTerm, menuSections]);
-
-
 
   // Callbacks otimizados
   const clearSearch = useCallback(() => {
@@ -587,36 +630,17 @@ export const Laboratorio: React.FC = memo(() => {
   }, []);
 
   const handleItemClick = useCallback((itemName: string) => {
-    // Usamos um switch para decidir o que fazer com base no nome do item
     switch (itemName) {
       case "Planilha":
-       WindowManager.openPlanilha();
+        WindowManager.openPlanilha();
         break;
-
       case "Cadastrar":
-        console.log("Ação: Cadastrar nova amostra!");
         WindowManager.openCadastrarAmostra();
         break;
-      
       case 'Personalizar':
-        console.log("Ação: Personalizar amostra!");
-      WindowManager.openPersonalizarAmostra();
-      break;
-
-      case "Alterar categoria":
-        console.log("Ação: Alterar categoria da amostra!");
+        WindowManager.openPersonalizarAmostra();
         break;
-
-      case "Gerar coleta":
-        console.log("Ação: Gerar processo de coleta!");
-        break;
-
-      case "Coleta":
-        console.log("Ação: Gerenciar coletas!");
-        break;
-
       case "Checagem":
-        console.log("Ação: Checagem de amostras!");
         openModal('checagem');
         break;
 
@@ -654,6 +678,9 @@ export const Laboratorio: React.FC = memo(() => {
       
 
       // ... outros cases permanecem iguais
+      case "Visualizar":
+        WindowManager.openVisualizarAmostas();
+        break;
       default:
         console.log(`Nenhuma ação definida para: ${itemName}`);
         break;
@@ -661,59 +688,222 @@ export const Laboratorio: React.FC = memo(() => {
   }, []);
 
   // Render functions para os modais
-  const renderChecagemItem = (item: ChecagemItem, index: number) => (
-    <div key={index} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <Building className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>{item.fantasia || 'N/A'}</h4>
-          <p>{item.razao || 'N/A'}</p>
+  const renderChecagemItem = (item: ChecagemItem, index: number) => {
+    console.log('Renderizando item:', item); // Debug
+    
+    return (
+      <div key={index} className={styles["item-card"]}>
+        <div className={styles["item-header"]}>
+          <div className={styles["item-icon"]}>
+            <Building size={20} />
+          </div>
+          <div className={styles["item-info"]}>
+            <h4>{item.fantasia || 'N/A'}</h4>
+            <p>{item.razao || 'N/A'}</p>
+          </div>
+        </div>
+        <div className={styles["item-details"]}>
+          <span>Min: {item.min_numero}</span>
+          <span>Max: {item.max_numero}</span>
+        </div>
+        <div className={styles["item-actions"]}>
+          <button 
+            className={styles["btn-open-checagem"]}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('Botão clicado, abrindo checagem:', item);
+              abrirChecagem(item);
+            }}
+            title="Abrir checagem"
+            type="button"
+          >
+            <ExternalLink size={16} />
+            <span>Abrir Checagem</span>
+          </button>
         </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span>Min: {item.min_numero}</span>
-        <span>Max: {item.max_numero}</span>
-      </div>
-    </div>
-  );
+    );
+  };
 
+  // =======================================================
+  // ============ INÍCIO DA CORREÇÃO ============
+  // =======================================================
+
+  const handleIniciarAnalise = useCallback(async (idAnalise: number) => {
+    try {
+        const userResponse = await invoke('usuario_logado') as Usuario;
+
+        if (!userResponse || !userResponse.id) {
+            console.error("Erro: ID do usuário logado não encontrado.");
+            alert("Não foi possível identificar o usuário logado para iniciar a análise.");
+            return;
+        }
+
+        const idUsuario = userResponse.id; 
+        
+        WindowManager.openAmostrasNaoIniciadas({ 
+            idAnalise: idAnalise,
+            idUsuario: idUsuario ,
+            // *** CORREÇÃO 1: Passando a lista correta ***
+            arrayAmostras: amostrasNaoIniciadas 
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+        alert("Erro fatal ao carregar dados do usuário. Tente novamente.");
+    }
+    
+    // *** CORREÇÃO 2: Adicionando a dependência correta ***
+  }, [amostrasNaoIniciadas]);
+
+
+ const handleIniciarAnalise2 = useCallback(async (idAnalise: number) => {
+    try {
+        const userResponse = await invoke('usuario_logado') as Usuario;
+
+        if (!userResponse || !userResponse.id) {
+            console.error("Erro: ID do usuário logado não encontrado.");
+            alert("Não foi possível identificar o usuário logado para iniciar a análise.");
+            return;
+        }
+
+        const idUsuario = userResponse.id; 
+        
+        WindowManager.openAmostrasNaoIniciadas({ 
+            idAnalise: idAnalise,
+            idUsuario: idUsuario ,
+            arrayAmostras: amostrasEmAnalise
+        });
+
+    } catch (error) {
+        console.error("Erro ao buscar usuário logado:", error);
+        alert("Erro fatal ao carregar dados do usuário. Tente novamente.");
+    }
+
+    // *** CORREÇÃO 3: Adicionando a dependência correta ***
+  }, [amostrasEmAnalise]);
+
+  // =======================================================
+  // ============ FIM DA CORREÇÃO ============
+  // =======================================================
+
+
+  const handleOpenTabelaNaoIniciada = useCallback(() => {
+    WindowManager.openTabelaNaoIniciada();
+  }, []);
+
+  const handleOpenTabelaIniciada = useCallback(() => {
+    WindowManager.openTabelaIniciada();
+  }, []);
+
+
+  // openTabelaIniciada
   const renderAmostraNaoIniciadaItem = (item: AmostraNaoIniciadaItem) => (
-    <div key={item.id} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <TestTube className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>#{item.numero || 'N/A'}</h4>
-          <p>{item.identificacao || 'Sem identificação'}</p>
+    <div key={item.id} className={styles["amostra-card"]}>
+      {/* Ícone e Conteúdo */}
+      <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
+        <div className={styles["amostra-card-icon"]}>
+          <TestTube />
+        </div>
+        
+        <div className={styles["amostra-card-content"]}>
+          <p className={styles["amostra-card-numero"]}>
+            <strong>#{item.numero}</strong> {item.identificacao}
+          </p>
+          
+          <p className={styles["amostra-card-identificacao"]}>
+            {item.fantasia || 'Sem informação'}
+          </p>
+          
+          <div className={styles["amostra-card-empresa"]}>
+            <span>🏢</span>
+            <strong>{item.razao || 'N/A'}</strong>
+          </div>
         </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span>{item.fantasia || item.razao || 'N/A'}</span>
+
+      {/* Ações */}
+      <div className={styles["amostra-card-actions"]}>
+        <button 
+            onClick={handleOpenTabelaNaoIniciada} 
+            className={`${styles["btn-iniciar"]} ${styles["btn-pendente"]} ${styles["btn-swing"]}`} // Classes para estilo e ANIMAÇÃO
+            title="Abrir Tabela de Amostras Não Iniciadas" 
+            type="button"
+          >
+            <Clock size={18} />
+          
+          </button>
+        
+        <button
+          onClick={() => handleIniciarAnalise(item.id)}
+          className={styles["btn-iniciar"]}
+          title="Iniciar análise desta amostra"
+        >
+          <ExternalLink size={18} />
+          <span>Iniciar</span>
+        </button>
       </div>
     </div>
   );
 
   const renderAmostraEmAnaliseItem = (item: AmostraEmAnaliseItem) => (
-    <div key={item.id} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
-        <FlaskConical className={styles["item-icon"]} />
-        <div className={styles["item-info"]}>
-          <h4>#{item.numero || 'N/A'}</h4>
-          <p>{item.identificacao || 'Sem identificação'}</p>
+    <div key={item.id} className={styles["amostra-card"]}>
+      {/* Ícone e Conteúdo */}
+      <div style={{ display: 'flex', gap: '1.5rem', flex: 1, alignItems: 'center' }}>
+        <div className={styles["amostra-card-icon"]} style={{ backgroundColor: '#dbeafe', color: '#1e40af' }}>
+          <FlaskConical />
         </div>
-        {item.passou ? (
-          <CheckCircle className={`${styles["status-icon"]} ${styles["status-success"]}`} />
-        ) : (
-          <XCircle className={`${styles["status-icon"]} ${styles["status-error"]}`} />
-        )}
+        
+        <div className={styles["amostra-card-content"]}>
+          <p className={styles["amostra-card-numero"]}>
+            <strong>#{item.numero}</strong> {item.identificacao}
+          </p>
+          
+          <p className={styles["amostra-card-identificacao"]}>
+            {item.fantasia || 'Sem informação'}
+          </p>
+          
+          <div className={styles["amostra-card-empresa"]}>
+            <span>🏢</span>
+            <strong>{item.razao || 'N/A'}</strong>
+          </div>
+          
+          {item.tempo && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+              <Clock size={14} />
+              <span>Tempo: {item.tempo}</span>
+            </div>
+          )}
+        </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span><Clock /> {item.tempo || 'N/A'}</span>
-        <span>{item.fantasia || item.razao || 'N/A'}</span>
+
+      {/* Ações */}
+      <div className={styles["amostra-card-actions"]}>
+       <button 
+            onClick={handleOpenTabelaIniciada} 
+            className={`${styles["btn-iniciar"]} ${styles["btn-pendente"]} ${styles["btn-swing"]}`} // Classes para estilo e ANIMAÇÃO
+            title="Abrir Tabela de Amostras Não Iniciadas" 
+            type="button"
+          >
+            <Clock size={18} />
+          
+          </button>
+        
+        <button
+          onClick={() => handleIniciarAnalise2(item.id)}
+          className={styles["btn-iniciar"]}
+          style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+          title="Abrir análise desta amostra"
+        >
+          <ExternalLink size={18} />
+          <span>Abrir</span>
+        </button>
       </div>
     </div>
   );
 
-  const renderTemperaturaItem = (item: TemperaturaItem) => (
+const renderTemperaturaItem = (item: TemperaturaItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
         <Thermometer className={styles["item-icon"]} />
@@ -726,6 +916,22 @@ export const Laboratorio: React.FC = memo(() => {
         <span>Min: {item.min_numero || 'N/A'}</span>
         <span>Max: {item.max_numero || 'N/A'}</span>
       </div>
+      {/* ============ BOTÃO CORRIGIDO ============ */}
+      <div className={styles["item-actions"]}>
+        <button
+          className={styles["btn-open-checagem"]} // Reutilizando estilo
+          onClick={() => {
+            closeModal('temperatura'); // 1. FECHA o modal principal de temperatura
+            setTempModalState({ isOpen: true, id: item.id }); // 2. ABRE o modal de salvar
+          }}
+          title="Registrar Temperatura"
+          type="button"
+        >
+          <Save size={16} />
+          <span>Registrar</span>
+        </button>
+      </div>
+      {/* ========================================= */}
     </div>
   );
 
@@ -762,6 +968,10 @@ export const Laboratorio: React.FC = memo(() => {
     </div>
   );
 
+
+   const handleOpenAmostrasBloqueadas = useCallback(() => {
+    WindowManager.openAmostrasBloqueadas();
+  }, []);
   const renderRegistroInsumoItem = (item: RegistroInsumoItem) => (
     <div key={item.id} className={styles["item-card"]}>
       <div className={styles["item-header"]}>
@@ -806,13 +1016,14 @@ export const Laboratorio: React.FC = memo(() => {
               >
                 <Search />
               </button>
-                 <button
-            className={styles["reload-button"]}
-            onClick={carregarDados}
-            title="Recarregar dados"
-          >  <RefreshCcw /> </button>
+              <button
+                className={styles["reload-button"]}
+                onClick={carregarDados}
+                title="Recarregar dados"
+              >
+                <RefreshCcw />
+              </button>
             </div>
-            
           </div>
         </div>
       </header>
@@ -951,18 +1162,37 @@ export const Laboratorio: React.FC = memo(() => {
         />
       </Modal>
 
-      <Modal
-        isOpen={modalStates.naoIniciadas}
-        onClose={() => closeModal('naoIniciadas')}
-        title="Amostras Não Iniciadas"
-      >
-        <ItemList
-          items={amostrasNaoIniciadas}
-          renderItem={renderAmostraNaoIniciadaItem}
-          emptyMessage="Nenhuma amostra não iniciada encontrada"
-        />
-      </Modal>
-
+<Modal
+  isOpen={modalStates.naoIniciadas}
+  onClose={() => closeModal('naoIniciadas')}
+  title="Amostras Não Iniciadas"
+>
+  <div className={styles["amostra-items-list"]}>
+    {amostrasNaoIniciadas.length === 0 ? (
+      <div className={styles["amostra-empty-state"]}>
+        <div className={styles["amostra-empty-icon"]}>
+          <TestTube size={80} />
+        </div>
+        <p className={styles["amostra-empty-text"]}>
+          Nenhuma amostra não iniciada encontrada
+        </p>
+      </div>
+    ) : (
+      <div className={styles["amostra-nao-iniciada-container"]}>
+        {amostrasNaoIniciadas.map(item => renderAmostraNaoIniciadaItem(item))}
+      </div>
+    )}
+  </div>
+</Modal>
+<SalvarTemperaturaModal
+        isOpen={tempModalState.isOpen}
+        id={tempModalState.id}
+        onClose={() => {
+          setTempModalState({ isOpen: false, id: null });
+          // Opcional: Recarregar dados se necessário
+          // carregarTemperatura(); 
+        }}
+      />
       <Modal
         isOpen={modalStates.emAnalise}
         onClose={() => closeModal('emAnalise')}
@@ -1004,6 +1234,17 @@ export const Laboratorio: React.FC = memo(() => {
         onClose={() => closeModal('bloqueadas')}
         title="Amostras Bloqueadas"
       >
+        <div style={{ marginBottom: '1rem' }}>
+          <button
+            className={styles["btn-open-checagem"]}
+            onClick={handleOpenAmostrasBloqueadas}
+            title="Abrir Tabela de Amostras Bloqueadas"
+            type="button"
+          >
+            <ExternalLink size={16} />
+            <span>Abrir Tabela Completa</span>
+          </button>
+        </div>
         <ItemList
           items={amostrasBloqueadas}
           renderItem={renderAmostraBloqueadaItem}

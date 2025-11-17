@@ -27,12 +27,20 @@ use controller::geral::visualizarcliente_controller::{
 use controller::geral::categoria_controller::{
     buscar_categorias_cadastro, criar_categoria, editar_categoria, excluir_categoria
 };
+
 use controller::geral::usuarioportal_controller::{
     buscar_clientes_usuario, buscar_setores_portal, alterar_permissao_setor, adicionar_cliente_usuario, remover_cliente_usuario, buscar_todos_setores_cliente, alterar_setor_cliente, buscar_usuarios_cliente, configurar_usuarios, remover_cadastro_usuario, excluir_usuario_cliente, reenviar_email_usuario, verificar_email, cadastrar_usuario, historico_usuario
 };
 use controller::geral::setor_controller::{
     buscar_setores_cadastro, criar_setor, editar_setor, excluir_setor
 };
+use controller::laboratorio::amostra_controller::{iniciar_amostra_analise, obter_detalhes_amostra, buscar_amostras_nao_iniciadas};
+use controller::laboratorio::resultado_controller::{solicitar_revisao, publicar_resultado, buscar_resultados_amostra, salvar_resultado, vistar_resultado, remover_visto_resultado, buscar_parametro_mapa,  buscar_detalhes_resultado,
+    salvar_resultado_completo, alterar_pop_resultado, buscar_pops_alternativos};
+
+use controller::laboratorio::amostra_broqueada_controller::{buscar_historico_bloqueio, bloquear_amostras, desbloquear_amostras, listar_amostras_bloqueadas };
+
+
 use controller::geral::consultor_controller::{ show_cadastrados, cadastrar_consultor, editar_consultor, deletar_consultor }; 
 use controller::geral::lab_terceirizado_controller::{
     listar_labs_terceirizados,
@@ -193,7 +201,7 @@ use crate::controller::geral::analise_controller::{
 
 
 // Módulo: Laboratório
-use controller::laboratorio::laboratorio_controller::{ buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
+use controller::laboratorio::laboratorio_controller::{ salvar_temperatura_analise, buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
 use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_tercerizado, 
     buscar_identificacao, 
@@ -211,7 +219,8 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_parametros_by_id
 };
 
-use controller::laboratorio::buscar_coleta::{buscar_coletas_e_amostras_client_command};
+use controller::laboratorio::coleta_checagem_controller::{salvar_checagens_client,
+            buscar_checagens_client};
 use controller::laboratorio::visualizar_amostra::{
     buscar_amostras
 };
@@ -741,7 +750,28 @@ fn main() {
             atualizar_numero_amostra,
             buscar_cliente_referente,
             buscar_parametros_by_id,
-            buscar_coletas_e_amostras_client_command
+            salvar_checagens_client,
+            buscar_checagens_client,
+            iniciar_amostra_analise, 
+            obter_detalhes_amostra,
+            buscar_amostras_nao_iniciadas,
+            buscar_resultados_amostra, 
+            salvar_resultado, 
+            vistar_resultado, 
+            remover_visto_resultado,
+            buscar_detalhes_resultado,
+            salvar_resultado_completo,
+            alterar_pop_resultado, 
+            buscar_pops_alternativos,
+            salvar_temperatura_analise,
+            buscar_historico_bloqueio,
+            bloquear_amostras,
+            desbloquear_amostras,
+            listar_amostras_bloqueadas,
+            buscar_parametro_mapa,
+            solicitar_revisao, 
+            publicar_resultado
+            
 
         ])
         .run(tauri::generate_context!())
