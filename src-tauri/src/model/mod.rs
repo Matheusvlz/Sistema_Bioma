@@ -44,3 +44,8 @@ pub mod pesquisa;
 pub mod estoque;
 pub mod materia_prima;
 pub mod materia_prima_options;
+pub mod insumo;
+pub mod insumo_registro;
+pub mod parametro_insumo;
+pub mod materia_prima_registro;
+pub mod insumo_registro_2;

@@ -620,15 +620,37 @@ export const Laboratorio: React.FC = memo(() => {
         openModal('checagem');
         break;
 
+        case 'Cadastrar insumo':
+        WindowManager.openGerenciarInsumo();
+        break;
+
       case 'Cadastrar matéria-prima':
         WindowManager.openGerenciarMateriaPrima();
         break;
 
-      case "Visualizar":
-        console.log("Ação: Visualizar amostras!");
-       WindowManager.openVisualizarAmostas();
+      case 'Registros insumo':
+        console.log("Ação: Visualizar registros de insumos!");
+        WindowManager.openGerenciarInsumoRegistro();
         break;
 
+        case "Visualizar":
+        console.log("Ação: Visualizar amostras!");
+        WindowManager.openVisualizarAmostas();
+        break;
+
+        case "Registros matéria-prima":
+        console.log("Ação: Gerenciar Registros de Matéria-Prima!");
+        WindowManager.openGerenciarMateriaPrimaRegistro();
+        break;
+
+        case "Meio de cultura": // Ou o nome exato que está no seu botão
+        console.log("Ação: Gerenciar Registros de Insumo e Amostras (V2)!");
+        WindowManager.openGerenciarInsumoRegistro2();
+        break;
+
+        case 'Parâmetros':
+        WindowManager.openGerenciarParametroInsumo();
+        break;
       
 
       // ... outros cases permanecem iguais

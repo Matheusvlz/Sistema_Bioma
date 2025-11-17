@@ -70,6 +70,15 @@ import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultados
 import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 
 import VisualizarMateriaPrima from '../view/laboratorio/VisualizarMateriaPrima';
+import VisualizarInsumo from '../view/laboratorio/VisualizarInsumo';
+
+import VisualizarInsumoRegistro from '../view/laboratorio/VisualizarInsumoRegistro';
+
+import VisualizarInsumoRegistro2 from '../view/laboratorio/VisualizarInsumoRegistro2';
+
+import VisualizarMateriaPrimaRegistro from '../view/laboratorio/VisualizarMateriaPrimaRegistro';
+
+import GerenciarParametroInsumo from '../view/laboratorio/GerenciarParametroInsumo';
 
 // Imports que seu amigo adicionou
 import Cadastrar_Manutencao from '../view/frota/Cadastrar_Manuntencao';
@@ -191,18 +200,23 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },
   'visualizar-amostras-cadastro': { component: <VisualizarAmostraView  />, hasLayout: false },
 
+  'lab-gerenciar-insumo': { component: <VisualizarInsumo />, hasLayout: false },
 
 
 
 
 
 
+  'rel-parametro-insumo': { component: <GerenciarParametroInsumo />, hasLayout: false },
+
+  'rel-insumo-registro-2': { component: <VisualizarInsumoRegistro2 />, hasLayout: false },
 
 
 
 
+  'lab-gerenciar-insumo-registro': { component: <VisualizarInsumoRegistro />, hasLayout: false },
 
-
+  'lab-gerenciar-materia-prima-registro': { component: <VisualizarMateriaPrimaRegistro />, hasLayout: false },
 
   // Qualidade
   'qualidade-fornecedor-form': { component: <FormularioFornecedor />, hasLayout: false },

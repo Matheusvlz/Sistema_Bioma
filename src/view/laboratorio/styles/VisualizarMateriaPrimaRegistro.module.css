@@ -1,0 +1,234 @@
+/* * CSS Híbrido e Caprichado - Modo Rolagem Unificada
+ */
+
+.container {
+  max-width: 98%;
+  margin: 1rem auto;
+  padding: 24px;
+  background-color: #f8fffe;
+  /* Removemos min-height fixo para deixar o conteúdo ditar a altura */
+  display: flex;
+  flex-direction: column;
+  color: #1f2937;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  border: 1px solid #e0e0e0;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 3px solid #21af56;
+}
+
+.header h2 {
+  color: #0f172a;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+/* Filtros */
+.filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filters select,
+.searchInput {
+  padding: 12px 16px;
+  border: 2px solid #374151;
+  border-radius: 12px;
+  font-size: 15px;
+  background-color: white;
+  color: #1f2937;
+  font-weight: 500;
+  min-width: 220px;
+}
+
+.filters select:focus,
+.searchInput:focus {
+  outline: none;
+  border-color: #21af56;
+  box-shadow: 0 0 0 3px rgba(33, 175, 86, 0.2);
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #1f2937;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+}
+
+.checkboxLabel:hover {
+  background-color: #f0fdf4;
+  border-color: #21af56;
+}
+
+/* --- Tabela com Rolagem Unificada --- 
+   Aqui está o segredo: removemos limites de altura vertical.
+   Mantemos apenas overflow-x para tabelas muito largas.
+*/
+.tableContainer {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  overflow-x: auto; /* Rolagem horizontal APENAS se necessário */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.tableHeader {
+  padding: 16px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  /* Se o conteúdo for menor que a tela, estica. Se for maior, rola horizontalmente */
+  min-width: 100%; 
+}
+
+.table th,
+.table td {
+  padding: 16px;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+  white-space: nowrap; /* Mantém dados em uma linha */
+}
+
+.table th {
+  background-color: #f0fdf4;
+  color: #166534;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.table td {
+  font-size: 14px;
+  color: #374151;
+}
+
+.table tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* Estilo para item obsoleto */
+.obsoleto td {
+  background-color: #fff1f2;
+  color: #9f1239;
+  opacity: 0.8;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.buttonEdit, .buttonDelete {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.buttonEdit:hover { background-color: #e0f2fe; }
+.buttonDelete:hover { background-color: #fee2e2; }
+
+.buttonPrimary {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.buttonPrimary:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Mensagens */
+.success, .error {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+}
+.success { background-color: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+.loadingCell { text-align: center; padding: 40px; color: #6b7280; }
+.empty { text-align: center; padding: 40px; color: #6b7280; font-style: italic; }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 16px;
+}
+
+.pagination button {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button:hover:not(:disabled) {
+  border-color: #22c55e;
+  color: #16a34a;
+}
+
+/* --- Container Principal (ATIVANDO ROLAGEM VERTICAL) --- */
+.container {
+  /* 1. Ocupa exatamente 100% da altura da janela do Windows */
+  height: 100vh; 
+  
+  /* 2. Se o conteúdo passar disso (seus 20 itens), cria a barra NA DIREITA pra descer */
+  overflow-y: auto; 
+  
+  /* Estilo visual padrão */
+  max-width: 100%; /* Ocupa a largura toda */
+  padding: 24px;
+  background-color: #f8fffe;
+  display: flex;
+  flex-direction: column;
+  color: #1f2937;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-sizing: border-box; /* Importante para o padding não comer a rolagem */
+}

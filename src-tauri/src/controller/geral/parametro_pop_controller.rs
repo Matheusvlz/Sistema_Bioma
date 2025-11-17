@@ -1,7 +1,7 @@
 use tauri::{command, AppHandle};
 use reqwest::Client;
 use crate::model::api_response::ApiResponse;
-use crate::model::parametro_pop::{ParametroPopDetalhado, ParametroPopPayload, NovoParametroApiPayload, AtualizacaoParametroPop, AtualizacaoLqIncertezaPayload};
+use crate::model::parametro_pop::{ParametroPopDetalhado, ParametroPopPayload, NovoParametroApiPayload, AtualizacaoParametroPop, AtualizacaoLqIncertezaPayload, ParametroGrupoNome};
 use crate::config::get_api_url;
 use serde_json;
 
@@ -186,5 +186,28 @@ pub async fn atualizar_lq_incerteza_tauri(app_handle: AppHandle, id: u32, payloa
             }
         },
         Err(e) => Err(ApiResponse::error(format!("Erro de conexão com a API: {}", e))),
+    }
+}
+
+#[command]
+pub async fn listar_grupos_parametros_tauri(
+    app_handle: AppHandle
+) -> Result<ApiResponse<Vec<ParametroGrupoNome>>, ApiResponse<()>> {
+    let client = Client::new();
+    let api_url = get_api_url(&app_handle);
+    let url = format!("{}/parametros/grupos", api_url); // A rota da API que criamos
+
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                match response.json::<Vec<ParametroGrupoNome>>().await {
+                    Ok(data) => Ok(ApiResponse::success("Grupos carregados.".to_string(), Some(data))),
+                    Err(e) => Err(ApiResponse::error(format!("Erro no JSON: {}", e))),
+                }
+            } else {
+                Err(ApiResponse::error(format!("API retornou erro ({})", response.status())))
+            }
+        },
+        Err(e) => Err(ApiResponse::error(format!("Erro de conexão: {}", e))),
     }
 }

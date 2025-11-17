@@ -136,7 +136,8 @@ use controller::geral::parametro_pop_controller::{
     editar_parametro_pop,
     deletar_parametro_pop,
     listar_parametros_pops_por_grupo,
-    atualizar_lq_incerteza_tauri
+    atualizar_lq_incerteza_tauri,
+    listar_grupos_parametros_tauri
 };
 
 use controller::geral::legislacao_parametro_controller::{
@@ -229,6 +230,42 @@ use controller::laboratorio::materia_prima_controller::{
     listar_unidades_tauri, // <-- A função que estava causando o erro
 };
 
+use controller::laboratorio::insumo_controller::{
+    listar_insumos_tauri,
+    criar_insumo_tauri,
+    editar_insumo_tauri,
+    deletar_insumo_tauri,
+    carregar_suporte_formulario_insumo_tauri,
+    buscar_insumo_tauri
+};
+
+use controller::laboratorio::insumo_registro_controller::{
+    listar_insumos_registros_tauri,
+    criar_insumo_registro_tauri,
+    editar_insumo_registro_tauri,
+    deletar_insumo_registro_tauri,
+    listar_fornecedores_dropdown_tauri,
+    listar_insumos_por_tipo_tauri,
+    buscar_receita_e_estoque_mp_tauri,
+    listar_insumo_tipos_tauri,
+};
+
+use controller::laboratorio::insumo_registro_2_controller::{
+    listar_insumo_registro_2_tauri,
+    criar_insumo_registro_2_tauri,
+    editar_insumo_registro_2_tauri,
+    deletar_insumo_registro_2_tauri,
+    atualizar_amostra_registro_2_tauri
+};
+
+use controller::laboratorio::materia_prima_registro_controller::{
+    listar_materia_prima_registro_tauri,
+    cadastrar_materia_prima_registro_tauri,
+    editar_materia_prima_registro_tauri,
+    deletar_materia_prima_registro_tauri,
+    atualizar_obsoleto_materia_prima_registro_tauri
+};
+
 
 use controller::admin::setor_controller::{
     listar_setores_command,
@@ -236,6 +273,16 @@ use controller::admin::setor_controller::{
     listar_usuarios_por_setor_command,
     atualizar_usuarios_do_setor_command,
 };
+
+use controller::laboratorio::parametro_insumo_controller::{
+    listar_parametros_pop_dropdown_tauri,
+    listar_insumos_relacionados_tauri,
+    listar_insumos_disponiveis_tauri,
+    relacionar_insumos_parametro_tauri,
+    remover_insumo_relacionado_tauri
+};
+
+
 
 use controller::admin::historico_controller::{
     listar_historico_command,
@@ -471,6 +518,7 @@ fn main() {
             editar_parametro_pop,
             deletar_parametro_pop,
             listar_parametros_pops_por_grupo,
+            listar_grupos_parametros_tauri,
             atualizar_lq_incerteza_tauri,
             listar_etapas,
             cadastrar_etapa,
@@ -480,6 +528,11 @@ fn main() {
             relacionar_etapas_a_tecnica,
             remover_tecnica_etapa,
             reordenar_etapas_da_tecnica,
+            listar_materia_prima_registro_tauri,
+            cadastrar_materia_prima_registro_tauri,
+            editar_materia_prima_registro_tauri,
+            deletar_materia_prima_registro_tauri,
+            atualizar_obsoleto_materia_prima_registro_tauri,
             
             listar_legislacao_parametro_tauri,
             cadastrar_legislacao_parametro_tauri,
@@ -540,7 +593,33 @@ fn main() {
             deletar_materia_prima_tauri,
             listar_tipos_materia_prima_tauri,
             listar_unidades_tauri,
+            listar_insumos_tauri,
+            criar_insumo_tauri,
+            editar_insumo_tauri,
+            deletar_insumo_tauri,
+            carregar_suporte_formulario_insumo_tauri,
+            buscar_insumo_tauri,
 
+            listar_parametros_pop_dropdown_tauri,
+            listar_insumos_relacionados_tauri,
+            listar_insumos_disponiveis_tauri,
+            relacionar_insumos_parametro_tauri,
+            remover_insumo_relacionado_tauri,
+
+
+            listar_insumos_registros_tauri,
+            criar_insumo_registro_tauri,
+            editar_insumo_registro_tauri,
+            deletar_insumo_registro_tauri,
+            listar_fornecedores_dropdown_tauri,
+            listar_insumos_por_tipo_tauri,
+            buscar_receita_e_estoque_mp_tauri,
+            listar_insumo_tipos_tauri,
+            listar_insumo_registro_2_tauri,
+            criar_insumo_registro_2_tauri,
+            editar_insumo_registro_2_tauri,
+            deletar_insumo_registro_2_tauri,
+            atualizar_amostra_registro_2_tauri,
             // Comandos de Qualidade e Utilitários
             import_xlsx_file,
             import_xlsx_from_bytes,
