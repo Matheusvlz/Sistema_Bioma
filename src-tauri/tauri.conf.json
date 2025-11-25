@@ -54,8 +54,7 @@
     ]
   },
   "plugins": {
-  "dialog": null,
-  "shell": null
-}
-
+    "fs": {},
+    "shell": {}
+  }
 }

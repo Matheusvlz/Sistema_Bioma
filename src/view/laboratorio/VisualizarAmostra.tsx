@@ -48,13 +48,7 @@ interface ClienteResponse {
   message?: string;
   total?: number;
 }
-/*
-interface DadosClienteResponse {
-  solicitantes: any[];
-  orcamentos: any[];
-  setor_portal: any[];
-}
-*/
+
 // Interface dos filtros do frontend
 interface Filters {
   cliente: string;
@@ -126,24 +120,23 @@ export const VisualizarAmostra = () => {
     terceirizacao: '',
     laboratorio: ''
   });
+  const [pdfLoadingId, setPdfLoadingId] = useState<number | null>(null);
 
   // Estados para ordenação
   const [sortColumn, setSortColumn] = useState<SortColumn | null>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const [selectedClient, setSelectedClient] = useState<string>('');
-  //const [selectedClienteObj, setSelectedClienteObj] = useState<Cliente | null>(null);
   const [searchResults, setSearchResults] = useState<Cliente[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [isSearching, setIsSearching] = useState<boolean>(false);
- // const [solicitantes, setSolicitantes] = useState<any[]>([]);
- // const [orcamentos, setOrcamentos] = useState<any[]>([]);
- // const [setores, setSetores] = useState<any[]>([]);
- // const [anoFiltro, setAnoFiltro] = useState<string>('');
 
   // Refs para controle do dropdown
   const searchRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [currentPdfUrl, setCurrentPdfUrl] = useState<string>('');
+  const [currentPdfName, setCurrentPdfName] = useState<string>('');
 
   // Estados para gerenciar o resultado da busca
   const [results, setResults] = useState<AmostraResult[]>([]);
@@ -218,6 +211,111 @@ export const VisualizarAmostra = () => {
         return sortDirection === 'asc' ? comparison : -comparison;
       }
     });
+  };
+
+  const base64ToPdfUrl = (base64: string): string => {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    return URL.createObjectURL(blob);
+  };
+
+  const openPdfViewer = (pdfUrl: string, pdfName: string) => {
+    setCurrentPdfUrl(pdfUrl);
+    setCurrentPdfName(pdfName);
+    setPdfViewerOpen(true);
+  };
+
+  const closePdfViewer = () => {
+    setPdfViewerOpen(false);
+    // Limpar URL para evitar memory leaks
+    if (currentPdfUrl) {
+        URL.revokeObjectURL(currentPdfUrl);
+    }
+    setCurrentPdfUrl('');
+    setCurrentPdfName('');
+  };
+
+  // Função para download direto a partir do visualizador
+  const downloadCurrentPdf = () => {
+    if (!currentPdfUrl) return;
+    const link = document.createElement('a');
+    link.href = currentPdfUrl;
+    link.download = currentPdfName || 'documento.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleStatusClick = async (amostra: AmostraResult) => {
+    // Só processa se tiver número de amostras (indicando emitido) e tiver idgrupo
+    if (!amostra.numero_amostras || !amostra.idgrupo) return;
+  
+    setPdfLoadingId(amostra.idgrupo);
+  
+    try {
+      // Formata a data para YYYY-MM-DD
+      let dataFormatada = '';
+      if (amostra.datalab) {
+        const dataStr = amostra.datalab.trim();
+        
+        if (/^\d{4}-\d{2}-\d{2}/.test(dataStr)) {
+          dataFormatada = dataStr.split(' ')[0]; 
+        }
+        else if (/^\d{2}\/\d{2}\/\d{4}/.test(dataStr)) {
+          const partes = dataStr.split(' ')[0].split('/');
+          dataFormatada = `${partes[2]}-${partes[1]}-${partes[0]}`; 
+        }
+        else {
+          const data = new Date(dataStr);
+          if (!isNaN(data.getTime())) {
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+            dataFormatada = `${ano}-${mes}-${dia}`;
+          }
+        }
+      }
+  
+      if (!dataFormatada || !/^\d{4}-\d{2}-\d{2}$/.test(dataFormatada)) {
+        throw new Error(`Data de entrada inválida: "${amostra.datalab}". Formato esperado: yyyy-MM-dd`);
+      }
+  
+      console.log(`Solicitando PDF - Grupo: ${amostra.idgrupo}, Data: ${dataFormatada}`);
+  
+      const response = await invoke<{ pdfBase64?: string; erro?: string }>(
+        'gerar_relatorio_final',
+        { 
+          idGrupo: amostra.idgrupo,
+          dataEntrada: dataFormatada 
+        }
+      );
+  
+      if (response.erro) {
+        alert(`Erro ao gerar relatório: ${response.erro}`);
+      } else if (response.pdfBase64) {
+        // SUCESSO: Abrir o Visualizador Interno
+        const pdfUrl = base64ToPdfUrl(response.pdfBase64);
+        const nomeArquivo = `relatorio_${amostra.sigla}${amostra.numero}.pdf`;
+        
+        // Abre o modal de visualização
+        openPdfViewer(pdfUrl, nomeArquivo);
+        
+      } else {
+        alert('Ocorreu um erro inesperado: PDF não retornado.');
+      }
+  
+    } catch (err) {
+      console.error('Erro ao buscar PDF:', err);
+      const errorMsg = err instanceof Error ? err.message : 'Falha ao comunicar com o serviço de relatórios.';
+      alert(errorMsg);
+    } finally {
+      setPdfLoadingId(null);
+    }
   };
 
   const handleSearch = async (): Promise<void> => {
@@ -340,7 +438,6 @@ export const VisualizarAmostra = () => {
   // Handler para seleção de cliente
   const handleClienteSelect = async (cliente: Cliente) => {
     try {
-      //setSelectedClienteObj(cliente);
       setSelectedClient(cliente.fantasia || cliente.razao || '');
       setShowDropdown(false);
       setSearchResults([]);
@@ -351,30 +448,17 @@ export const VisualizarAmostra = () => {
         cliente: cliente.fantasia || cliente.razao || ''
       }));
 
-     // const dadosCliente: DadosClienteResponse = await invoke('buscar_dados_cliente', {
-      //  clienteId: cliente.id,
-      //});
-
-    //  setSolicitantes(dadosCliente.solicitantes);
-    //  setOrcamentos(dadosCliente.orcamentos);
-//setSetores(dadosCliente.setor_portal);
-
       // Limpar seleções anteriores
       handleClearSolicitanteSearch();
-     // setAnoFiltro('');
 
     } catch (error) {
       console.error('Erro ao buscar dados do cliente:', error);
-    //  setSolicitantes([]);
-    //  setOrcamentos([]);
-    //  setSetores([]);
     }
   };
 
   // Handler para limpar busca de cliente
   const handleClearSearch = () => {
     setSelectedClient('');
-   // setSelectedClienteObj(null);
     setShowDropdown(false);
     setSearchResults([]);
     setFilters(prev => ({
@@ -404,6 +488,22 @@ export const VisualizarAmostra = () => {
       }
     };
   }, []);
+
+  // Fechar modais com ESC
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            if (pdfViewerOpen) {
+                closePdfViewer();
+            }
+        }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [pdfViewerOpen]);
 
   const handleClear = (): void => {
     setFilters({
@@ -499,8 +599,11 @@ export const VisualizarAmostra = () => {
   };
 
   const handleOpenPDF = (amostra: AmostraResult): void => {
-    console.log('Abrir PDF da amostra:', amostra);
-    // Implementar lógica para abrir PDF
+    if (amostra.numero_amostras) {
+        handleStatusClick(amostra);
+    } else {
+        alert("O relatório não foi emitido para esta amostra.");
+    }
   };
 
   const handleEmailSample = (amostra: AmostraResult): void => {
@@ -702,6 +805,14 @@ export const VisualizarAmostra = () => {
             <div className="tableHeader">
               <div 
                 className="tableHeaderCell sortableHeader" 
+                onClick={() => handleSort('status')}
+                title="Clique para ordenar por status"
+              >
+                Status
+                {renderSortIcon('status')}
+              </div>
+              <div 
+                className="tableHeaderCell sortableHeader" 
                 onClick={() => handleSort('amostra')}
                 title="Clique para ordenar por amostra"
               >
@@ -715,14 +826,6 @@ export const VisualizarAmostra = () => {
               >
                 Cliente
                 {renderSortIcon('cliente')}
-              </div>
-              <div 
-                className="tableHeaderCell sortableHeader" 
-                onClick={() => handleSort('status')}
-                title="Clique para ordenar por status"
-              >
-                Status
-                {renderSortIcon('status')}
               </div>
               <div 
                 className="tableHeaderCell sortableHeader" 
@@ -747,18 +850,41 @@ export const VisualizarAmostra = () => {
               {currentItems.map((amostra, index) => (
                 <div key={index} className="tableRow">
                   <div className="tableCell">
-                    <span className="sampleNumber">{amostra.sigla}{amostra.numero}</span>
-                    {amostra.cert_versao && (
-                      <span className="sampleVersion">v{amostra.cert_versao}</span>
+                    {amostra.numero_amostras != null ? (
+                      <button
+                        onClick={() => handleStatusClick(amostra)}
+                        className={`statusBadge statusEmitido`}
+                        style={{ 
+                          cursor: 'pointer', 
+                          border: 'none', 
+                          background: 'transparent',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                        title="Clique para visualizar o PDF"
+                        disabled={pdfLoadingId === amostra.idgrupo}
+                      >
+                        {pdfLoadingId === amostra.idgrupo ? (
+                          <>
+                            <Loader size={12} className="animate-spin" />
+                            Gerando...
+                          </>
+                        ) : (
+                          'Emitido'
+                        )}
+                      </button>
+                    ) : (
+                      <span className="statusBadge statusPendente">
+                        Pendente
+                      </span>
                     )}
                   </div>
                   <div className="tableCell">
-                    <span className="clientName">{amostra.fantasia}</span>
+                    <span className="sampleNumber">{`${amostra.sigla}${amostra.numero}`}</span>
                   </div>
                   <div className="tableCell">
-                   <span className={`statusBadge status${amostra.numero_amostras}`}>
-  {amostra.numero_amostras != null ? 'Emitido' : ''}
-</span>
+                    <span className="clientName">{amostra.fantasia}</span>
                   </div>
                   <div className="tableCell">
                     <span className="dateText">{amostra.datalab}</span>
@@ -789,6 +915,7 @@ export const VisualizarAmostra = () => {
                         onClick={() => handleOpenPDF(amostra)}
                         className="actionButton actionButtonPdf"
                         title="Abrir PDF"
+                        disabled={!amostra.numero_amostras}
                       >
                         <FileText className="actionIcon" />
                       </button>
@@ -1289,6 +1416,36 @@ export const VisualizarAmostra = () => {
         </div>
       </div>
         </div>
+
+        {/* --- PDF VIEWER OVERLAY --- */}
+        {pdfViewerOpen && (
+            <div className="pdf-viewer-overlay" onClick={closePdfViewer}>
+                <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
+                    <div className="pdf-viewer-header">
+                        <h3 className="pdf-viewer-title">{currentPdfName}</h3>
+                        <div className="pdf-viewer-controls">
+                            <button 
+                                onClick={downloadCurrentPdf} 
+                                className="viewer-control-button" 
+                                title="Baixar"
+                            >
+                                <Download size={20} />
+                            </button>
+                            <button onClick={closePdfViewer} className="viewer-close-button" title="Fechar">
+                                <X size={24} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className="pdf-viewer-content">
+                        <iframe
+                            src={currentPdfUrl}
+                            className="pdf-viewer-iframe"
+                            title={currentPdfName}
+                        />
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };

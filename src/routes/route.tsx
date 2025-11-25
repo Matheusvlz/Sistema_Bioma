@@ -89,6 +89,8 @@ import ParametroResultadoView from '../view/laboratorio/parametro-resultado-view
 import AmostrasNaoIniciadasView from '../view/laboratorio/TabelaAmostraNaoIniciada';
 import TabelaAmostraIniciada from '../view/laboratorio/TabelaAmostraIniciada';
 import {AmostrasBloqueadas }from '../view/laboratorio/AmostrasBloqueadas';
+import {AnaliseRevisada }from '../view/laboratorio/AnaliseRevisada';
+
 // Define a new type for route configurations
 interface RouteConfig {
   component: React.ReactNode;
@@ -229,7 +231,9 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'tabela-nao-iniciada': { component: <AmostrasNaoIniciadasView />, hasLayout:false},
   'tabela-iniciada': { component: <TabelaAmostraIniciada />, hasLayout:false},
   'amostras-broqueadas': { component: <AmostrasBloqueadas />, hasLayout: false },
-  'amostras-mapa': { component: <ParametroMapaView />, hasLayout: false }  
+  'amostras-mapa': { component: <ParametroMapaView />, hasLayout: false },
+
+  'gerar-relatorio-parcial': { component: <AnaliseRevisada />, hasLayout: false}
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

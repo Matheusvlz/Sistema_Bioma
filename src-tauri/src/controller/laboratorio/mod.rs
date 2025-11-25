@@ -9,3 +9,4 @@ pub mod amostra_controller;
 pub mod resultado_controller;
 pub mod materia_prima_controller;
 pub mod amostra_broqueada_controller;
+pub mod visualizar_relatorio_controller;

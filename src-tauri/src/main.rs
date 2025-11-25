@@ -1,20 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-// --- Declaração dos Módulos Principais ---
 mod controller;
 mod model;
 mod socket_listener;
 mod config;
 mod utils;
 
-// --- Importações dos Controllers ---
-
-// Módulo: Início e Notificações
 use controller::inicio_controller::{get_data_inicio, get_data_for_screen};
 use controller::inicio_case::case_x9_controller::{salvar_ticket, update_kanban, update_kanban_card_urgency_and_index};
 use controller::notification_controller::{get_inicio_data_from_api, finalizar_notificacao, mark_kanban_card_as_completed};
 
-// Módulo: Geral (Clientes, Consultores, Estruturas, etc.)
 use controller::geral_controller::{
     buscar_amostras_pre_cadastradas, buscar_clientes_sem_cadastro, buscar_coletas, buscar_coletas_portal, buscar_solicitacoes_usuarios
 };
@@ -221,8 +216,19 @@ use controller::laboratorio::cadastrar_amostra_controller::{
 use controller::laboratorio::coleta_checagem_controller::{salvar_checagens_client,
             buscar_checagens_client};
 use controller::laboratorio::visualizar_amostra::{
-    buscar_amostras
+    buscar_amostras, gerar_relatorio_final
 };
+use controller::laboratorio::visualizar_relatorio_controller::{
+    proxy_listar_clientes_revisao,
+            proxy_listar_analises_revisadas,
+            proxy_assinar_relatorios,
+            gerar_relatorio_final2,
+            gerar_relatorio_amostragem,
+            gerar_relatorio_cq,
+            gerar_relatorio_preview
+
+};
+
 
 use controller::laboratorio::amostra_personalizavel_controller::{
     listar_amostras_por_faixa_tauri,
@@ -352,6 +358,8 @@ fn main() {
         .setup(|app| {
             let app_handle = app.handle();
 
+          
+
             tauri::async_runtime::spawn({
                 let app_handle_clone = app_handle.clone();
                 async move {
@@ -362,8 +370,10 @@ fn main() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_dialog::init()) // Inicializa o plugin de diálogo
+     //   .plugin(tauri_plugin_dialog::init()) // Inicializa o plugin de diálogo
         .plugin(tauri_plugin_opener::init()) // Inicializa o plugin de abrir pastas/links
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
             // Comandos de Início e Notificações
             get_data_inicio,
@@ -691,7 +701,15 @@ fn main() {
             listar_amostras_bloqueadas,
             buscar_parametro_mapa,
             solicitar_revisao, 
-            publicar_resultado
+            publicar_resultado,
+            gerar_relatorio_final,
+            proxy_listar_clientes_revisao,
+            proxy_listar_analises_revisadas,
+            proxy_assinar_relatorios,
+            gerar_relatorio_final2,
+            gerar_relatorio_amostragem,
+            gerar_relatorio_cq,
+            gerar_relatorio_preview
             
 
         ])

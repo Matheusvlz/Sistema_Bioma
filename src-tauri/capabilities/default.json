@@ -24,6 +24,64 @@
     "fs:allow-copy-file",
     "fs:allow-mkdir",
     "fs:allow-read-dir",
-    "fs:allow-exists"
+    "fs:allow-exists",
+    "shell:allow-open",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        "$TEMP/*",
+        "$TEMP/**",
+        "$APPDATA/*",
+        "$APPDATA/**",
+        "$HOME/Downloads/*",
+        "$HOME/Downloads/**",
+        "$DOWNLOAD/*",
+        "$DOWNLOAD/**"
+      ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "open-pdf",
+          "cmd": "cmd",
+          "args": [
+            "/C",
+            "start",
+            "",
+            {
+              "validator": "\\S+"
+            }
+          ]
+        },
+        {
+          "name": "open-file",
+          "cmd": "explorer",
+          "args": [
+            {
+              "validator": ".*"
+            }
+          ]
+        },
+        {
+          "name": "open-file-linux",
+          "cmd": "xdg-open",
+          "args": [
+            {
+              "validator": ".*"
+            }
+          ]
+        },
+        {
+          "name": "open-file-macos",
+          "cmd": "open",
+          "args": [
+            {
+              "validator": ".*"
+            }
+          ]
+        }
+      ]
+    }
   ]
 }
