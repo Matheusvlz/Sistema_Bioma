@@ -219,6 +219,12 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_parametros_by_id
 };
 
+use controller::laboratorio::reagente_limpeza_registro_controller::{
+    listar_reagentes_itens_tauri, criar_reagente_item_tauri, deletar_reagente_item_tauri,
+    listar_registros_reagente_tauri, criar_registro_reagente_tauri, 
+    editar_registro_reagente_tauri, registrar_uso_reagente_tauri
+};
+
 use controller::laboratorio::coleta_checagem_controller::{salvar_checagens_client,
             buscar_checagens_client};
 use controller::laboratorio::visualizar_amostra::{
@@ -266,7 +272,6 @@ use controller::laboratorio::insumo_registro_2_controller::{
     deletar_insumo_registro_2_tauri,
     atualizar_amostra_registro_2_tauri
 };
-
 use controller::laboratorio::materia_prima_registro_controller::{
     listar_materia_prima_registro_tauri,
     cadastrar_materia_prima_registro_tauri,
@@ -274,15 +279,12 @@ use controller::laboratorio::materia_prima_registro_controller::{
     deletar_materia_prima_registro_tauri,
     atualizar_obsoleto_materia_prima_registro_tauri
 };
-
-
 use controller::admin::setor_controller::{
     listar_setores_command,
     criar_setor_command,
     listar_usuarios_por_setor_command,
     atualizar_usuarios_do_setor_command,
 };
-
 use controller::laboratorio::parametro_insumo_controller::{
     listar_parametros_pop_dropdown_tauri,
     listar_insumos_relacionados_tauri,
@@ -290,8 +292,6 @@ use controller::laboratorio::parametro_insumo_controller::{
     relacionar_insumos_parametro_tauri,
     remover_insumo_relacionado_tauri
 };
-
-
 
 use controller::admin::historico_controller::{
     listar_historico_command,
@@ -467,6 +467,13 @@ fn main() {
             cadastrar_lab_terceirizado,
             editar_lab_terceirizado,
             deletar_lab_terceirizado,
+            listar_reagentes_itens_tauri,
+            criar_reagente_item_tauri,
+            deletar_reagente_item_tauri,
+            listar_registros_reagente_tauri,
+            criar_registro_reagente_tauri,
+            editar_registro_reagente_tauri,
+            registrar_uso_reagente_tauri,
             // ✅ CORREÇÃO: Usamos os comandos que já existiam, sem o sufixo.
             listar_tipos,
             cadastrar_tipo,

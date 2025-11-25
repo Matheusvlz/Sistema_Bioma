@@ -1,0 +1,331 @@
+/* src/view/laboratorio/css/VisualizarReagenteLimpezaRegistro.module.css */
+
+/* --- Variáveis de Tema (Fácil de alterar) --- */
+:root {
+  --primary-color: #0056b3;       /* Azul Profissional */
+  --primary-hover: #004494;
+  --success-color: #28a745;       /* Verde Sucesso */
+  --success-hover: #218838;
+  --danger-color: #dc3545;        /* Vermelho Ação/Erro */
+  --warning-color: #ffc107;       /* Amarelo Atenção */
+  --text-color: #333333;
+  --text-secondary: #666666;
+  --bg-color: #f4f6f9;            /* Fundo cinza bem claro */
+  --card-bg: #ffffff;
+  --border-color: #dee2e6;
+  --radius: 8px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Layout Principal --- */
+.container {
+  padding: 2rem;
+  background-color: var(--bg-color);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-color);
+}
+
+.header {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin: 0;
+}
+
+/* --- Card do Formulário --- */
+.card {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+}
+
+.row {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: flex-end; /* Alinha inputs e botões na base */
+  flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+/* --- Inputs e Labels --- */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 150px; /* Garante que não fique minúsculo */
+}
+
+.inputGroup label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.select,
+.inputGroup input {
+  padding: 0.6rem 0.8rem;
+  font-size: 0.95rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px; /* Bordas levemente arredondadas */
+  background-color: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  color: var(--text-color);
+}
+
+.select:focus,
+.inputGroup input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 86, 179, 0.1); /* Anel de foco sutil */
+}
+
+.select:disabled,
+.inputGroup input:disabled {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  color: #adb5bd;
+}
+
+/* --- Botões --- */
+.actions {
+  display: flex;
+  align-items: flex-end;
+}
+
+.btnPrimary {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  height: 42px; /* Altura fixa para alinhar com inputs */
+}
+
+.btnPrimary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btnPrimary:disabled {
+  background-color: #a0c4e8;
+  cursor: not-allowed;
+}
+
+.btnSmall {
+  border: none;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Cores específicas para botões de ação na tabela */
+.btnSmall { 
+    background-color: var(--success-color); /* Padrão iniciar (Verde) */
+    color: white;
+}
+
+/* Você pode adicionar logica condicional no React para mudar a classe se for finalizar */
+/* Mas como estamos usando a mesma classe, vamos assumir que o usuário gosta do verde para ação positiva */
+/* Se quiser diferenciar: crie .btnSuccess e .btnDanger no CSS e aplique no React */
+
+.btnSmall:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btnSmall:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.btnIcon {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.btnIcon:hover:not(:disabled) {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.btnIcon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+
+/* --- Tabela --- */
+.tableContainer {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden; /* Para arredondar as bordas da tabela */
+  overflow-x: auto; /* Scroll horizontal se necessário */
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table thead {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid var(--border-color);
+}
+
+.table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table tbody tr:hover {
+  background-color: #f8f9fa; /* Efeito hover na linha */
+}
+
+/* Estilo para a célula de Data + Usuário */
+.table td div {
+    display: flex;
+    flex-direction: column;
+}
+.table td strong {
+    color: var(--text-color);
+    font-size: 0.95rem;
+}
+.table td small {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+/* --- Banners de Feedback --- */
+.errorBanner, .successBanner {
+  padding: 1rem;
+  border-radius: var(--radius);
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.errorBanner {
+  background-color: #fdecea;
+  color: var(--danger-color);
+  border: 1px solid #fadbd8;
+}
+
+.successBanner {
+  background-color: #e8f5e9;
+  color: var(--success-color);
+  border: 1px solid #c8e6c9;
+}
+
+/* --- Tabela com Scroll Inteligente --- */
+.tableContainer {
+  background-color: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
+  
+  /* SEGREDOS DO SCROLL: */
+  overflow-y: auto; /* Habilita scroll vertical */
+  overflow-x: auto; /* Habilita scroll horizontal se colunas estourarem */
+  
+  /* Define uma altura máxima dinâmica: 
+     100vh (tela toda) - aprox 380px (espaço ocupado pelo cabeçalho + formulário acima).
+     Isso força a tabela a criar barra de rolagem se passar desse tamanho. */
+  max-height: calc(100vh - 380px); 
+  min-height: 300px; /* Garante uma altura mínima visual */
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+/* Fixar o Cabeçalho da Tabela (Sticky Header) 
+   Isso faz o cabeçalho ficar parado enquanto você rola os dados para baixo */
+.table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa; /* Mesma cor do background original */
+  z-index: 1; /* Garante que fique por cima dos dados */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1); /* Sombra suave para separar */
+}
+
+/* --- Estilização da Barra de Rolagem (Scrollbar Invisível/Moderna) --- */
+
+/* Largura da barra */
+.tableContainer::-webkit-scrollbar {
+  width: 8px;  /* Vertical */
+  height: 8px; /* Horizontal */
+}
+
+/* O "trilho" por onde a barra corre (Invisível) */
+.tableContainer::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+/* A "pega" da barra (Thumb) */
+.tableContainer::-webkit-scrollbar-thumb {
+  background-color: transparent; /* Invisível por padrão */
+  border-radius: 4px;
+}
+
+/* Só mostra a cor da barra quando o mouse está em cima da tabela */
+.tableContainer:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2); /* Cinza suave translúcido */
+}
+
+/* Quando clica na barra para arrastar */
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.4); /* Cinza mais escuro */
+}

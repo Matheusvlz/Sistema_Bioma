@@ -49,3 +49,4 @@ pub mod insumo_registro;
 pub mod parametro_insumo;
 pub mod materia_prima_registro;
 pub mod insumo_registro_2;
+pub mod reagente_limpeza_registro;

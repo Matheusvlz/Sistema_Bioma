@@ -1039,6 +1039,20 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
   }
 
 
+  static async openReagenteLimpezaRegistro(): Promise<WebviewWindow> {
+  return this.openWindow({
+      label: 'lab-reagente-limpeza-registro',
+      title: 'Registro de Reagente de Limpeza',
+      url: '/#/lab-reagente-limpeza-registro',
+      width: 1200, // Largura confortável para a tabela
+      height: 800,
+      resizable: true,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+
 static async openParametroResultado(dadosJanela?: any): Promise<WebviewWindow> {
   return this.openWindow({
     label: 'parametro-resultado',

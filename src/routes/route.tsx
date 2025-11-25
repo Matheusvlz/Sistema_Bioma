@@ -69,6 +69,9 @@ import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
 import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
 import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
 
+
+import VisualizarReagenteLimpezaRegistro from '../view/laboratorio/VisualizarReagenteLimpezaRegistro';
+
 import VisualizarMateriaPrima from '../view/laboratorio/VisualizarMateriaPrima';
 import VisualizarInsumo from '../view/laboratorio/VisualizarInsumo';
 
@@ -211,7 +214,7 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
 
 
 
-
+  'lab-reagente-limpeza-registro': { component: <VisualizarReagenteLimpezaRegistro />, hasLayout: false },
 
 
   'rel-parametro-insumo': { component: <GerenciarParametroInsumo />, hasLayout: false },
@@ -236,6 +239,8 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'coleta-checagem': { component: <ColetaChecagem />, hasLayout: false },
 
   'amostra-details': { component: <AmostraDetailView />, hasLayout: false},
+
+  
 
    'resultado-cadastro': { component: <ResultadoCadastroView />, hasLayout: false},
 

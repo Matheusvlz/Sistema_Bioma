@@ -672,6 +672,11 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
         WindowManager.openGerenciarInsumoRegistro2();
         break;
 
+        case "Reagente para limpeza": // Ou o nome exato que está no seu botão
+        console.log("Ação: Reagente para limpeza!");
+        WindowManager.openReagenteLimpezaRegistro();
+        break;
+
         case 'Parâmetros':
         WindowManager.openGerenciarParametroInsumo();
         break;
