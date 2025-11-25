@@ -1,0 +1,272 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f4f6f8;
+    padding: 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.header h2 {
+    color: #2c3e50;
+    margin: 0;
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.selectInsumo {
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    min-width: 300px;
+    font-size: 1rem;
+}
+
+.btnPrimary {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btnPrimary:hover {
+    background-color: #2980b9;
+}
+
+.btnPrimary:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+/* --- Tabela e Rolagem --- */
+.tableContainer {
+    flex: 1;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden; /* Esconde o scroll do container externo */
+    display: flex;
+    flex-direction: column;
+}
+
+.tableWrapper {
+    overflow-y: auto; /* Scroll vertical APENAS na tabela */
+    flex: 1;
+    max-height: calc(100vh - 180px); /* Ajuste fino para caber na tela */
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px; /* Garante layout em telas pequenas */
+}
+
+.table th {
+    background-color: #f8f9fa;
+    color: #5f6c7b;
+    font-weight: 600;
+    padding: 15px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    border-bottom: 2px solid #e2e8f0;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #edf2f7;
+    color: #2d3748;
+    vertical-align: middle;
+}
+
+.table tr:hover {
+    background-color: #f7fafc;
+}
+
+/* --- Células de Amostra (Input Inline) --- */
+.amostraCell {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.inputAmostra {
+    width: 80px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.inputLetra {
+    width: 40px;
+    padding: 6px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.btnSaveMini {
+    background: #27ae60;
+    color: white;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btnSaveMini:hover { background: #219150; }
+
+.completedBadge {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: #e6fffa;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #b2f5ea;
+}
+
+.amostraValue {
+    font-weight: bold;
+    color: #234e52;
+    font-size: 1.1rem;
+}
+
+.userName {
+    font-size: 0.75rem;
+    color: #718096;
+}
+
+/* --- Status e Ações --- */
+.validadeVencida { color: #e53e3e; font-weight: bold; }
+.validadeOk { color: #38a169; }
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btnEdit {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    font-size: 1.2rem;
+}
+.btnEdit:hover { color: #3498db; }
+
+.btnDelete {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #718096;
+    font-size: 1.2rem;
+}
+.btnDelete:hover { color: #e53e3e; }
+
+/* --- Loading e Empty States --- */
+.loading, .empty {
+    text-align: center;
+    padding: 40px;
+    color: #a0aec0;
+    font-size: 1.1rem;
+}
+
+/* --- Modal Overlay --- */
+.modalOverlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90%;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.formGroup {
+    margin-bottom: 15px;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.formInput {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btnCancel {
+    background: #edf2f7;
+    color: #4a5568;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}

@@ -73,3 +73,9 @@ pub struct AtualizacaoLqIncertezaPayload {
     pub incerteza: Option<String>,
 }
 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[allow(non_snake_case)]
+pub struct ParametroGrupoNome {
+    pub grupo: String,
+}

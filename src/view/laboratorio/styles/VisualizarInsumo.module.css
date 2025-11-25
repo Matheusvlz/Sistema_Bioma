@@ -1,0 +1,304 @@
+/* src/view/laboratorio/styles/VisualizarInsumo.module.css */
+/* Baseado no estilo profissional fornecido */
+
+.container {
+  padding: 2rem;
+  font-family: 'Inter', sans-serif;
+  background-color: #f8fafc;
+  min-height: 100vh;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.header h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* --- Filtros --- */
+.filterContainer {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.searchInput,
+.selectInput {
+  flex: 1;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background: #f9fafb;
+}
+
+.searchInput:focus,
+.selectInput:focus {
+  outline: none;
+  border-color: #14a5b8;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(20, 165, 184, 0.15);
+}
+
+/* --- Tabela --- */
+.tableContainer {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden; /* Para o border-radius funcionar */
+  
+  /* UX de Scroll */
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+  color: #374151;
+  font-size: 0.9rem;
+}
+
+.table th {
+  background-color: #f9fafb;
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  /* UX de Scroll - Cabeçalho Fixo */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover {
+  background-color: #f8fafc;
+}
+
+/* --- Botões de Ação da Tabela --- */
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.buttonEdit,
+.buttonDelete {
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.buttonEdit svg,
+.buttonDelete svg {
+  width: 18px;
+  height: 18px;
+}
+
+.buttonEdit {
+  background-color: #e0f2f1;
+  color: #00796b;
+}
+.buttonEdit:hover {
+  background-color: #b2dfdb;
+}
+
+.buttonDelete {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+.buttonDelete:hover {
+  background-color: #fecaca;
+}
+.buttonDelete:disabled {
+  background-color: #f1f5f9;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* --- Estados da Tabela --- */
+.loadingCell,
+.empty {
+  text-align: center;
+  padding: 4rem;
+  color: #6b7280;
+  font-size: 1rem;
+}
+.loadingCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid rgba(20, 165, 184, 0.2);
+  border-top-color: #14a5b8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- Mensagens de Alerta --- */
+.error,
+.success {
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  border: 1px solid;
+}
+
+.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
+
+.success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+
+/* --- Estilos do Modal (Padrão V8.0) --- */
+.modalBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: #f8fafc;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 800px; /* Mesmo max-width do CSS de cadastro */
+  
+  /* UX de Scroll para o modal */
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+/* --- Modal de Confirmação (Delete) --- */
+.modalConfirm {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modalConfirm h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-top: 0;
+}
+
+.modalConfirm p {
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+/* --- Botões (Copiado do seu CSS base) --- */
+.buttonPrimary,
+.buttonSecondary,
+.buttonDeleteConfirm {
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #14a5b8 0%, #14a5b8 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(20, 165, 184, 0.2);
+}
+.buttonPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(20, 165, 184, 0.3);
+}
+
+.buttonSecondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+.buttonSecondary:hover:not(:disabled) {
+  background: #d1d5db;
+}
+
+.buttonDeleteConfirm {
+  background-color: #dc2626;
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+.buttonDeleteConfirm:hover:not(:disabled) {
+  background-color: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
+}
+
+.buttonPrimary:disabled,
+.buttonSecondary:disabled,
+.buttonDeleteConfirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

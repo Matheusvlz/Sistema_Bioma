@@ -43,7 +43,7 @@ pub async fn get_data_inicio(app_handle: AppHandle) -> Result<RespostaTela<AllRe
 
     let url = get_api_url(&app_handle);
     let full_url = format!("{}/get/inicio", url);
-    println!("[LOG] Enviando requisição para: {}", full_url);
+    //println!("[LOG] Enviando requisição para: {}", full_url);
 
     let client = Client::new();
     let response = client
@@ -53,7 +53,7 @@ pub async fn get_data_inicio(app_handle: AppHandle) -> Result<RespostaTela<AllRe
         .await
         .map_err(|e| format!("Erro ao enviar requisição: {}", e))?;
 
-    println!("[LOG] Status da resposta: {}", response.status());
+   // println!("[LOG] Status da resposta: {}", response.status());
 
     if !response.status().is_success() {
         let status_code = response.status();
@@ -66,12 +66,12 @@ pub async fn get_data_inicio(app_handle: AppHandle) -> Result<RespostaTela<AllRe
         .await
         .map_err(|e| format!("Erro ao ler corpo da resposta: {}", e))?;
 
-    println!("[LOG] Corpo da resposta:\n{}", body);
+   // println!("[LOG] Corpo da resposta:\n{}", body);
 
     let parsed: RespostaTela<AllResponseData> =
         serde_json::from_str(&body).map_err(|e| format!("Erro ao decodificar JSON: {}", e))?;
 
-    println!("[LOG] Resposta decodificada com sucesso: {:?}", parsed);
+ //   println!("[LOG] Resposta decodificada com sucesso: {:?}", parsed);
 
     Ok(parsed)
 }
@@ -80,11 +80,11 @@ pub async fn get_data_inicio(app_handle: AppHandle) -> Result<RespostaTela<AllRe
 #[command]
 pub async fn get_data_for_screen(app_handle: AppHandle, screen_name: String) -> Result<RespostaTela<AllResponseData>, String> {
     let usuario = obter_usuario().ok_or("Usuário não autenticado")?;
-    println!("[LOG] Usuário autenticado: {:?}", usuario);
+ //   println!("[LOG] Usuário autenticado: {:?}", usuario);
 
         let url = get_api_url(&app_handle);
     let full_url = format!("{}/get/tela", url);
-    println!("[LOG] Enviando requisição para: {}", full_url);
+  //  println!("[LOG] Enviando requisição para: {}", full_url);
 
     let client = Client::new();
     let response = client
@@ -94,7 +94,7 @@ pub async fn get_data_for_screen(app_handle: AppHandle, screen_name: String) -> 
         .await
         .map_err(|e| format!("Erro ao enviar requisição para /get/tela: {}", e))?;
 
-    println!("[LOG] Status da resposta de /get/tela: {}", response.status());
+   // println!("[LOG] Status da resposta de /get/tela: {}", response.status());
 
     if !response.status().is_success() {
         let status_code = response.status();
@@ -107,12 +107,13 @@ pub async fn get_data_for_screen(app_handle: AppHandle, screen_name: String) -> 
         .await
         .map_err(|e| format!("Erro ao ler corpo da resposta de /get/tela: {}", e))?;
 
-    println!("[LOG] Corpo da resposta de /get/tela:\n{}", body);
+  //  println!("[LOG] Corpo da resposta de /get/tela:\n{}", body);
 
     let parsed: RespostaTela<AllResponseData> =
         serde_json::from_str(&body).map_err(|e| format!("Erro ao decodificar JSON de /get/tela: {}", e))?;
 
-    println!("[LOG] Resposta decodificada com sucesso de /get/tela: {:?}", parsed);
+ //   println!("[LOG] Resposta decodificada com sucesso de /get/tela: {:?}", parsed);
 
     Ok(parsed)
 }
+

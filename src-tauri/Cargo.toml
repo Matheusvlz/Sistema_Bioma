@@ -75,4 +75,13 @@ tauri-plugin-shell = "2"
 
 
 
+# --- OTIMIZAÇÃO DE MEMÓRIA (Adicione no final do arquivo) ---
 
+# Configuração para desenvolvimento (dev)
+[profile.dev]
+incremental = true # Recompila apenas o que mudou
+
+# O Segredo: Desliga o peso das dependências externas
+[profile.dev.package."*"]
+debug = 0       # Remove símbolos de debug das bibliotecas (Salva muita RAM)
+opt-level = 3   # Otimiza as bibliotecas para rodarem mais leve

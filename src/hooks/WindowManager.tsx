@@ -785,7 +785,70 @@ static async openVisualizarColeta(memory_instance?: any, selectedClientId?: numb
     });
   }
 
+  static async openGerenciarInsumo(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'lab-gerenciar-insumo',
+      title: 'Gerenciar Insumos',
+      url: '/#/lab-gerenciar-insumo',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
 
+  static async openGerenciarInsumoRegistro(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'lab-gerenciar-insumo-registro',
+      title: 'Gerenciar Registro de Insumos',
+      url: '/#/lab-gerenciar-insumo-registro',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+
+  static async openGerenciarMateriaPrimaRegistro(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'lab-gerenciar-materia-prima-registro',
+      title: 'Gerir Registros de Matéria-Prima (Lotes)',
+      url: '/#/lab-gerenciar-materia-prima-registro',
+      // Usando o mesmo tamanho do Código-Mestre 'legislacao-parametro' e 'parametro-insumo'
+      width: 1600,
+      height: 900,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+ static async openGerenciarParametroInsumo(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'rel-parametro-insumo',
+      title: 'Gerir Parâmetro x Insumo',
+      url: '/#/rel-parametro-insumo',
+      // Um bom tamanho para um dashboard de 3 painéis
+      width: 1600, 
+      height: 900,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+
+
+  static async openGerenciarInsumoRegistro2(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'rel-insumo-registro-2',
+      title: 'Registro de Insumos e Amostras',
+      url: '/#/rel-insumo-registro-2',
+      width: 1400, // Tabela larga precisa de espaço
+      height: 900,
+      center: true,
+      allowMultiple: false,
+    });
+  }
+  
   static async openGerenciarMateriaPrima(): Promise<WebviewWindow> {
     return this.openWindow({
       label: 'cad-materia-prima',
@@ -972,6 +1035,20 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
       allowMultiple: true,
       maximized: true,
       data: amostra
+    });
+  }
+
+
+  static async openReagenteLimpezaRegistro(): Promise<WebviewWindow> {
+  return this.openWindow({
+      label: 'lab-reagente-limpeza-registro',
+      title: 'Registro de Reagente de Limpeza',
+      url: '/#/lab-reagente-limpeza-registro',
+      width: 1200, // Largura confortável para a tabela
+      height: 800,
+      resizable: true,
+      center: true,
+      allowMultiple: false,
     });
   }
 
