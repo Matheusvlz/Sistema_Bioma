@@ -677,6 +677,11 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
         WindowManager.openReagenteLimpezaRegistro();
         break;
 
+
+
+
+      //teste
+
         case 'Parâmetros':
         WindowManager.openGerenciarParametroInsumo();
         break;
