@@ -4,7 +4,6 @@ pub mod cadastrar_amostra_controller;
 pub mod visualizar_amostra;
 pub mod amostra_personalizavel_controller;
 pub mod buscar_coleta;
-pub mod materia_prima_controller;
 pub mod insumo_controller;
 pub mod insumo_registro_controller;
 pub mod parametro_insumo_controller;

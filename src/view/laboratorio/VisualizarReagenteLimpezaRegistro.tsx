@@ -97,7 +97,6 @@ const VisualizarReagenteLimpezaRegistro: React.FC = () => {
     // Carregar Dropdown (ITENS)
     const carregarOpcoes = useCallback(async () => {
         try {
-            // ✅ COMANDO ATUALIZADO
             const res: ApiResponse<ReagenteItem[]> = await invoke('listar_reagentes_itens_tauri');
             if (res.success && res.data) setReagentes(res.data);
         } catch (err: any) { setError(`Erro ao carregar reagentes: ${err}`); }
@@ -112,9 +111,9 @@ const VisualizarReagenteLimpezaRegistro: React.FC = () => {
         if (!reagenteSelecionado) return;
         setLoading(true);
         try {
-            // ✅ COMANDO ATUALIZADO (Argumento snake_case para garantir)
+            // ✅ CORREÇÃO FINAL: Enviamos 'reagenteId' (camelCase) para o Tauri traduzir para 'reagente_id' no Rust
             const res: ApiResponse<ReagenteRegistro[]> = await invoke('listar_registros_reagente_tauri', {
-                reagente_id: reagenteSelecionado 
+                reagenteId: reagenteSelecionado 
             });
             if (res.success && res.data) setRegistros(res.data);
             else setError(res.message || "Erro ao carregar registros.");
@@ -168,7 +167,6 @@ const VisualizarReagenteLimpezaRegistro: React.FC = () => {
                     data_preparo: form.data_preparo,
                     validade: form.validade
                 };
-                // ✅ COMANDO ATUALIZADO
                 const res: ApiResponse<void> = await invoke('editar_registro_reagente_tauri', { 
                     id: idEmEdicao, payload 
                 });
@@ -182,13 +180,12 @@ const VisualizarReagenteLimpezaRegistro: React.FC = () => {
             } else {
                 // CRIAÇÃO (POST)
                 const payload = {
-                    reagente_limpeza: reagenteSelecionado,
+                    reagente_limpeza: reagenteSelecionado, // Tauri vai converter para reagente_limpeza automaticamente
                     lote: form.lote,
                     fabricante: form.fabricante,
                     data_preparo: form.data_preparo,
                     validade: form.validade
                 };
-                // ✅ COMANDO ATUALIZADO
                 const res: ApiResponse<void> = await invoke('criar_registro_reagente_tauri', { payload });
                 
                 if (res.success) {
@@ -216,7 +213,6 @@ const VisualizarReagenteLimpezaRegistro: React.FC = () => {
                 data: dataHoje,
                 tipo_registro: tipo
             };
-            // ✅ COMANDO ATUALIZADO
             const res: ApiResponse<void> = await invoke('registrar_uso_reagente_tauri', {
                 id: idRegistro, payload
             });
