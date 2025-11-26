@@ -31,6 +31,16 @@ pub struct FiltrosAmostra {
     pub coletado_por: Option<String>,
 }
 
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RelatorioResponse {
+    // A chave do Spring/Kotlin é "pdfBase64"
+    #[serde(rename = "pdfBase64")] 
+    pub pdf_base64: Option<String>,
+    
+    // Mapeia para a chave "erro" retornada em caso de falha no Spring
+    pub erro: Option<String>, 
+}
 // Estrutura para o resultado da consulta
 #[derive(Deserialize, Serialize, Debug)]
 pub struct AmostraResult {
@@ -98,4 +108,44 @@ pub async fn buscar_amostras(
 
     serde_json::from_str::<AmostraResponse>(&body_text)
         .map_err(|e| format!("Erro ao parsear JSON: {}", e))
+}
+
+#[command]
+pub async fn gerar_relatorio_final(
+    id_grupo: u32,
+    data_entrada: String, // Espera formato YYYY-MM-DD
+) -> Result<RelatorioResponse, String> {
+    // URL do seu microserviço Java
+    // Nota: Se o microserviço estiver em outra máquina/container, ajuste o localhost
+    let url = format!(
+        "http://localhost:8083/api/relatorios/final/{}?data={}",
+        id_grupo, data_entrada
+    );
+
+    let client = reqwest::Client::new();
+
+    println!("Solicitando relatório: {}", url); // Log para debug
+
+    let res = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| format!("Erro ao conectar com microserviço de relatórios: {:?}", e))?;
+
+    let status = res.status();
+    
+    if !status.is_success() {
+        return Err(format!("Microserviço retornou erro: {}", status));
+    }
+
+    let body_text = res
+        .text()
+        .await
+        .map_err(|e| format!("Erro ao ler resposta do microserviço: {:?}", e))?;
+
+    // Parseia o retorno do Java: {"pdfBase64": "..."} ou {"erro": "..."}
+    let response: RelatorioResponse = serde_json::from_str(&body_text)
+        .map_err(|e| format!("Erro ao parsear JSON do relatório: {}", e))?;
+
+    Ok(response)
 }

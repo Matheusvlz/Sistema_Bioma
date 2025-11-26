@@ -1067,6 +1067,8 @@ static async openParametroResultado(dadosJanela?: any): Promise<WebviewWindow> {
   });
 }
 
+// gerar-relatorio-parcial
+
 static async openAmostrasBloqueadas(): Promise<WebviewWindow> {
   return this.openWindow({
     label: 'amostras-broqueadas',
@@ -1079,6 +1081,17 @@ static async openAmostrasBloqueadas(): Promise<WebviewWindow> {
   });
 }
 
+static async openGerarRelatorioParcial(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'gerar-relatorio-parcial',
+    title: 'Gerar Relatório',
+    url: '/#/gerar-relatorio-parcial',
+    width: 1200,
+    height: 800,
+    allowMultiple: false, 
+
+  });
+}
 
 
 

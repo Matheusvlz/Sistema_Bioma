@@ -691,6 +691,11 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
       case "Visualizar":
         WindowManager.openVisualizarAmostas();
         break;
+         case "Gerar":
+        WindowManager.openGerarRelatorioParcial();
+        break;
+
+        
       default:
         console.log(`Nenhuma ação definida para: ${itemName}`);
         break;
