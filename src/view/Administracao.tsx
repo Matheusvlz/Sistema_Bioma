@@ -261,7 +261,7 @@ export const Administracao = memo(() => {
             items: [
                 { name: "Relatorio Coletores", icon: TrendingUp, description: "Visualize e filtre coletores, cidades, e clientes" },
                 { name: "Logs de Coletores", icon: FileText, description: "Consultar registros de execução" },
-                { name: "Configurar Coletores", icon: Settings2, description: "Ajustar parâmetros e regras" }
+                { name: "Relatorio Financeiro", icon: Settings2, description: "Um power B.I geral com relação com o financeiro" }
             ]
         },
         {
@@ -368,6 +368,11 @@ export const Administracao = memo(() => {
 
             case 'Relatorio Coletores':
             WindowManager.openRelatorioAnalise(); // <-- Aponte para a nova função
+            break;
+
+            
+            case 'Relatorio Financeiro':
+            WindowManager.openBiFinanceiro();
             break;
 
             case 'Cadastrar Usuário': // Ou o nome exato que você usou no menu

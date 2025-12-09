@@ -677,6 +677,13 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
         WindowManager.openReagenteLimpezaRegistro();
         break;
 
+        case 'Parâmetros Ensaio':
+         WindowManager.openFilaTrabalho();
+        break;
+
+        case 'lab-mapa-resultado':
+        WindowManager.openMapaResultado();
+        break;
 
 
 

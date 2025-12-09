@@ -20,6 +20,7 @@ import { Planilha } from '../view/laboratorio/Planilha';
 import { CadastrarAmostra } from '../view/laboratorio/CadastrarAmostra';
 import { HistoricoUsuario } from '../view/geral/HistoricoUsuario';
 import { VisualizarAmostra } from '../view/laboratorio/VisualizarAmostra';
+import { AnaliseRevisada } from '../view/laboratorio/AnaliseRevisada';
 import VisualizarLabsTerceirizados from '../view/geral/VisualizarLabsTerceirizados';
 import VisualizarLegislacaoParametro from '../view/geral/VisualizarLegislacaoParametro';
 import CadastrarColeta from '../view/geral/CadastrarColeta';
@@ -68,6 +69,7 @@ import VisualizarPesquisas from '../view/qualidade/VisualizarPesquisas';
 import FormularioPesquisa from '../view/qualidade/FormularioPesquisa';
 import VisualizarResultadosPesquisa from '../view/qualidade/VisualizarResultadosPesquisa';
 import GerenciarEstoque from '../view/qualidade/GerenciarEstoque';
+import DashboardFinanceiroPage from '../view/administracao/DashboardFinanceiroPage';
 
 
 import VisualizarReagenteLimpezaRegistro from '../view/laboratorio/VisualizarReagenteLimpezaRegistro';
@@ -80,6 +82,9 @@ import VisualizarInsumoRegistro from '../view/laboratorio/VisualizarInsumoRegist
 import VisualizarInsumoRegistro2 from '../view/laboratorio/VisualizarInsumoRegistro2';
 
 import VisualizarMateriaPrimaRegistro from '../view/laboratorio/VisualizarMateriaPrimaRegistro';
+
+import VisualizarFilaTrabalho from '../view/laboratorio/VisualizarFilaTrabalho';
+import VisualizarMapaResultado from '../view/laboratorio/VisualizarMapaResultado';
 
 import GerenciarParametroInsumo from '../view/laboratorio/GerenciarParametroInsumo';
 
@@ -101,7 +106,6 @@ import ParametroResultadoView from '../view/laboratorio/parametro-resultado-view
 import AmostrasNaoIniciadasView from '../view/laboratorio/TabelaAmostraNaoIniciada';
 import TabelaAmostraIniciada from '../view/laboratorio/TabelaAmostraIniciada';
 import {AmostrasBloqueadas }from '../view/laboratorio/AmostrasBloqueadas';
-import {AnaliseRevisada }from '../view/laboratorio/AnaliseRevisada';
 
 // Define a new type for route configurations
 interface RouteConfig {
@@ -208,11 +212,19 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'selecionar-parametros': { component: <SelecionarParametrosView />, hasLayout: false },
   'cad-materia-prima': { component: <VisualizarMateriaPrima />, hasLayout: false },
 
+  'gerar-relatorio-parcial': { component: <AnaliseRevisada />, hasLayout: false},
+
+  // --- NOVAS ROTAS DO MÓDULO MAPA/FILA ---
+  'lab-fila-trabalho': { component: <VisualizarFilaTrabalho />, hasLayout: false },
+  'lab-mapa-resultado': { component: <VisualizarMapaResultado />, hasLayout: false },
+
   
   'selecionar-coletas': { component: <SelecionarColetasView />, hasLayout: false },
   'visualizar-amostras-cadastro': { component: <VisualizarAmostraView  />, hasLayout: false },
 
   'lab-gerenciar-insumo': { component: <VisualizarInsumo />, hasLayout: false },
+
+  'bi-financeiro': { component: <DashboardFinanceiroPage />, hasLayout: false },
 
 
 

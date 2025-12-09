@@ -143,6 +143,8 @@ use controller::geral::parametro_pop_controller::{
     listar_grupos_parametros_tauri
 };
 
+use controller::geral::bi_financeiro_controller::{listar_auditoria_financeira_tauri, obter_kpis_financeiros_tauri};
+
 use controller::geral::legislacao_parametro_controller::{
     listar_legislacao_parametro_tauri,
     cadastrar_legislacao_parametro_tauri,
@@ -214,6 +216,8 @@ use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_parametros_by_id
 };
 
+
+
 use controller::laboratorio::reagente_limpeza_registro_controller::{
     listar_reagentes_itens_tauri, criar_reagente_item_tauri, deletar_reagente_item_tauri,
     listar_registros_reagente_tauri, criar_registro_reagente_tauri, 
@@ -284,6 +288,15 @@ use controller::laboratorio::materia_prima_registro_controller::{
     editar_materia_prima_registro_tauri,
     deletar_materia_prima_registro_tauri,
     atualizar_obsoleto_materia_prima_registro_tauri
+};
+use controller::laboratorio::fila_trabalho_controller::{
+    listar_fila_trabalho_tauri,
+    iniciar_analises_tauri,
+};
+
+use controller::laboratorio::mapa_resultado_controller::{
+    carregar_mapa_tauri,
+    salvar_mapa_tauri,
 };
 use controller::admin::setor_controller::{
     listar_setores_command,
@@ -484,6 +497,8 @@ fn main() {
             criar_registro_reagente_tauri,
             editar_registro_reagente_tauri,
             registrar_uso_reagente_tauri,
+            listar_auditoria_financeira_tauri,
+            obter_kpis_financeiros_tauri,
             // ✅ CORREÇÃO: Usamos os comandos que já existiam, sem o sufixo.
             listar_tipos,
             cadastrar_tipo,
@@ -565,6 +580,10 @@ fn main() {
             editar_legislacao_parametro_tauri,
             deletar_legislacao_parametro_tauri,
             listar_legislacoes_ativas_tauri,
+            listar_fila_trabalho_tauri,
+            iniciar_analises_tauri,
+            carregar_mapa_tauri,
+            salvar_mapa_tauri,
 
             listar_pacotes_tauri,
             buscar_pacote_por_id_tauri,

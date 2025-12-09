@@ -16,3 +16,5 @@ pub mod materia_prima_controller;
 pub mod amostra_broqueada_controller;
 pub mod visualizar_relatorio_controller;
 pub mod reagente_limpeza_registro_controller;
+pub mod fila_trabalho_controller;
+pub mod mapa_resultado_controller;

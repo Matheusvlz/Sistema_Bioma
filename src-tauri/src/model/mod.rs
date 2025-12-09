@@ -50,3 +50,6 @@ pub mod parametro_insumo;
 pub mod materia_prima_registro;
 pub mod insumo_registro_2;
 pub mod reagente_limpeza_registro;
+pub mod fila_trabalho;
+pub mod mapa_resultado;
+pub mod financeiro_bi;
