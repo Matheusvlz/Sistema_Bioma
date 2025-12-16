@@ -143,7 +143,13 @@ use controller::geral::parametro_pop_controller::{
     listar_grupos_parametros_tauri
 };
 
-use controller::geral::bi_financeiro_controller::{listar_auditoria_financeira_tauri, obter_kpis_financeiros_tauri};
+use controller::geral::bi_financeiro_controller::{
+   // get_auditoria_financeira, 
+    //get_kpis_financeiros, 
+    //abrir_arquivo_rede_bioma
+    listar_auditoria_financeira_tauri,
+    abrir_arquivo_rede_bioma_tauri
+};
 
 use controller::geral::legislacao_parametro_controller::{
     listar_legislacao_parametro_tauri,
@@ -498,7 +504,10 @@ fn main() {
             editar_registro_reagente_tauri,
             registrar_uso_reagente_tauri,
             listar_auditoria_financeira_tauri,
-            obter_kpis_financeiros_tauri,
+            abrir_arquivo_rede_bioma_tauri,
+            //get_auditoria_financeira,
+           // get_kpis_financeiros,
+            //abrir_arquivo_rede_bioma,
             // ✅ CORREÇÃO: Usamos os comandos que já existiam, sem o sufixo.
             listar_tipos,
             cadastrar_tipo,

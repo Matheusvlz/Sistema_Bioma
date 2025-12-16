@@ -1,91 +1,40 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { 
-    FiDollarSign, FiAlertTriangle, FiCheckCircle, FiRefreshCw, 
-    FiServer, FiFilter, FiCalendar, FiUser, FiFileText 
+    FiSearch, FiRefreshCw, FiChevronRight, FiChevronDown, 
+    FiAlertTriangle, FiCheckCircle, FiClock, FiFileText, 
+    FiDollarSign, FiTruck, FiBox, FiAlertOctagon, FiUser 
 } from 'react-icons/fi';
-import styles from './css/DashboardFinanceiro.module.css'; 
+import styles from './css/DashboardFinanceiro.module.css';
+import { AuditoriaService } from './services/auditoriaService';
+import { OrcamentoAuditoria, FiltrosAuditoriaPayload } from './types/auditoria';
 
-// --- Tipagem ---
-interface FiltrosPayload {
-    dataInicio: string;
-    dataFim: string;
-    clienteId?: number;
-    apenasErros?: boolean;
-}
+const AuditoriaOrcamento: React.FC = () => {
+    // --- Estados ---
+    const [items, setItems] = useState<OrcamentoAuditoria[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+    const [totais, setTotais] = useState({ registros: 0, paginas: 1 });
 
-interface AuditoriaItem {
-    id_parcela: number;
-    numero_nf: string | null;
-    numero_parcela: number | null;
-    total_parcelas: number;
-    nome_cliente: string;
-    data_vencimento: string;
-    data_pagamento: string | null;
-    valor_previsto: string; 
-    valor_pago: string | null;
-    status_financeiro: 'Pago' | 'Aberto' | 'Atrasado';
-    orcamento_origem: string | null;
-    valor_orcado: string | null;
-    data_coleta: string | null;
-    coletor_nome: string | null;
-    dias_delay_faturamento: number | null;
-    rpa_status: 'SUCESSO' | 'FALHA' | null;
-    rpa_erro: string | null;
-}
-
-interface KpiData {
-    total_previsto: string;
-    total_recebido: string;
-    total_inadimplente: string;
-    qtd_falhas_robo: number;
-}
-
-interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    message?: string;
-}
-
-const DashboardFinanceiroPage: React.FC = () => {
-    // Datas Iniciais (1º dia do mês até hoje)
-    const hoje = new Date().toISOString().split('T')[0];
-    const primeiroDia = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-
-    const [filtros, setFiltros] = useState<FiltrosPayload>({
-        dataInicio: primeiroDia,
-        dataFim: hoje,
-        apenasErros: false
+    // --- Filtros Iniciais ---
+    const [filtros, setFiltros] = useState<FiltrosAuditoriaPayload>({
+        // Padrão: Últimos 90 dias
+        data_inicio: new Date(new Date().setDate(new Date().getDate() - 90)).toISOString().split('T')[0],
+        data_fim: new Date().toISOString().split('T')[0],
+        termo_busca: '',
+        apenas_problemas: false,
+        pagina: 1,
+        itens_por_pagina: 20
     });
 
-    const [items, setItems] = useState<AuditoriaItem[]>([]);
-    const [kpis, setKpis] = useState<KpiData | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    // --- Formatadores ---
-    const fmtMoeda = (val: string | number | null) => {
-        if (!val) return '-';
-        const num = typeof val === 'string' ? parseFloat(val) : val;
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num);
-    };
-
-    const fmtData = (dateStr: string | null) => {
-        if (!dateStr) return '-';
-        return new Date(dateStr).toLocaleDateString('pt-BR');
-    };
-
+    // --- Carregamento ---
     const carregarDados = useCallback(async () => {
         setLoading(true);
         try {
-            const resLista = await invoke<ApiResponse<AuditoriaItem[]>>('listar_auditoria_financeira_tauri', { filtros });
-            if (resLista.success && resLista.data) setItems(resLista.data);
-
-            const resKpi = await invoke<ApiResponse<KpiData>>('obter_kpis_financeiros_tauri', { filtros });
-            if (resKpi.success && resKpi.data) setKpis(resKpi.data);
-
+            const res = await AuditoriaService.listarAuditoria(filtros);
+            setItems(res.data);
+            setTotais({ registros: res.total_registros, paginas: res.total_paginas });
         } catch (error) {
-            console.error("Erro crítico:", error);
-            alert("Falha ao carregar dados financeiro.");
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -95,171 +44,315 @@ const DashboardFinanceiroPage: React.FC = () => {
         carregarDados();
     }, [carregarDados]);
 
+    // --- Formatadores ---
+    const fmtBRL = (val?: string) => {
+        if (!val) return 'R$ 0,00';
+        return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    };
+
+    const fmtData = (val?: string) => {
+        if (!val) return '-';
+        return val.split('-').reverse().join('/');
+    };
+
+    // NOVO: Formata Data e Hora (YYYY-MM-DD HH:MM:SS -> DD/MM/YYYY HH:MM)
+    const fmtDataHora = (val?: string) => {
+        if (!val) return '-';
+        const date = new Date(val);
+        // Se a data for inválida (ex: string vazia), retorna original
+        if (isNaN(date.getTime())) return val; 
+        return date.toLocaleString('pt-BR');
+    };
+
+    // --- Handlers ---
+    const toggleExpand = (id: number) => {
+        setExpandedId(expandedId === id ? null : id);
+    };
+
+    const handlePageChange = (novaPagina: number) => {
+        if (novaPagina >= 1 && novaPagina <= totais.paginas) {
+            setFiltros(prev => ({ ...prev, pagina: novaPagina }));
+        }
+    };
+
+    // Abre PDF na rede
+    const handleAbrirArquivo = (tipo: 'ORCAMENTO' | 'BOLETO', dados: any) => {
+        AuditoriaService.abrirArquivoRede(tipo, {
+            numero: dados.numero,
+            ano: dados.ano,
+            nf: dados.nf,
+            data_competencia: dados.data_competencia
+        });
+    };
+
     return (
         <div className={styles.container}>
-            {/* TOPO */}
-            <div className={styles.header}>
-                <div className={styles.titleSection}>
-                    <h1>Auditoria Financeira</h1>
-                    <p>Rastreabilidade completa: Orçamento ➔ Coleta ➔ Fatura ➔ Robô</p>
+            {/* === BARRA DE FILTROS === */}
+            <div className={styles.filterBar}>
+                <div className={styles.inputGroup}>
+                    <label>Início</label>
+                    <input 
+                        type="date" 
+                        className={styles.input}
+                        value={filtros.data_inicio}
+                        onChange={e => setFiltros({...filtros, data_inicio: e.target.value, pagina: 1})}
+                    />
+                </div>
+                <div className={styles.inputGroup}>
+                    <label>Fim</label>
+                    <input 
+                        type="date" 
+                        className={styles.input}
+                        value={filtros.data_fim}
+                        onChange={e => setFiltros({...filtros, data_fim: e.target.value, pagina: 1})}
+                    />
                 </div>
                 
-                <div className={styles.controls}>
-                    <div className={styles.dateGroup}>
-                        <FiCalendar color="#666"/>
-                        <input 
-                            type="date" className={styles.inputDate}
-                            value={filtros.dataInicio} 
-                            onChange={e => setFiltros({...filtros, dataInicio: e.target.value})} 
-                        />
-                        <span>a</span>
-                        <input 
-                            type="date" className={styles.inputDate}
-                            value={filtros.dataFim} 
-                            onChange={e => setFiltros({...filtros, dataFim: e.target.value})} 
-                        />
-                    </div>
-                    
-                    <button 
-                        className={`${styles.filterBtn} ${filtros.apenasErros ? styles.active : ''}`}
-                        onClick={() => setFiltros({...filtros, apenasErros: !filtros.apenasErros})}
-                        title="Filtra apenas boletos vencidos, com erro de valor ou falha de envio"
-                    >
-                        <FiFilter /> {filtros.apenasErros ? 'Focando Erros' : 'Todos'}
-                    </button>
-
-                    <button onClick={carregarDados} className={styles.refreshBtn} disabled={loading} title="Atualizar Dados">
-                        <FiRefreshCw className={loading ? styles.spin : ''} size={18} />
-                    </button>
+                <div className={styles.inputGroup}>
+                    <label>Busca Inteligente</label>
+                    <input 
+                        className={styles.searchInput} 
+                        placeholder="Nº Orçamento, Cliente, Cidade, NF..."
+                        value={filtros.termo_busca}
+                        onChange={e => setFiltros({...filtros, termo_busca: e.target.value, pagina: 1})}
+                        onKeyDown={e => e.key === 'Enter' && carregarDados()}
+                    />
                 </div>
+
+                <label className={styles.checkboxLabel}>
+                    <input 
+                        type="checkbox" 
+                        checked={filtros.apenas_problemas}
+                        onChange={e => setFiltros({...filtros, apenas_problemas: e.target.checked, pagina: 1})}
+                    />
+                    Somente Problemas
+                </label>
+
+                <button className={styles.btnPrimary} onClick={carregarDados} disabled={loading}>
+                    {loading ? <FiRefreshCw className="spin" /> : <FiSearch />}
+                    Buscar
+                </button>
             </div>
 
-            {/* KPIS */}
-            {kpis && (
-                <div className={styles.kpiContainer}>
-                    <div className={styles.kpiCard}>
-                        <div className={styles.icon} style={{ background: '#e0f2f1', color: '#00695c' }}><FiDollarSign /></div>
-                        <div>
-                            <h3>Recebido (Realizado)</h3>
-                            <div className={styles.valueGreen}>{fmtMoeda(kpis.total_recebido)}</div>
-                            <div className={styles.sub}>Meta: {fmtMoeda(kpis.total_previsto)}</div>
-                        </div>
-                    </div>
+            {/* === TABELA === */}
+            <div className={styles.tableWrapper}>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th style={{ width: '40px' }}></th>
+                            <th>Orçamento</th>
+                            <th>Data</th>
+                            <th>Cliente / Cidade</th>
+                            <th>Status Auditoria</th>
+                            <th>Valor Total</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {items.length === 0 && !loading && (
+                            <tr><td colSpan={7} style={{textAlign:'center', padding:'2rem'}}>Nenhum orçamento encontrado.</td></tr>
+                        )}
 
-                    <div className={`${styles.kpiCard} ${parseFloat(kpis.total_inadimplente) > 0 ? styles.alerta : ''}`}>
-                        <div className={styles.icon} style={{ background: '#ffebee', color: '#c62828' }}><FiAlertTriangle /></div>
-                        <div>
-                            <h3>Inadimplência</h3>
-                            <div className={styles.valueRed}>{fmtMoeda(kpis.total_inadimplente)}</div>
-                            <div className={styles.sub}>Vencidos no período</div>
-                        </div>
-                    </div>
-
-                    <div className={styles.kpiCard}>
-                        <div className={styles.icon} style={{ background: '#fff3e0', color: '#ef6c00' }}><FiServer /></div>
-                        <div>
-                            <h3>Falhas Robô</h3>
-                            <div className={kpis.qtd_falhas_robo > 0 ? styles.valueRed : styles.valueNormal}>
-                                {kpis.qtd_falhas_robo} Falhas
-                            </div>
-                            <div className={styles.sub}>Envios não realizados</div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* TABELA */}
-            <div className={styles.tableBox}>
-                <div className={styles.tableWrapper}>
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Vencimento</th>
-                                <th>Cliente / Origem</th>
-                                <th>NF / Parc.</th>
-                                <th>Valores (A vs B)</th>
-                                <th>Operacional (Coleta)</th>
-                                <th>Automação (RPA)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.length === 0 && !loading && (
-                                <tr><td colSpan={7} className={styles.empty}>Nenhum registro encontrado para o período.</td></tr>
-                            )}
-                            {items.map(item => {
-                                const isAtrasado = item.status_financeiro === 'Atrasado';
-                                const valPrevisto = parseFloat(item.valor_previsto);
-                                const valPago = item.valor_pago ? parseFloat(item.valor_pago) : 0;
-                                const diferenca = item.valor_pago ? valPago - valPrevisto : 0;
-                                const temDiferenca = Math.abs(diferenca) > 0.05; // Margem de centavos
-
-                                return (
-                                    <tr key={item.id_parcela} className={isAtrasado ? styles.rowLate : ''}>
-                                        <td>
-                                            <span className={`${styles.badge} ${styles[item.status_financeiro]}`}>
-                                                {item.status_financeiro}
+                        {items.map(orc => (
+                            <React.Fragment key={orc.id}>
+                                {/* LINHA MESTRE */}
+                                <tr 
+                                    className={`${styles.masterRow} ${expandedId === orc.id ? styles.active : ''}`}
+                                    onClick={() => toggleExpand(orc.id)}
+                                >
+                                    <td style={{textAlign: 'center'}}>
+                                        {expandedId === orc.id ? <FiChevronDown /> : <FiChevronRight className={styles.iconExpand} />}
+                                    </td>
+                                    <td>
+                                        <strong>{orc.numero_completo}</strong>
+                                        {orc.status_geral === "Cancelado" && <span style={{marginLeft:'5px', color:'red', fontSize:'0.8rem'}}>(Cancelado)</span>}
+                                    </td>
+                                    <td>{fmtData(orc.data_criacao)}</td>
+                                    <td>
+                                        <div style={{fontWeight:500}}>{orc.nome_cliente}</div>
+                                        <div style={{fontSize:'0.8rem', color:'#666'}}>{orc.cidade_cliente || 'Cidade n/d'}</div>
+                                    </td>
+                                    <td>
+                                        {/* Status Badge */}
+                                        {orc.status_geral === "Problema" || orc.alertas.length > 0 ? (
+                                            <span className={`${styles.badge} ${styles.badgeDanger}`}>
+                                                <FiAlertTriangle /> Atenção
                                             </span>
-                                        </td>
-                                        <td>
-                                            <strong>{fmtData(item.data_vencimento)}</strong>
-                                            {item.data_pagamento && <div className={styles.paidDate}>Pago: {fmtData(item.data_pagamento)}</div>}
-                                        </td>
-                                        <td>
-                                            <div className={styles.client}><FiUser size={10} style={{marginRight:4}}/> {item.nome_cliente}</div>
-                                            <div className={styles.orcamento}>
-                                                <FiFileText size={10} style={{marginRight:4}}/> 
-                                                {item.orcamento_origem ? `Orç: ${item.orcamento_origem}` : 'Orçamento n/ enc.'}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div>NF: {item.numero_nf || 'S/N'}</div>
-                                            <small style={{color:'#666'}}>Parc. {item.numero_parcela}/{item.total_parcelas}</small>
-                                        </td>
-                                        <td>
-                                            <div className={styles.valor} title="Valor do Boleto">{fmtMoeda(valPrevisto)}</div>
-                                            {item.valor_pago && (
-                                                <div className={styles.valOk} title="Valor Pago no Banco">
-                                                    Pg: {fmtMoeda(valPago)}
+                                        ) : orc.status_geral === "Concluído" ? (
+                                            <span className={`${styles.badge} ${styles.badgeOk}`}>
+                                                <FiCheckCircle /> Concluído
+                                            </span>
+                                        ) : orc.status_geral === "Cancelado" ? (
+                                            <span className={`${styles.badge} ${styles.badgeDanger}`}>
+                                                Cancelado
+                                            </span>
+                                        ) : (
+                                            <span className={`${styles.badge} ${styles.badgeInfo}`}>
+                                                <FiClock /> Em Aberto
+                                            </span>
+                                        )}
+                                    </td>
+                                    <td style={{fontWeight: 'bold', color: '#111827'}}>
+                                        {fmtBRL(orc.valor_final)}
+                                    </td>
+                                    <td>
+                                        <button 
+                                            className={styles.btnIcon}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAbrirArquivo('ORCAMENTO', { numero: orc.numero, ano: orc.ano });
+                                            }}
+                                            title="Abrir Orçamento PDF"
+                                        >
+                                            <FiFileText /> PDF
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                {/* LINHA DETALHE (EXPANDIDA) */}
+                                {expandedId === orc.id && (
+                                    <tr className={styles.detailsRow}>
+                                        <td colSpan={7}>
+                                            <div className={styles.detailsContainer}>
+                                                
+                                                {/* 1. ESCOPO */}
+                                                <div className={styles.detailSection}>
+                                                    <h4><FiBox /> Escopo Contratado</h4>
+                                                    <ul className={styles.detailList}>
+                                                        {orc.itens.map((item, idx) => (
+                                                            <li key={idx}>
+                                                                <span>{parseFloat(item.quantidade)}x {item.nome}</span>
+                                                                <strong>{fmtBRL(item.preco_total)}</strong>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                    <div className={styles.totalRow}>
+                                                        <div>Itens: {fmtBRL(orc.valor_total_itens)}</div>
+                                                        <div style={{color:'#666', fontSize:'0.75rem'}}>
+                                                            Frete: {fmtBRL(orc.valor_frete)} | Desc: <span style={{color:'red'}}>-{fmtBRL(orc.valor_desconto)}</span>
+                                                        </div>
+                                                        <div style={{marginTop:'5px', fontSize:'1rem'}}>Total: {fmtBRL(orc.valor_final)}</div>
+                                                    </div>
                                                 </div>
-                                            )}
-                                            {temDiferenca && item.valor_pago && (
-                                                <div className={styles.valDiff} title="Diferença (Juros ou Desconto)">
-                                                    {diferenca > 0 ? '+' : ''}{fmtMoeda(diferenca)}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td>
-                                            {item.data_coleta ? (
-                                                <div className={styles.coletaBox}>
-                                                    <div className={styles.coletaDate}><FiCheckCircle color="#059669"/> {fmtData(item.data_coleta)}</div>
-                                                    <small>{item.coletor_nome}</small>
-                                                    {(item.dias_delay_faturamento || 0) > 15 && (
-                                                        <span className={styles.tagDelay} title="Tempo entre Coleta e Emissão da NF">
-                                                            Delay {item.dias_delay_faturamento}d
-                                                        </span>
+
+                                                {/* 2. OPERACIONAL (Agora com Coletor e Data) */}
+                                                <div className={styles.detailSection}>
+                                                    <h4><FiTruck /> Operacional (Coletas)</h4>
+                                                    {orc.ciclo_operacional.length === 0 ? (
+                                                        <div className={styles.emptyState}>Nenhuma operação registrada.</div>
+                                                    ) : (
+                                                        orc.ciclo_operacional.map((op, idx) => (
+                                                            <div key={idx} className={op.status === 'Coletado' ? styles.cardOp : styles.cardOpPending}>
+                                                                <div style={{display:'flex', justifyContent:'space-between', marginBottom: '4px'}}>
+                                                                    <strong>{op.status}</strong>
+                                                                    {/* Usa data_hora_registro se tiver, senão data_coleta */}
+                                                                    <span style={{fontSize:'0.8rem'}}>
+                                                                        {fmtDataHora(op.data_hora_registro) !== '-' ? fmtDataHora(op.data_hora_registro) : fmtData(op.data_coleta)}
+                                                                    </span>
+                                                                </div>
+                                                                
+                                                                {/* EXIBIÇÃO DO COLETOR (Se disponível) */}
+                                                                {op.status === 'Coletado' && op.nome_coletor && (
+                                                                    <div style={{fontSize:'0.8rem', color:'#4b5563', display:'flex', alignItems:'center', gap:'4px'}}>
+                                                                        <FiUser size={12}/> {op.nome_coletor}
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                {op.numero_coleta && <div style={{fontSize:'0.8rem', marginTop:'4px'}}>Coleta: <strong>#{op.numero_coleta}</strong></div>}
+                                                            </div>
+                                                        ))
                                                     )}
                                                 </div>
-                                            ) : <span className={styles.dash}>-</span>}
-                                        </td>
-                                        <td>
-                                            {item.rpa_status === 'SUCESSO' && <span className={styles.roboSuccess}>Enviado</span>}
-                                            {item.rpa_status === 'FALHA' && (
-                                                <div className={styles.roboFail} title={item.rpa_erro || 'Erro desconhecido'}>
-                                                    Falha Envio
+
+                                                {/* 3. FINANCEIRO */}
+                                                <div className={styles.detailSection}>
+                                                    <h4><FiDollarSign /> Financeiro (Faturas)</h4>
+                                                    {orc.ciclo_financeiro.length === 0 ? (
+                                                        <div className={styles.emptyState}>Nenhum faturamento encontrado (6 meses).</div>
+                                                    ) : (
+                                                        <table className={styles.miniTable}>
+                                                            <thead><tr><th>NF</th><th>Parc</th><th>Venc</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+                                                            <tbody>
+                                                                {orc.ciclo_financeiro.map((fin, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td>{fin.numero_nf || 'S/N'}</td>
+                                                                        <td>{fin.numero_parcela}</td>
+                                                                        <td>{fmtData(fin.data_vencimento)}</td>
+                                                                        <td>{fmtBRL(fin.valor_parcela)}</td>
+                                                                        <td className={
+                                                                            fin.status === 'Pago' ? styles.textGreen : 
+                                                                            fin.status === 'Atrasado' ? styles.textRed : styles.textOrange
+                                                                        }>
+                                                                            {fin.status}
+                                                                        </td>
+                                                                        <td>
+                                                                            <button 
+                                                                                className={styles.btnIcon} 
+                                                                                title="Abrir Boleto/NF na Rede"
+                                                                                onClick={() => handleAbrirArquivo('BOLETO', { 
+                                                                                    nf: fin.numero_nf,
+                                                                                    data_competencia: fin.data_emissao || fin.data_vencimento
+                                                                                })}
+                                                                            >
+                                                                                <FiFileText size={12}/>
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    )}
+                                                    
+                                                    {/* Auditoria IA */}
+                                                    {orc.alertas.length > 0 && (
+                                                        <div className={styles.alertBox}>
+                                                            <div style={{fontWeight:'bold', marginBottom:'5px', display:'flex', alignItems:'center', gap:'5px'}}>
+                                                                <FiAlertOctagon /> Diagnóstico do Auditor:
+                                                            </div>
+                                                            <ul style={{paddingLeft:'20px', margin:0}}>
+                                                                {orc.alertas.map((alerta, i) => (
+                                                                    <li key={i}>{alerta}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            )}
-                                            {!item.rpa_status && <span className={styles.dash}>-</span>}
+
+                                            </div>
                                         </td>
                                     </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* === RODAPÉ === */}
+            <div className={styles.footer}>
+                <div>
+                    Mostrando {items.length} de {totais.registros} registros.
+                </div>
+                <div style={{display:'flex', gap:'10px'}}>
+                    <button 
+                        className={styles.btnIcon} 
+                        disabled={filtros.pagina <= 1}
+                        onClick={() => handlePageChange(filtros.pagina - 1)}
+                    >
+                        Anterior
+                    </button>
+                    <span>Página {filtros.pagina} de {totais.paginas}</span>
+                    <button 
+                        className={styles.btnIcon} 
+                        disabled={filtros.pagina >= totais.paginas}
+                        onClick={() => handlePageChange(filtros.pagina + 1)}
+                    >
+                        Próxima
+                    </button>
                 </div>
             </div>
         </div>
     );
 };
 
-export default DashboardFinanceiroPage;
+export default AuditoriaOrcamento; 

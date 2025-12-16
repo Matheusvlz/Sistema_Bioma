@@ -1,74 +1,158 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use bigdecimal::BigDecimal;
-use serde_with::{serde_as, DisplayFromStr}; // Importante para lidar com os números que vêm como String
+use serde_with::{serde_as, DisplayFromStr};
 
-// --- Payload de Entrada (O que o React manda para filtrar) ---
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct FiltrosDashboardPayload {
-    pub data_inicio: Option<String>,
-    pub data_fim: Option<String>,
-    pub cliente_id: Option<u32>,
-    pub apenas_erros: Option<bool>,
-}
+// =====================================================================
+// ESTRUTURAS DE LEITURA (Vêm da API -> Tauri)
+// =====================================================================
 
-// --- Resposta da Tabela (Espelho do JSON da API) ---
 #[serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 #[allow(non_snake_case)]
-pub struct AuditoriaDetalheResponse {
-    pub id_parcela: u32,
-    pub id_fatura: u32,
-    pub numero_nf: Option<String>,
-    pub numero_parcela: Option<u8>, // Option<u8> conforme corrigimos na API
-    pub total_parcelas: i64,
+pub struct OrcamentoAuditoriaDetalhado {
+    // --- Cabeçalho ---
+    pub id: u32,
+    pub numero: u32,
+    pub versao: String,
+    pub ano: String,
+    pub numero_completo: String,
+    pub data_criacao: String,
     
+    // --- Cliente ---
     pub id_cliente: u32,
     pub nome_cliente: String,
+    pub cidade_cliente: Option<String>,
 
-    // Datas vêm como String "YYYY-MM-DD" do JSON, o serde trata isso nativamente para String
-    pub data_vencimento: String, 
-    pub data_pagamento: Option<String>,
-
-    // Valores vêm como String "488.33". Usamos DisplayFromStr para o Rust entender como BigDecimal
+    // --- Valores ---
     #[serde_as(as = "Option<DisplayFromStr>")]
-    pub valor_previsto: Option<BigDecimal>,
+    pub valor_total_itens: Option<BigDecimal>,
     
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub valor_frete: Option<BigDecimal>,
+    
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub valor_desconto: Option<BigDecimal>,
+    
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub valor_final: Option<BigDecimal>,
+
+    // --- Listas Aninhadas ---
+    pub itens: Vec<ItemOrcamentoDetalhado>,
+    pub ciclo_operacional: Vec<CicloOperacionalDetalhado>, // <--- O Ponto Chave
+    pub ciclo_financeiro: Vec<CicloFinanceiroDetalhado>,
+
+    // --- Status ---
+    pub status_geral: String,
+    pub alertas: Vec<String>,
+}
+
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct ItemOrcamentoDetalhado {
+    pub nome: String,
+    #[serde_as(as = "DisplayFromStr")]
+    pub quantidade: BigDecimal,
+    #[serde_as(as = "DisplayFromStr")]
+    pub preco_total: BigDecimal,
+}
+
+// --- ATENÇÃO: AQUI ESTAVA O PROBLEMA ANTES ---
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct CicloOperacionalDetalhado {
+    pub id_agendamento: Option<u32>,
+    pub data_agendada: Option<String>,
+    
+    pub id_coleta: Option<u32>,
+    pub numero_coleta: Option<String>,
+    pub data_coleta: Option<String>, // Data simples (YYYY-MM-DD)
+    
+    // --- NOVOS CAMPOS OBRIGATÓRIOS ---
+    // Agora o Tauri aceita ler isso do JSON da API
+    pub data_hora_registro: Option<String>, // Timestamp Completo
+    pub nome_coletor: Option<String>,       // Nome do Usuário
+    
+    pub status: String,
+}
+
+#[serde_as]
+#[derive(Debug, Serialize, Deserialize)]
+#[allow(non_snake_case)]
+pub struct CicloFinanceiroDetalhado {
+    pub id_fatura: u32,
+    pub numero_nf: Option<String>,
+    pub data_emissao: Option<String>,
+    
+    pub numero_parcela: u32,
+    pub data_vencimento: Option<String>,
+    pub data_pagamento: Option<String>,
+    
+    #[serde_as(as = "Option<DisplayFromStr>")]
+    pub valor_parcela: Option<BigDecimal>,
     #[serde_as(as = "Option<DisplayFromStr>")]
     pub valor_pago: Option<BigDecimal>,
     
-    pub status_financeiro: String,
-
-    // Comercial
-    pub orcamento_origem: Option<String>,
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub valor_orcado: Option<BigDecimal>,
-    pub responsavel_frete: Option<String>,
-    pub responsavel_coleta: Option<String>,
-
-    // Operacional
-    pub data_coleta: Option<String>,
-    pub coletor_nome: Option<String>,
-    pub dias_delay_faturamento: Option<i64>,
-
-    // RPA
-    pub rpa_status: Option<String>,
-    pub rpa_data_envio: Option<String>,
-    pub rpa_erro: Option<String>,
+    pub status: String,
 }
 
-// --- Resposta dos KPIs ---
-#[serde_as]
+// --- Resposta Paginada ---
 #[derive(Debug, Serialize, Deserialize)]
-pub struct KpiResponse {
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub total_previsto: Option<BigDecimal>,
+#[allow(non_snake_case)]
+pub struct PaginatedAuditoriaResponse {
+    pub data: Vec<OrcamentoAuditoriaDetalhado>,
+    pub total_registros: i64,
+    pub total_paginas: i64,
+    pub pagina_atual: i64,
+}
+
+// =====================================================================
+// PAYLOADS (Front -> Tauri -> API)
+// =====================================================================
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct FiltrosAuditoriaPayload {
+    pub data_inicio: Option<String>,
+    pub data_fim: Option<String>,
+    pub termo_busca: Option<String>,
+    pub apenas_problemas: Option<bool>,
     
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub total_recebido: Option<BigDecimal>,
-    
-    #[serde_as(as = "Option<DisplayFromStr>")]
-    pub total_inadimplente: Option<BigDecimal>,
-    
-    pub qtd_falhas_robo: i64,
+    pub pagina: Option<i64>,
+    pub itens_por_pagina: Option<i64>,
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(non_snake_case)]
+pub struct ArquivoRedePayload {
+    pub tipo: String, // "ORCAMENTO", "BOLETO"
+    pub numero: Option<u32>,
+    pub ano: Option<String>,
+    pub nf: Option<String>,
+    pub data_competencia: Option<String>, 
+}
+
+// =====================================================================
+// PAYLOADS API (Saída para API)
+// =====================================================================
+
+#[derive(Debug, Serialize)]
+#[allow(non_snake_case)]
+pub struct FiltrosAuditoriaApiPayload {
+    pub data_inicio: Option<String>,
+    pub data_fim: Option<String>,
+    pub termo_busca: Option<String>,
+    pub apenas_problemas: Option<bool>,
+    pub pagina: Option<i64>,
+    pub itens_por_pagina: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+#[allow(non_snake_case)]
+pub struct ArquivoRedeApiPayload {
+    pub tipo: String,
+    pub numero: Option<u32>,
+    pub ano: Option<String>,
+    pub nf: Option<String>,
+    pub data_competencia: Option<String>,
 }
