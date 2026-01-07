@@ -100,8 +100,10 @@ import ParametroMapaView from '../view/laboratorio/ParametroMapaView';
 import ParametroResultadoView from '../view/laboratorio/parametro-resultado-view';
 import AmostrasNaoIniciadasView from '../view/laboratorio/TabelaAmostraNaoIniciada';
 import TabelaAmostraIniciada from '../view/laboratorio/TabelaAmostraIniciada';
+import TabelaAmostraFinalizada from '../view/laboratorio/TabelaAmostraFinalizada';
 import {AmostrasBloqueadas }from '../view/laboratorio/AmostrasBloqueadas';
 import {AnaliseRevisada }from '../view/laboratorio/AnaliseRevisada';
+import ImprimirView from '../view/laboratorio/ImprimirView';
 
 // Define a new type for route configurations
 interface RouteConfig {
@@ -249,10 +251,14 @@ export const authenticatedRoutes: Record<string, RouteConfig> = {
   'parametro-resultado': { component: <ParametroResultadoView />, hasLayout: false},
   'tabela-nao-iniciada': { component: <AmostrasNaoIniciadasView />, hasLayout:false},
   'tabela-iniciada': { component: <TabelaAmostraIniciada />, hasLayout:false},
+  'tabela-finalizada': { component: <TabelaAmostraFinalizada />, hasLayout: false},
   'amostras-broqueadas': { component: <AmostrasBloqueadas />, hasLayout: false },
   'amostras-mapa': { component: <ParametroMapaView />, hasLayout: false },
 
-  'gerar-relatorio-parcial': { component: <AnaliseRevisada />, hasLayout: false}
+  'gerar-relatorio-parcial': { component: <AnaliseRevisada />, hasLayout: false},
+
+   'enviar-relatorio-portal': { component: <ImprimirView />, hasLayout: false},
+  
 };
 
 export type AuthenticatedRoute = keyof typeof authenticatedRoutes;

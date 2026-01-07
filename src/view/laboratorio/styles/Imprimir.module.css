@@ -1,0 +1,968 @@
+/* styles/Imprimir.module.css - Design Moderno Azul & Branco */
+
+.container {
+  padding: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+  min-height: 100vh;
+}
+
+/* ==================== NOTIFICAÇÕES ==================== */
+
+.notification {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  z-index: 2000;
+  animation: slideIn 0.3s ease;
+  min-width: 320px;
+}
+
+.notification.success {
+  background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
+  color: white;
+}
+
+.notification.error {
+  background: linear-gradient(135deg, #c62828 0%, #e53935 100%);
+  color: white;
+}
+
+.notification button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  display: flex;
+  align-items: center;
+  transition: background 0.2s;
+}
+
+.notification button:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ==================== HEADER ==================== */
+
+.header {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 32px;
+  box-shadow: 0 8px 32px rgba(25, 118, 210, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.headerTitle svg {
+  color: white;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2));
+}
+
+.headerTitle h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.headerTitle p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 6px 0 0 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ==================== BOTÕES ==================== */
+
+.buttonRefresh,
+.buttonPrimary,
+.buttonView,
+.buttonSearch,
+.buttonClear,
+.buttonDownload,
+.paginationButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  outline: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.buttonRefresh::before,
+.buttonPrimary::before,
+.buttonSearch::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.buttonRefresh:hover::before,
+.buttonPrimary:hover::before,
+.buttonSearch:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.buttonRefresh {
+  background: white;
+  color: #1976d2;
+}
+
+.buttonRefresh:hover:not(:disabled) {
+  background: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+.buttonPrimary {
+  background: linear-gradient(135deg, #fff 0%, #f0f4f8 100%);
+  color: #1976d2;
+}
+
+.buttonPrimary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.4);
+}
+
+.buttonSearch {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+}
+
+.buttonSearch:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(25, 118, 210, 0.4);
+}
+
+.buttonClear {
+  background: #f5f5f5;
+  color: #666;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.buttonClear:hover:not(:disabled) {
+  background: #e0e0e0;
+  border-color: #bdbdbd;
+}
+
+.buttonView {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  padding: 10px;
+}
+
+.buttonView:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  transform: scale(1.1);
+}
+
+.buttonDownload {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  padding: 10px 16px;
+}
+
+.buttonDownload:hover {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+}
+
+.buttonRefresh:disabled,
+.buttonPrimary:disabled,
+.buttonView:disabled,
+.buttonSearch:disabled,
+.buttonClear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ==================== FILTROS ==================== */
+
+.filterSection {
+  background: white;
+  border-radius: 16px;
+  padding: 28px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.08);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+}
+
+.filterRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.filterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.filterGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565c0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filterGroup select,
+.dateInput {
+  padding: 12px 16px;
+  border: 2px solid #e3f2fd;
+  border-radius: 10px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #333;
+  font-weight: 500;
+}
+
+.filterGroup select:hover,
+.dateInput:hover {
+  border-color: #90caf9;
+}
+
+.filterGroup select:focus,
+.dateInput:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+}
+
+/* ==================== BUSCA DE CLIENTE ==================== */
+
+.searchContainer {
+  position: relative;
+}
+
+.searchInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.searchInputIcon {
+  position: absolute;
+  left: 14px;
+  color: #1976d2;
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 12px 40px 12px 40px;
+  border: 2px solid #e3f2fd;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.searchInput:hover {
+  border-color: #90caf9;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #1976d2;
+  box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.1);
+}
+
+.clearButton {
+  position: absolute;
+  right: 10px;
+  background: #e3f2fd;
+  border: none;
+  padding: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #1565c0;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.clearButton:hover {
+  background: #1976d2;
+  color: white;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e3f2fd;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(25, 118, 210, 0.15);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.dropdownItem {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdownItem:hover {
+  background: linear-gradient(90deg, #e3f2fd 0%, transparent 100%);
+  color: #1565c0;
+  font-weight: 600;
+}
+
+/* ==================== FILTER INFO ==================== */
+
+.filterActions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.filterInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #666;
+  padding-top: 20px;
+  border-top: 2px solid #e3f2fd;
+  flex-wrap: wrap;
+}
+
+.filterInfo svg {
+  color: #1976d2;
+}
+
+.filterBadge,
+.filterBadgeSelected {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.filterBadge {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+}
+
+.filterBadgeSelected {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+}
+
+/* ==================== TABELA ==================== */
+
+.tableSection {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.08);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+  /* Removemos o min-height fixo aqui para deixar o wrapper controlar a altura */
+  display: flex;
+  flex-direction: column;
+}
+
+.tableWrapper {
+  /* Habilita scroll tanto vertical quanto horizontal */
+  overflow: auto;
+  
+  /* Define uma altura máxima. Se passar disso, cria o scroll */
+  max-height: 60vh; 
+  width: 100%;
+  
+  /* Garante que a barra de rolagem fique 'dentro' do container arredondado */
+  border-radius: 0 0 16px 16px; 
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate; /* Necessário para o sticky header funcionar bem com bordas */
+  border-spacing: 0;
+}.table thead {
+  /* O background movemos para o TH para garantir que cubra as linhas ao rolar */
+  z-index: 10;
+}
+
+.table th {
+  padding: 18px 20px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 3px solid #0d47a1;
+  color: white;
+  
+  /* PROPRIEDADES PARA O CABEÇALHO FIXO (STICKY) */
+  position: sticky;
+  top: 0;
+  z-index: 20; /* Fica acima das linhas */
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+}
+
+.thCheckbox,
+.thActions {
+  text-align: center;
+  width: 60px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #e3f2fd;
+  transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+  background: linear-gradient(90deg, #e3f2fd 0%, transparent 100%);
+  /* Removemos o transform scale no hover pois quebra o layout sticky da tabela */
+  /* transform: scale(1.01); */ 
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.1);
+}
+
+.rowSelected {
+  background: linear-gradient(90deg, #bbdefb 0%, #e3f2fd 100%) !important;
+}
+
+.table td {
+  padding: 18px 20px;
+  font-size: 14px;
+  color: #333;
+  border-bottom: 1px solid #e3f2fd; /* Adicionado para manter a linha visível */
+}
+
+/* O resto permanece igual... */
+.tdCheckbox,
+.tdActions {
+  text-align: center;
+}
+
+.tdCheckbox input[type="checkbox"],
+.thCheckbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #1976d2;
+}
+.rowSelected {
+  background: linear-gradient(90deg, #bbdefb 0%, #e3f2fd 100%) !important;
+}
+
+.table td {
+  padding: 18px 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+.tdCheckbox,
+.tdActions {
+  text-align: center;
+}
+
+.tdCheckbox input[type="checkbox"],
+.thCheckbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #1976d2;
+}
+
+/* ==================== CÉLULAS ==================== */
+
+.cellCliente {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.clienteName {
+  font-weight: 600;
+  color: #1565c0;
+  font-size: 15px;
+}
+
+.amostraInfo {
+  font-size: 12px;
+  color: #666;
+  background: #e3f2fd;
+  padding: 4px 10px;
+  border-radius: 12px;
+  display: inline-block;
+  width: fit-content;
+}
+
+.cellRelatorio {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.relatorioNumero {
+  font-weight: 600;
+  color: #1976d2;
+  font-size: 15px;
+}
+
+.protocolo {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+.cellPeriodo {
+  font-size: 13px;
+  color: #555;
+  line-height: 1.8;
+}
+
+.cellPeriodo div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ==================== BADGES ==================== */
+
+.badgeGroup {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badgeSuccess,
+.badgeInfo,
+.badgeWarning,
+.badgeDefault {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badgeSuccess {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.badgeInfo {
+  background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+}
+
+.badgeWarning {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.badgeDefault {
+  background: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+/* ==================== STATUS PROGRESSO ==================== */
+
+.statusProgresso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.statusAguardando {
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  color: #666;
+}
+
+.statusProcessando {
+  background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  color: #0d47a1;
+  box-shadow: 0 2px 8px rgba(25, 118, 210, 0.3);
+}
+
+.statusSucesso {
+  background: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.statusErro {
+  background: linear-gradient(135deg, #e57373 0%, #ef5350 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
+}
+
+/* ==================== PAGINAÇÃO ==================== */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  margin-top: 24px;
+  box-shadow: 0 4px 20px rgba(25, 118, 210, 0.08);
+  border: 1px solid rgba(25, 118, 210, 0.1);
+}
+
+.paginationButton {
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+}
+
+.paginationButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  color: white;
+  transform: scale(1.05);
+}
+
+.paginationButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paginationInfo {
+  font-size: 15px;
+  color: #1565c0;
+  font-weight: 600;
+  padding: 0 16px;
+}
+
+/* ==================== MODAL ==================== */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 71, 161, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  background: white;
+  border-radius: 20px;
+  width: 90vw;
+  max-width: 1200px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 48px rgba(25, 118, 210, 0.3);
+  border: 2px solid rgba(25, 118, 210, 0.1);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: 18px 18px 0 0;
+  color: white;
+}
+
+.modalHeader h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+}
+
+.modalClose {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  color: white;
+  border-radius: 10px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.modalClose:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.pdfViewer {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: #f5f5f5;
+}
+
+/* ==================== LOADING & EMPTY ==================== */
+
+.loadingContainer,
+.emptyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.loadingSpinner {
+  animation: spin 1s linear infinite;
+  color: #1976d2;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 2px 4px rgba(25, 118, 210, 0.3));
+}
+
+.loadingContainer p,
+.emptyContainer p {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1565c0;
+  margin-top: 16px;
+}
+
+.emptyContainer small {
+  color: #999;
+  margin-top: 8px;
+}
+
+.emptyContainer svg {
+  color: #bbdefb;
+  margin-bottom: 20px;
+}
+
+/* ==================== ANIMAÇÕES ==================== */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ==================== SCROLLBAR CUSTOMIZADO ==================== */
+
+.tableWrapper::-webkit-scrollbar,
+.dropdown::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track,
+.dropdown::-webkit-scrollbar-track {
+  background: #e3f2fd;
+  border-radius: 10px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb,
+.dropdown::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: 10px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover,
+.dropdown::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+}
+
+/* ==================== RESPONSIVE ==================== */
+
+@media (max-width: 1200px) {
+  .container {
+    padding: 20px;
+  }
+
+  .filterRow {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding: 24px 20px;
+  }
+
+  .headerContent {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .headerTitle {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+
+  .headerActions {
+    justify-content: stretch;
+    flex-direction: column;
+  }
+
+  .headerActions button {
+    width: 100%;
+  }
+
+  .filterRow {
+    grid-template-columns: 1fr;
+  }
+
+  .filterActions {
+    flex-direction: column;
+  }
+
+  .filterActions button {
+    width: 100%;
+  }
+
+  .table {
+    font-size: 13px;
+  }
+
+  .table th,
+  .table td {
+    padding: 12px 10px;
+  }
+
+  .modal {
+    width: 95vw;
+    height: 95vh;
+  }
+
+  .notification {
+    left: 12px;
+    right: 12px;
+    min-width: auto;
+  }
+}

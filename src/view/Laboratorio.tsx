@@ -689,6 +689,12 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
          case "Gerar":
         WindowManager.openGerarRelatorioParcial();
         break;
+           case "Enviar para internet":
+        WindowManager.openEnviarRealatorioPortal();
+        break;
+
+       
+        
 
         
       default:
@@ -794,9 +800,6 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
     // *** CORREÇÃO 3: Adicionando a dependência correta ***
   }, [amostrasEmAnalise]);
 
-  // =======================================================
-  // ============ FIM DA CORREÇÃO ============
-  // =======================================================
 
 
   const handleOpenTabelaNaoIniciada = useCallback(() => {
@@ -806,6 +809,12 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
   const handleOpenTabelaIniciada = useCallback(() => {
     WindowManager.openTabelaIniciada();
   }, []);
+
+   const handleOpenTabelaFinalizada = useCallback(() => {
+    WindowManager.openTabelaFinalizada();
+  }, []);
+
+  // openTabelaFinalizada
 
 
   // openTabelaIniciada
@@ -945,20 +954,49 @@ const renderTemperaturaItem = (item: TemperaturaItem) => (
     </div>
   );
 
-  const renderAmostraFinalizadaItem = (item: AmostraFinalizadaItem) => (
-    <div key={item.id} className={styles["item-card"]}>
-      <div className={styles["item-header"]}>
+ const renderAmostraFinalizadaItem = (item: AmostraFinalizadaItem) => (
+    
+    // Adicionado style para permitir o flexbox e alinhamento dos itens e ações
+    <div key={item.id} className={styles["item-card"]} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      
+      {/* Ícone e Conteúdo principal do Card */}
+      <div style={{ display: 'flex', gap: '1rem', flex: 1, alignItems: 'center' }}>
         <CheckCircle className={styles["item-icon"]} />
         <div className={styles["item-info"]}>
           <h4>#{item.numero || 'N/A'}</h4>
           <p>{item.identificacao || 'Sem identificação'}</p>
+          <div className={styles["item-details"]}>
+            <span>{item.fantasia || item.razao || 'N/A'}</span>
+          </div>
         </div>
       </div>
-      <div className={styles["item-details"]}>
-        <span>{item.fantasia || item.razao || 'N/A'}</span>
+      
+      {/* Ações (Novo Bloco de Código Adicionado) */}
+      <div className={styles["item-actions"]} style={{ minWidth: 'fit-content' }}>
+        {/* Você pode ajustar o onClick para a função que lida com a abertura/visualização da amostra finalizada */}
+        <button
+          onClick={() => handleOpenTabelaFinalizada()} // Função de exemplo, ajuste conforme sua necessidade
+          className={styles["btn-abrir-finalizada"]} // Defina a classe de estilo no seu CSS
+          style={{ 
+              backgroundColor: '#10b981', // Exemplo de cor verde para finalizada
+              borderColor: '#10b981', 
+              color: 'white',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+          }}
+          title="Abrir análise finalizada desta amostra"
+        >
+          {/* O componente ExternalLink deve ser importado de onde você está usando */}
+          <ExternalLink size={18} /> 
+          <span>Abrir</span>
+        </button>
       </div>
     </div>
-  );
+);
 
   const renderAmostraBloqueadaItem = (item: AmostraBloqueadaItem) => (
     <div key={item.id} className={styles["item-card"]}>

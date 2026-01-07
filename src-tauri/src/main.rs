@@ -196,7 +196,7 @@ use crate::controller::geral::analise_controller::{
 
 
 // Módulo: Laboratório
-use controller::laboratorio::laboratorio_controller::{ salvar_temperatura_analise, buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo };
+use controller::laboratorio::laboratorio_controller::{ salvar_temperatura_analise, buscar_checagem, buscar_nao_iniciada, buscar_em_analise, buscar_temperatura, buscar_amostras_finalizadas, buscar_amostras_bloqueadas, buscar_registro_insumo,  buscar_finalizada2, revisar_amostras2, bloquear_amostras2, publicar_resultados2, buscar_laboratorios2 };
 use controller::laboratorio::cadastrar_amostra_controller::{
     buscar_tercerizado, 
     buscar_identificacao, 
@@ -381,6 +381,11 @@ use controller::chat::chat_controller::{
     get_users, create_chat, get_user_chats, send_message, 
     get_chat_messages, create_direct_chat, send_file_message
 };
+
+use controller::laboratorio::tauri_imprimir_controller::{
+ proxy_listar_clientes_imprimir, proxy_listar_relatorios_imprimir, proxy_imprimir_relatorios, proxy_visualizar_relatorio_imprimir
+};
+ 
 use controller::download_controller::{download_file_to_downloads, download_file_bytes};
 use controller::frota::frota_controller::{buscar_agendamentos_hoje};
 use controller::frota::motoristas_controller::{buscar_motoristas, criar_motorista, atualizar_motorista, deletar_motorista};
@@ -795,7 +800,16 @@ fn main() {
             gerar_relatorio_final2,
             gerar_relatorio_amostragem,
             gerar_relatorio_cq,
-            gerar_relatorio_preview
+            gerar_relatorio_preview,
+            proxy_listar_clientes_imprimir,
+            proxy_listar_relatorios_imprimir,
+            proxy_imprimir_relatorios, 
+            proxy_visualizar_relatorio_imprimir,
+            buscar_finalizada2,
+            revisar_amostras2,
+            bloquear_amostras2,
+            publicar_resultados2, 
+            buscar_laboratorios2
             
 
         ])

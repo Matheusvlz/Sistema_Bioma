@@ -328,7 +328,7 @@ const AmostraNaoIniciadaView: React.FC = () => {
         await carregarDetalhes(windowData.idAnalise);
         
         setTimeout(() => {
-          abrirJanelaResultados();
+         // abrirJanelaResultados();
         }, 500);
       } else {
         setError(response.message || "Erro ao iniciar amostra");
