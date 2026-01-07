@@ -27,3 +27,4 @@ pub mod etapa_controller;
 pub mod tecnica_etapa_controller;
 pub mod calculo_controller;
 pub mod analise_controller;
+pub mod bi_financeiro_controller;

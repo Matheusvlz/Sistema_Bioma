@@ -233,7 +233,7 @@ const SectionItem = memo(({ item, onItemClick }: { item: any; onItemClick: (name
   );
 });
 
-// Componente de Seção otimizado
+// Componente de Seção otimizadoo
 const SectionCard = memo(({ section, searchTerm, onItemClick }: { 
   section: any; 
   searchTerm: string; 
@@ -472,7 +472,7 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
       color: styles["bg-green-500"],
       category: "ensaios",
       items: [
-        { name: "Parâmetros", icon: Settings, description: "Configurar parâmetros de ensaio" },
+        { name: "Parâmetros Ensaio", icon: Settings, description: "Configurar parâmetros de ensaio" },
         { name: "Amostras", icon: TestTube, description: "Gerenciar amostras para ensaio" },
         { name: "Resultados", icon: BarChart3, description: "Visualizar resultados de ensaios" }
       ]
@@ -504,7 +504,7 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
         { name: "Registros insumo", icon: Clipboard, description: "Visualizar registros de insumos" },
         { name: "Meio de cultura", icon: Beaker, description: "Gerenciar meios de cultura" },
         { name: "Reagente para limpeza", icon: Package, description: "Gerenciar reagentes de limpeza" },
-        { name: "Parâmetros", icon: Settings, description: "Configurar parâmetros de insumos" }
+        { name: "Parâmetros Insumos", icon: Settings, description: "Configurar parâmetros de insumos" }
       ]
     },
     {
@@ -677,7 +677,19 @@ const [tempModalState, setTempModalState] = useState<{ isOpen: boolean; id: numb
         WindowManager.openReagenteLimpezaRegistro();
         break;
 
-        case 'Parâmetros':
+        case 'Parâmetros Ensaio':
+         WindowManager.openFilaTrabalho();
+        break;
+
+        case 'lab-mapa-resultado':
+        WindowManager.openMapaResultado();
+        break;
+
+
+
+      //teste
+
+        case 'Parâmetros Insumos':
         WindowManager.openGerenciarParametroInsumo();
         break;
       

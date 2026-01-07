@@ -1,0 +1,167 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+/* --- Header de Informações (Cabeçalho do Parâmetro) --- */
+.headerInfo {
+    background: white;
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+    gap: 1rem;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.infoBlock h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #2c3e50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.infoBlock label {
+    display: block;
+    font-size: 0.75rem;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.infoBlock span {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #34495e;
+}
+
+/* --- Toolbar de Ações --- */
+.toolbar {
+    padding: 0.8rem 1rem;
+    background: #eef2f7;
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid #dae1e7;
+}
+
+.btnAction {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btnSave { background: #27ae60; color: white; }
+.btnSave:hover { background: #219150; }
+
+.btnVerify { background: #e67e22; color: white; }
+.btnVerify:hover { background: #d35400; }
+
+.btnCalc { background: #3498db; color: white; }
+.btnCalc:hover { background: #2980b9; }
+
+/* --- A Grid "Monstro" --- */
+.gridWrapper {
+    flex: 1;
+    overflow: auto; /* Permite rolar X e Y */
+    padding: 1rem;
+    position: relative;
+}
+
+.gridTable {
+    border-collapse: separate; /* Necessário para sticky headers */
+    border-spacing: 0;
+    background: white;
+    min-width: 100%;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.gridTable th {
+    background: #f8f9fa;
+    color: #555;
+    font-weight: 600;
+    padding: 10px;
+    border-bottom: 2px solid #ddd;
+    border-right: 1px solid #eee;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Coluna de Amostra Fixa à Esquerda */
+.colFixed {
+    position: sticky;
+    left: 0;
+    z-index: 11; /* Maior que o header normal */
+    background: #f8f9fa;
+    border-right: 2px solid #ddd !important;
+}
+
+/* Células */
+.gridTable td {
+    padding: 0; /* Padding zero para o input ocupar tudo */
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #eee;
+    height: 35px;
+}
+
+/* Inputs da Grid */
+.cellInput {
+    width: 100%;
+    height: 100%;
+    border: none;
+    padding: 0 8px;
+    text-align: center;
+    font-size: 0.9rem;
+    outline: none;
+    background: transparent;
+    transition: background 0.2s;
+    min-width: 80px; /* Largura mínima para colunas dinâmicas */
+}
+
+.cellInput:focus {
+    background: #e8f0fe;
+    box-shadow: inset 0 0 0 2px #3498db;
+}
+
+/* Identificação (Texto Fixo) */
+.cellText {
+    padding: 0 10px;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+/* Validação Visual (Porting do Java) */
+.limitError {
+    background-color: #ffcccc !important; /* Vermelho claro */
+    color: #cc0000;
+    font-weight: bold;
+}
+
+.limitSuccess {
+    background-color: white;
+}
+
+/* Rodapé de Status */
+.statusBar {
+    background: #2c3e50;
+    color: white;
+    padding: 5px 1rem;
+    font-size: 0.8rem;
+    text-align: right;
+}

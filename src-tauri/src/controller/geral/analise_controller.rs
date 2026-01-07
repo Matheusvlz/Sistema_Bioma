@@ -14,7 +14,7 @@ use crate::{
 };
 
 // As funções de dropdown não mudam
-#[tauri::command]
+#[tauri::command]   
 pub async fn get_cidades_analise_command(
     app_handle: AppHandle,
 ) -> Result<ApiResponse<Vec<CidadeDropdown>>, ApiResponse<()>> {

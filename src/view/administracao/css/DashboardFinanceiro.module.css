@@ -1,0 +1,342 @@
+/* Container Principal: Ocupa toda a altura e usa Flexbox para organizar topo/tabela/rodapé */
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f8f9fa; /* Fundo cinza bem suave */
+    padding: 1.5rem;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #333;
+}
+
+/* --- BARRA DE FILTROS --- */
+.filterBar {
+    display: flex;
+    gap: 1rem;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    margin-bottom: 1rem;
+    align-items: flex-end; /* Alinha os inputs e botão na base */
+    flex-wrap: wrap;
+}
+
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.inputGroup label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280; /* Cinza médio */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.input, .searchInput {
+    padding: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.input:focus, .searchInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.searchInput {
+    width: 380px; /* Largura maior para a busca inteligente */
+    background-color: #fff;
+}
+
+/* Checkbox estilizado como um botão toggle suave */
+.checkboxLabel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    background: #fff1f2; /* Fundo vermelho bem claro */
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    border: 1px solid #fecdd3;
+    color: #be123c; /* Texto vermelho escuro */
+    margin-bottom: 1px; /* Ajuste fino de alinhamento */
+}
+
+.checkboxLabel:hover {
+    background: #ffe4e6;
+}
+
+.btnPrimary {
+    background-color: #2563eb; /* Azul Royal */
+    color: white;
+    border: none;
+    padding: 0.6rem 1.5rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, transform 0.1s;
+    height: 38px; /* Altura fixa para alinhar com inputs */
+}
+
+.btnPrimary:hover {
+    background-color: #1d4ed8;
+}
+
+.btnPrimary:active {
+    transform: translateY(1px);
+}
+
+.btnPrimary:disabled {
+    background-color: #93c5fd;
+    cursor: wait;
+}
+
+/* --- TABELA MESTRE --- */
+.tableWrapper {
+    flex: 1; /* Ocupa o espaço restante */
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    overflow-y: auto; /* Scroll vertical interno */
+    position: relative;
+    border: 1px solid #e5e7eb;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.table th {
+    background-color: #f9fafb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    text-align: left;
+    padding: 1rem 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    color: #4b5563;
+    font-weight: 600;
+}
+
+.table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+/* Linha Clicável (Mestre) */
+.masterRow {
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.masterRow:hover {
+    background-color: #f3f4f6;
+}
+
+.masterRow.active {
+    background-color: #eff6ff; /* Azul bem claro quando expandido */
+    border-left: 4px solid #2563eb;
+}
+
+.masterRow.active td {
+    border-bottom: none; /* Remove borda para conectar com o detalhe */
+    font-weight: 500;
+}
+
+.iconExpand {
+    color: #9ca3af;
+    transition: transform 0.2s;
+}
+
+/* --- BADGES DE STATUS --- */
+.badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badgeOk { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badgeWarning { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+.badgeDanger { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.badgeInfo { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+/* Botões Pequenos (PDF, Ações) */
+.btnIcon {
+    background: white;
+    border: 1px solid #d1d5db;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #4b5563;
+    transition: all 0.2s;
+}
+
+.btnIcon:hover {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #111827;
+}
+
+/* --- DETALHES EXPANDIDOS (O "Krl a 4") --- */
+.rowDetails {
+    background-color: #fff;
+}
+
+.detailsContainer {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    display: grid;
+    /* Grid de 3 colunas: Escopo (30%), Operacional (30%), Financeiro (40%) */
+    grid-template-columns: 1fr 1fr 1.3fr; 
+    gap: 1.5rem;
+    border-bottom: 2px solid #e5e7eb;
+    background-color: #eff6ff; /* Mantém fundo azulado suave */
+}
+
+/* Cards das Seções Internas */
+.detailSection {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.detailSection h4 {
+    margin: 0 0 1rem 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #6b7280;
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Listas de Itens */
+.detailList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.detailList li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    color: #374151;
+}
+
+.totalRow {
+    margin-top: auto; /* Empurra para o fundo do card */
+    padding-top: 1rem;
+    border-top: 2px solid #f3f4f6;
+    text-align: right;
+    font-size: 0.85rem;
+    color: #374151;
+}
+
+/* Cards de Operação (Coletas) */
+.cardOp {
+    background: #f0fdf4;
+    border-left: 4px solid #22c55e;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 0 4px 4px 0;
+}
+
+.cardOpPending {
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    border-radius: 0 4px 4px 0;
+}
+
+/* Tabela Financeira Mini */
+.miniTable {
+    width: 100%;
+    font-size: 0.8rem;
+    border-collapse: collapse;
+}
+
+.miniTable th { 
+    text-align: left; 
+    color: #9ca3af; 
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.miniTable td { 
+    padding: 0.5rem 0; 
+    border-bottom: 1px solid #f3f4f6; 
+}
+
+.textGreen { color: #16a34a; font-weight: 700; }
+.textRed { color: #dc2626; font-weight: 700; }
+.textOrange { color: #ea580c; font-weight: 700; }
+
+.emptyState {
+    font-style: italic;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 2rem;
+    font-size: 0.9rem;
+}
+
+/* Box de Alertas do Auditor */
+.alertBox {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #991b1b;
+    font-size: 0.85rem;
+}
+
+/* --- RODAPÉ (Paginação) --- */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    padding: 0 0.5rem;
+    font-size: 0.9rem;
+    color: #4b5563;
+}

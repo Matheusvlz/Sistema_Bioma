@@ -712,6 +712,18 @@ static async openGerenciarLegislacaoParametro(): Promise<WebviewWindow> {
         });
     }
 
+    static async openBiFinanceiro(): Promise<WebviewWindow> {
+        return this.openWindow({
+            label: 'bi-financeiro',
+            title: 'Auditoria Financeira 360°', // Título que aparece na barra da janela
+            url: '/#/bi-financeiro',
+            width: 1300,
+            height: 900,
+            center: true,
+            allowMultiple: false, // Evita abrir dois dashboards iguais
+        });
+    }
+
     static async openCadastrarPacote(pacoteId?: number): Promise<WebviewWindow> {
         const url = pacoteId 
             ? `/#/cadastrar-pacote?id=${pacoteId}` 
@@ -1064,6 +1076,34 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
     });
   }
 
+
+  // --- Módulo Laboratório: Fila e Mapa ---
+
+  static async openFilaTrabalho(): Promise<void> {
+     this.openWindow({
+      label: 'lab-fila-trabalho',
+      title: 'Fila de Trabalho - Laboratório',
+      url: '/#/lab-fila-trabalho',
+      width: 1280,
+      height: 800,
+      resizable: true,
+      center: true,
+      maximized: true // Fila de trabalho geralmente é melhor maximizada
+    });
+  }
+
+  static async openMapaResultado(): Promise<void> {
+     this.openWindow({
+      label: 'lab-mapa-resultado',
+      title: 'Mapa de Resultados',
+      url: '/#/lab-mapa-resultado',
+      width: 1400, // Mapa precisa de bastante largura para as colunas dinâmicas
+      height: 900,
+      resizable: true,
+      center: true,
+      maximized: true
+    });
+  }
 
 static async openParametroResultado(dadosJanela?: any): Promise<WebviewWindow> {
   return this.openWindow({
