@@ -6,7 +6,7 @@ use crate::config::get_api_url;
 
 // URL base do Microserviço Spring (Relatórios) - Porta 8083
 const SPRING_API_BASE: &str = "http://localhost:8083/api/relatorios";
-
+use crate::model::usuario::obter_usuario;
 // ==================== ESTRUTURAS ====================
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -40,6 +40,7 @@ pub struct AssinarRequest {
     // CORRIGIDO: IDs de grupo devem ser u32
     pub ids: Vec<u32>,
     pub usuario_id: i32,
+    pub usuario_nome: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

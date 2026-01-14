@@ -22,6 +22,20 @@ interface AnaliseDTO {
   obs_texto?: string;
 }
 
+interface Usuario {
+  success: boolean;
+  id: number;
+  nome: string;
+  privilegio: string;
+  empresa?: string;
+  ativo: boolean;
+  nome_completo: string;
+  cargo: string;
+  numero_doc: string;
+  profile_photo?: string; 
+  dark_mode: boolean;
+}
+
 interface ClienteDTO {
   id: number;
   fantasia?: string;
@@ -35,6 +49,7 @@ interface RelatorioResponse {
 interface AssinarRequest {
   ids: number[];
   usuario_id: number;
+  usuario_nome: string;
 }
 
 // ==================== COMPONENTE PRINCIPAL ====================
@@ -215,7 +230,7 @@ const handleVisualizarPDF = useCallback(async (
     console.log('📤 Enviando requisição para Tauri (PREVIEW):', { idGrupo });
 
     // ✅ CORREÇÃO: Usar o comando de PREVIEW (não precisa de data)
-    const response = await invoke<RelatorioResponse>(
+ const response = await invoke<RelatorioResponse>(
       'gerar_relatorio_preview', // ← MUDOU: era 'gerar_relatorio_final2'
       { idGrupo } // ← SEM 'dataEntrada'
     );
@@ -309,16 +324,21 @@ const handleVisualizarPDF = useCallback(async (
 
     try {
       // TODO: Substituir por ID do usuário logado real
-      const usuarioId = 1; 
-      
-      const request: AssinarRequest = { 
+       const userResponse = await invoke('usuario_logado') as Usuario;
+      const usuarioId = 2; 
+            const usuarioNome = userResponse.nome; 
+    const requestPayload: AssinarRequest = { // Renomeando a variável local para clareza
         ids, 
-        usuario_id: usuarioId 
+        usuario_id: usuarioId,
+        usuario_nome: usuarioNome
       };
 
-      console.log('📤 Enviando requisição de assinatura:', request);
+      console.log('📤 Enviando requisição de assinatura:', requestPayload);
 
-      await invoke('proxy_assinar_relatorios', request);
+      // CORREÇÃO: Envolver o payload no objeto esperado pelo comando Tauri
+      await invoke('proxy_assinar_relatorios', { 
+        request: requestPayload // Use a chave 'request'
+      });
       
       console.log('✅ Assinatura concluída com sucesso');
       setSuccessMessage(`✅ ${ids.length} relatório(s) assinado(s) com sucesso!`);

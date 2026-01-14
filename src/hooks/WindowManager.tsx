@@ -1025,6 +1025,18 @@ static async openPersonalizarAmostra(): Promise<WebviewWindow> {
       allowMultiple: false,
     });
   }
+  // enviar-relatorio-portal
+    static async openEnviarRealatorioPortal(): Promise<WebviewWindow> {
+    return this.openWindow({
+      label: 'enviar-relatorio-portal',
+      title: 'Imprimir Relatório', 
+      url: '/#/enviar-relatorio-portal',
+      width: 1200,
+      height: 800,
+      center: true,
+      allowMultiple: false,
+    });
+  }
 
   static async openVisualizarQualificacoes(): Promise<WebviewWindow> {
     return this.openWindow({
@@ -1140,6 +1152,17 @@ static async openTabelaNaoIniciada(): Promise<WebviewWindow> {
     label: 'tabela-nao-iniciada',
     title: 'Tabela Não Iniciada',
     url: '/#/tabela-nao-iniciada',
+    width: 1200,
+    height: 800,
+    allowMultiple: true
+  });
+}
+
+static async openTabelaFinalizada(): Promise<WebviewWindow> {
+  return this.openWindow({
+    label: 'tabela-finalizada',
+    title: 'Tabela Finalizada',
+    url: '/#/tabela-finalizada',
     width: 1200,
     height: 800,
     allowMultiple: true
