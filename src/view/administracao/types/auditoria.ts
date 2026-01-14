@@ -1,86 +1,90 @@
-// src/types/auditoria.ts
+// =====================================================================
+// 1. SUB-ESTRUTURAS (DETALHES)
+// =====================================================================
 
-// --- Sub-estruturas (Filhos) ---
-
-export interface ItemOrcamento {
-    nome: string;
-    quantidade: string;
-    preco_total: string;
-}
-
-export interface CicloOperacional {
-    id_agendamento?: number;
-    data_agendada?: string;
-    
-    id_coleta?: number;
-    numero_coleta?: string;
-    data_coleta?: string; // Data simples (YYYY-MM-DD)
-    
-    // --- CAMPOS NOVOS OBRIGATÓRIOS ---
-    // Agora o Frontend sabe que pode receber isso
-    data_hora_registro?: string; // Timestamp exato do sistema
-    nome_coletor?: string;       // Nome do usuário que realizou a coleta
-    
-    status: string; // "Agendado", "Coletado", "Pendente"
-}
-
-export interface CicloFinanceiro {
-    id_fatura: number;
-    numero_nf?: string;
-    data_emissao?: string;
-    
-    numero_parcela: number;
-    data_vencimento?: string;
-    data_pagamento?: string;
-    
-    valor_parcela?: string;
-    valor_pago?: string;
-    status: string; // "Pago", "Aberto", "Atrasado"
-}
-
-// --- Estrutura Principal (Pai) ---
-
-export interface OrcamentoAuditoria {
+export interface ArquivoFisico {
     id: number;
-    numero: number;
-    versao: string;
-    ano: string;
-    numero_completo: string; // Ex: "055/A-2025"
-    data_criacao: string;    // YYYY-MM-DD
+    caminho: string;
+}
+
+export interface BoletoItemNF {
+    id: number;
+    nf_numero?: string;
+    caminho_nf?: string;
+    data_emissao?: string;
+    data_vencimento?: string;
     
+    pago: boolean;
+    
+    valor?: string;      // BigDecimal string
+    valor_pago?: string; // BigDecimal string
+    
+    empresa?: string;
+    
+    arquivos_boletos: ArquivoFisico[];
+}
+
+export interface OrcamentoVinculado {
+    id: number;
+    numero_completo: string;
+    data: string;
+    
+    // Matemática Financeira (Strings numéricas)
+    valor_base_itens: string;
+    valor_frete_real: string;
+    valor_descontos: string;
+    valor_final_calculado: string;
+
+    // Resumo Operacional
+    qtd_coletas: number;
+    resumo_coletas: string[];
+}
+
+// =====================================================================
+// 2. ESTRUTURA PRINCIPAL (AGORA É BOLETO, NÃO ORÇAMENTO)
+// =====================================================================
+
+export interface BoletoRastreabilidade {
+    // Dados do Boleto Pai
+    id: number;
     id_cliente: number;
     nome_cliente: string;
-    cidade_cliente?: string;
+    descricao?: string;
+    boleto_path?: string; // Geralmente o número da Nota Principal ou ID
+    
+    data_vencimento?: string;
+    data_emissao?: string;
+    
+    valor_total?: string;          // Valor do Boleto
+    valor_pago_acumulado?: string; // Quanto já foi pago
+    valor_fatura_original?: string; 
 
-    // Valores (Strings formatadas vindo do Rust/BigDecimal)
-    valor_total_itens?: string;
-    valor_frete?: string;
-    valor_desconto?: string;
-    valor_final?: string;
+    status_pagamento: string; // "PAGO", "PARCIAL", "PENDENTE", "ATRASADO"
 
-    // Listas Aninhadas
-    itens: ItemOrcamento[];
-    ciclo_operacional: CicloOperacional[];
-    ciclo_financeiro: CicloFinanceiro[];
-
-    // Diagnóstico
-    status_geral: string; 
-    alertas: string[];
+    // Filhos
+    itens_nf: BoletoItemNF[];
+    orcamento_vinculado?: OrcamentoVinculado;
 }
 
-// --- Filtros e Paginação ---
+// =====================================================================
+// 3. PAYLOADS E RESPOSTAS
+// =====================================================================
 
+// Filtros da Tela (O Front manda data_inicio/fim, o Backend converte para vencimento)
 export interface FiltrosAuditoriaPayload {
     data_inicio: string;
     data_fim: string;
-    termo_busca: string;
+    cliente_id?: number; 
+    cidade?: string;
+    termo_busca: string; // Opcional no backend agora, mas mantemos no front
     apenas_problemas: boolean;
     pagina: number;
     itens_por_pagina: number;
 }
 
-export interface PaginatedAuditoriaResponse {
-    data: OrcamentoAuditoria[];
+// Resposta do Backend Tauri
+export interface PaginatedBoletoResponse {
+    data: BoletoRastreabilidade[];
     total_registros: number;
     total_paginas: number;
     pagina_atual: number;

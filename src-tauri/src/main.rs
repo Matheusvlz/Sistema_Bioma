@@ -147,7 +147,7 @@ use controller::geral::bi_financeiro_controller::{
    // get_auditoria_financeira, 
     //get_kpis_financeiros, 
     //abrir_arquivo_rede_bioma
-    listar_auditoria_financeira_tauri,
+    listar_rastreabilidade_boletos_tauri,
     abrir_arquivo_rede_bioma_tauri
 };
 
@@ -503,7 +503,7 @@ fn main() {
             criar_registro_reagente_tauri,
             editar_registro_reagente_tauri,
             registrar_uso_reagente_tauri,
-            listar_auditoria_financeira_tauri,
+            listar_rastreabilidade_boletos_tauri,
             abrir_arquivo_rede_bioma_tauri,
             //get_auditoria_financeira,
            // get_kpis_financeiros,

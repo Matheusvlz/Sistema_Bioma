@@ -1,69 +1,81 @@
-import { invoke } from "@tauri-apps/api/core";
-import { FiltrosAuditoriaPayload, PaginatedAuditoriaResponse } from "../types/auditoria";
+import { invoke } from '@tauri-apps/api/core'; // Ou 'tauri' dependendo da versão
+import { 
+    FiltrosAuditoriaPayload, 
+    PaginatedAuditoriaResponse 
+} from '../types/auditoria';
 
-// Interface interna para resposta genérica do Tauri
+// Interface do Wrapper de Resposta (Igual ao do Rust ApiResponse)
 interface ApiResponse<T> {
-    success: boolean;
+    message: string;
     data?: T;
-    message?: string;
-}
-
-// Interface específica para os dados de abertura de arquivo
-// Isso garante que o componente passe exatamente o que o Rust precisa
-interface DadosArquivo {
-    numero?: number;      // Para Orçamento
-    ano?: string;         // Para Orçamento
-    nf?: string;          // Para Boleto
-    data_competencia?: string; // NOVO: Essencial para achar a pasta do boleto (YYYY-MM-DD)
+    error?: string;
 }
 
 export const AuditoriaService = {
     
-    // --- 1. BUSCAR DADOS (Lista Hierárquica) ---
-    // Chama o Controller Rust para buscar a lista de orçamentos e seus detalhes
+    /**
+     * Busca os dados da Auditoria Financeira 360 chamando o Backend Tauri.
+     */
     listarAuditoria: async (filtros: FiltrosAuditoriaPayload): Promise<PaginatedAuditoriaResponse> => {
         try {
-            console.log("Service: Buscando auditoria com filtros:", filtros);
+            // Log para debug no Console do Navegador (F12)
+            console.log("Service: Solicitando auditoria ao Tauri...", filtros);
             
-            const res = await invoke<ApiResponse<PaginatedAuditoriaResponse>>("listar_auditoria_financeira_tauri", { 
-                payload: filtros 
+            // O nome do comando aqui DEVE ser idêntico ao do #[command] no Rust
+            const response = await invoke<ApiResponse<PaginatedAuditoriaResponse>>('listar_auditoria_financeira_tauri', {
+                payload: filtros
             });
-            
-            if (res.success && res.data) {
-                return res.data;
+
+            // Verifica se o Backend retornou erro tratado
+            if (response.error) {
+                console.error("Service: Erro retornado pelo Backend:", response.error);
+                throw new Error(response.error);
             }
-            throw new Error(res.message || "Erro desconhecido ao buscar auditoria.");
-        } catch (error: any) {
-            console.error("Erro no Service (Listar Auditoria):", error);
-            throw error; // Repassa o erro para o componente tratar (loading/toast)
+
+            // Verifica se veio dado
+            if (!response.data) {
+                throw new Error("O Backend retornou sucesso, mas sem dados (data is null).");
+            }
+
+            return response.data;
+
+        } catch (error) {
+            // Erro de comunicação ou falha grave (Rust panic, etc)
+            console.error("Service: Falha crítica na comunicação:", error);
+            throw error;
         }
     },
 
-    // --- 2. ABRIR ARQUIVO NA REDE (PDF) ---
-    // Chama a função Rust que varre as pastas da rede
-    abrirArquivoRede: async (tipo: 'ORCAMENTO' | 'BOLETO', dados: DadosArquivo) => {
+    /**
+     * Solicita ao SO para abrir o arquivo (PDF) na rede.
+     */
+    abrirArquivoRede: async (tipo: 'ORCAMENTO' | 'BOLETO', dados: any): Promise<void> => {
         try {
-            console.log(`Service: Tentando abrir ${tipo}`, dados);
+            const payload = {
+                tipo,
+                numero: dados.numero,
+                ano: dados.ano,
+                nf: dados.nf,
+                data_competencia: dados.data_competencia
+            };
 
-            const res = await invoke<ApiResponse<string>>("abrir_arquivo_rede_bioma_tauri", {
-                payload: {
-                    tipo,
-                    numero: dados.numero,
-                    ano: dados.ano,
-                    nf: dados.nf,
-                    data_competencia: dados.data_competencia // Campo crítico adicionado
-                }
+            console.log("Service: Abrindo arquivo...", payload);
+
+            const response = await invoke<ApiResponse<string>>('abrir_arquivo_rede_bioma_tauri', { 
+                payload 
             });
-            
-            if (!res.success) {
-                // Se o Rust não achou o arquivo ou deu erro, avisamos o usuário
-                alert(`Atenção: ${res.message}`);
+
+            if (response.error) {
+                console.warn("Service: Arquivo não aberto:", response.error);
+                // Aqui você poderia disparar um Toast/Alerta visual se tiver uma lib de UI configurada
+                alert("Não foi possível abrir o arquivo: " + response.error);
             } else {
-                console.log("Arquivo aberto com sucesso:", res.data);
+                console.log("Service: Arquivo aberto com sucesso:", response.message);
             }
+
         } catch (error) {
-            console.error("Erro no Service (Abrir Arquivo):", error);
-            alert("Falha técnica ao tentar comunicar com o sistema de arquivos. Verifique se a unidade de rede está acessível.");
+            console.error("Service: Erro ao tentar abrir arquivo:", error);
+            alert("Erro de sistema ao abrir arquivo.");
         }
     }
 };

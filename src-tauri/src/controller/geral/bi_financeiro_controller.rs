@@ -2,44 +2,44 @@ use tauri::{command, AppHandle};
 use reqwest::Client;
 use std::process::Command;
 use crate::model::api_response::ApiResponse;
-// Importa o model que acabamos de criar. 
-// OBS: Certifique-se que o nome do módulo no seu mod.rs bate com o nome do arquivo.
-// Se o arquivo é financeiro_bi_model.rs, o import é financeiro_bi_model.
-use crate::model::financeiro_bi::{
-    PaginatedAuditoriaResponse, 
-    FiltrosAuditoriaPayload, FiltrosAuditoriaApiPayload,
-    ArquivoRedePayload, ArquivoRedeApiPayload
-};
 use crate::config::get_api_url;
 
-// Estrutura auxiliar para ler apenas o campo "caminho" do JSON da API
+// Importa os models completos
+use crate::model::financeiro_bi::{
+    PaginatedBoletoResponse, 
+    FiltrosAuditoriaPayload, FiltrosBoletoApiPayload,
+    ArquivoRedePayload, ArquivoRedeApiPayload
+};
+
 #[derive(serde::Deserialize)]
-struct CaminhoResponse {
-    caminho: String,
-}
+struct CaminhoResponse { caminho: String }
 
 // =====================================================================
-// COMANDO 1: LISTAR DADOS (COM LOGS DE DEBUG / X-9)
+// COMANDO 1: LISTAR RASTREABILIDADE (BOLETOS)
 // =====================================================================
 #[command]
-pub async fn listar_auditoria_financeira_tauri(
+pub async fn listar_rastreabilidade_boletos_tauri(
     app_handle: AppHandle,
     payload: FiltrosAuditoriaPayload
-) -> Result<ApiResponse<PaginatedAuditoriaResponse>, ApiResponse<()>> {
+) -> Result<ApiResponse<PaginatedBoletoResponse>, ApiResponse<()>> {
     
     let client = Client::new();
     let api_url = get_api_url(&app_handle);
+    // Rota da API
     let url = format!("{}/financeiro/auditoria", api_url);
 
-    println!("\n=== TAURI DEBUG INICIADO ===");
-    println!("1. Buscando na API: {}", url);
+    println!("\n=== TAURI DEBUG: RASTREABILIDADE BOLETOS ===");
+    println!("1. URL Alvo: {}", url);
+    
+    // Isso agora vai compilar porque o Model tem 'data_inicio'
+    println!("2. Filtros (Vencimento): {:?} até {:?}", payload.data_inicio, payload.data_fim);
 
-    // Mapeia o payload do Frontend para o formato esperado pela API
-    let api_payload = FiltrosAuditoriaApiPayload {
-        data_inicio: payload.data_inicio,
-        data_fim: payload.data_fim,
-        termo_busca: payload.termo_busca,
-        apenas_problemas: payload.apenas_problemas,
+    // DE-PARA: Mapeia 'data_inicio' (Front) para 'data_vencimento_inicio' (API)
+    let api_payload = FiltrosBoletoApiPayload {
+        data_vencimento_inicio: payload.data_inicio,
+        data_vencimento_fim: payload.data_fim,
+        cliente_id: payload.cliente_id,
+        cidade: payload.cidade,
         pagina: payload.pagina,
         itens_por_pagina: payload.itens_por_pagina,
     };
@@ -47,59 +47,32 @@ pub async fn listar_auditoria_financeira_tauri(
     match client.get(&url).query(&api_payload).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                // Tenta ler o texto bruto primeiro para garantir que não é erro de parse
-                // (Isso é um pouco mais custoso, mas infalível para debug)
-                // Mas aqui vamos confiar no serde direto para manter o padrão, com logs no sucesso.
-                
-                match response.json::<PaginatedAuditoriaResponse>().await {
+                match response.json::<PaginatedBoletoResponse>().await {
                     Ok(data) => {
-                        println!("2. API respondeu com sucesso! Registros: {}", data.total_registros);
-                        
-                        // --- O GRANDE TESTE DO X-9 ---
-                        // Pega o primeiro orçamento que tiver operação para ver o que veio
-                        if let Some(primeiro_orc) = data.data.iter().find(|o| !o.ciclo_operacional.is_empty()) {
-                            println!("3. Analisando Orçamento: {}", primeiro_orc.numero_completo);
-                            
-                            for (i, op) in primeiro_orc.ciclo_operacional.iter().enumerate() {
-                                println!("   [Operação {}] Status: {}", i, op.status);
-                                println!("   -> Nome Coletor (JSON): {:?}", op.nome_coletor);
-                                println!("   -> Data Registro (JSON): {:?}", op.data_hora_registro);
-                                
-                                if op.nome_coletor.is_none() {
-                                    println!("   ALERTA: O campo nome_coletor veio NULO (None) da API!");
-                                }
-                            }
-                        } else {
-                            println!("3. Nenhum orçamento com operacional encontrado na página 1 para auditar.");
-                        }
-                        println!("============================\n");
-
-                        Ok(ApiResponse::success(
-                            "Auditoria carregada com sucesso.".to_string(),
-                            Some(data)
-                        ))
+                        println!("3. SUCESSO! Boletos encontrados: {}", data.total_registros);
+                        Ok(ApiResponse::success("OK".to_string(), Some(data)))
                     },
                     Err(e) => {
-                        println!("ERRO CRÍTICO AO LER JSON: {:?}", e);
-                        Err(ApiResponse::error(format!("Erro ao processar JSON da API (Verifique se o Model do Tauri bate com a API): {}", e)))
+                        println!("ERRO PARSE JSON: {:?}", e);
+                        Err(ApiResponse::error(format!("Erro Parse JSON (Estrutura incorreta?): {}", e)))
                     },
                 }
             } else {
-                let status = response.status();
-                let err_body = response.text().await.unwrap_or_default();
-                println!("ERRO DA API: {} - {}", status, err_body);
-                Err(ApiResponse::error(format!("API retornou erro ({}): {}", status, err_body)))
+                let s = response.status();
+                let t = response.text().await.unwrap_or_default();
+                println!("ERRO API: {} - {}", s, t);
+                Err(ApiResponse::error(format!("API Erro ({}): {}", s, t)))
             }
         },
         Err(e) => {
-            println!("ERRO DE CONEXÃO: {:?}", e);
-            Err(ApiResponse::error(format!("Falha de conexão com a API: {}", e)))
+            println!("ERRO CONEXAO: {:?}", e);
+            Err(ApiResponse::error(format!("Sem conexão com a API: {}", e)))
         },
     }
 }
 
 // =====================================================================
-// COMANDO 2: ABRIR ARQUIVO (Ponte + Sistema Operacional)
+// COMANDO 2: ABRIR ARQUIVO DA REDE
 // =====================================================================
 #[command]
 pub async fn abrir_arquivo_rede_bioma_tauri(
@@ -109,10 +82,8 @@ pub async fn abrir_arquivo_rede_bioma_tauri(
 
     let client = Client::new();
     let api_url = get_api_url(&app_handle);
-    // Rota que contém a lógica de varredura de pastas (migrada do Python)
     let url = format!("{}/financeiro/arquivo-rede", api_url); 
 
-    // Monta o payload para a API
     let api_payload = ArquivoRedeApiPayload {
         tipo: payload.tipo,
         numero: payload.numero,
@@ -121,41 +92,35 @@ pub async fn abrir_arquivo_rede_bioma_tauri(
         data_competencia: payload.data_competencia,
     };
 
-    // 1. Pergunta para a API onde está o arquivo
-    let caminho_rede = match client.get(&url).query(&api_payload).send().await {
+    let caminho = match client.get(&url).query(&api_payload).send().await {
         Ok(res) => {
             if res.status().is_success() {
                 match res.json::<CaminhoResponse>().await {
-                    Ok(json) => json.caminho,
-                    Err(_) => return Err(ApiResponse::error("Erro ao ler resposta de caminho da API".to_string())),
+                    Ok(j) => j.caminho,
+                    Err(_) => return Err(ApiResponse::error("Erro ao ler JSON de caminho".to_string())),
                 }
             } else {
-                return Err(ApiResponse::error("API não conseguiu localizar o caminho do arquivo".to_string()));
+                return Err(ApiResponse::error("Arquivo não encontrado pelo servidor".to_string()));
             }
         },
-        Err(e) => return Err(ApiResponse::error(format!("Erro de conexão ao buscar arquivo: {}", e))),
+        Err(e) => return Err(ApiResponse::error(format!("Erro conexão: {}", e))),
     };
 
-    if caminho_rede.is_empty() {
-        return Err(ApiResponse::error("Caminho retornado vazio. O arquivo pode não existir.".to_string()));
-    }
+    if caminho.is_empty() { return Err(ApiResponse::error("Caminho retornado vazio".to_string())); }
 
-    println!("Tauri: Abrindo no Explorer -> {}", caminho_rede);
+    println!("Tentando abrir no SO: {}", caminho);
 
-    // 2. Executa o comando do Sistema Operacional para abrir o caminho
     #[cfg(target_os = "windows")]
     {
-        match Command::new("explorer").arg(&caminho_rede).spawn() {
-            Ok(_) => Ok(ApiResponse::success(format!("Abrindo: {}", caminho_rede), Some(caminho_rede))),
-            Err(e) => Err(ApiResponse::error(format!("Falha ao iniciar Explorer: {}", e)))
-        }
+        // Sanitização para Windows
+        let caminho_win = caminho.replace("/", "\\"); 
+        Command::new("explorer").arg(&caminho_win).spawn().map_err(|e| ApiResponse::error(e.to_string()))?; 
     }
 
     #[cfg(not(target_os = "windows"))]
-    {
-        match Command::new("xdg-open").arg(&caminho_rede).spawn() {
-            Ok(_) => Ok(ApiResponse::success(format!("Abrindo (Linux): {}", caminho_rede), Some(caminho_rede))),
-            Err(e) => Err(ApiResponse::error(format!("Falha ao iniciar xdg-open: {}", e)))
-        }
+    { 
+        Command::new("xdg-open").arg(&caminho).spawn().map_err(|e| ApiResponse::error(e.to_string()))?; 
     }
+
+    Ok(ApiResponse::success(format!("Abrindo: {}", caminho), Some(caminho)))
 }
