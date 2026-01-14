@@ -349,6 +349,8 @@ use controller::qualidade::fornecedor_controller::{
     listar_qualificacoes_tauri,
 };
 
+
+// teste de push
 use controller::qualidade::pesquisa_controller::{
     listar_modelos_pesquisa_tauri,
     listar_itens_por_modelo_tauri,
