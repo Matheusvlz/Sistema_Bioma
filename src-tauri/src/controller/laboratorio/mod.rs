@@ -18,3 +18,4 @@ pub mod reagente_limpeza_registro_controller;
 pub mod tauri_imprimir_controller;
 pub mod fila_trabalho_controller;
 pub mod mapa_resultado_controller;
+pub mod materia_prima_controller;

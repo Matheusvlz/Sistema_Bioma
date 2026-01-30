@@ -116,7 +116,7 @@ pub async fn editar_registro_reagente_tauri(app_handle: AppHandle, id: u32, payl
 #[command]
 pub async fn registrar_uso_reagente_tauri(app_handle: AppHandle, id: u32, payload: UsoPayload) -> Result<ApiResponse<()>, ApiResponse<()>> {
     let client = Client::new();
-    let url = format!("{}/laboratorio/reagentes-limpeza/registros/{}/uso", get_api_url(&app_handle), id);
+    let url = format!("{}/laboratorio/reagentes-limpeza/registros/{}/uso", get_api_url(&app_handle), id);   
     let api_payload = UsoApiPayload {
         usuario_id: payload.usuario_id, data: br_to_iso(&payload.data), tipo_registro: payload.tipo_registro,
     };
