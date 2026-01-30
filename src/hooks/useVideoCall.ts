@@ -31,7 +31,7 @@ export const useVideoCall = (userId: number, userName: string) => {
         }
 
         try {
-            const wsUrl = `ws://localhost:8082/ws/call/${userId}`;
+            const wsUrl = `ws://192.168.15.60:8082/ws/call/${userId}`;
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
@@ -174,7 +174,7 @@ export const useVideoCall = (userId: number, userName: string) => {
     // Verificar se usuário pode receber chamada
     const checkUserAvailability = useCallback(async (targetUserId: number): Promise<boolean> => {
         try {
-            const response = await fetch(`http://localhost:8082/api/call/check/${targetUserId}`);
+            const response = await fetch(`http://192.168.15.60:8082/api/call/check/${targetUserId}`);
             const data = await response.json();
             return data.available;
         } catch (error) {
