@@ -246,6 +246,41 @@ pub async fn send_message(app_handle: AppHandle, chat_id: i32, user_id: i32, con
 }
 
 // Nova função específica para envio de arquivos
+
+
+fn is_allowed_file_type(file_type: &str, file_name: &str) -> bool {
+    let allowed_mimes = vec![
+        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
+        "application/pdf", "application/msword", 
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-excel",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "text/plain", "text/csv", "text/html", "text/css", "text/javascript",
+        "application/json", "application/javascript", "application/x-httpd-php",
+        "text/x-c", "text/x-c++", "text/x-java-source", "text/x-script.phyton"
+    ];
+
+    // Se o MIME estiver na lista, ok
+    if allowed_mimes.contains(&file_type) {
+        return true;
+    }
+
+    // Se o MIME for genérico ou vazio, verificar extensão
+    let allowed_extensions = vec![
+        "rs", "java", "php", "js", "ts", "tsx", "jsx", 
+        "c", "cpp", "h", "hpp", "cs", "kt", "kts", 
+        "py", "rb", "go", "sql", "json", "xml", "yaml", "toml"
+    ];
+
+    let path = std::path::Path::new(file_name);
+    if let Some(ext) = path.extension() {
+        if let Some(ext_str) = ext.to_str() {
+            return allowed_extensions.contains(&ext_str.to_lowercase().as_str());
+        }
+    }
+
+    false
+}
 #[tauri::command]
 pub async fn send_file_message(
     app_handle: AppHandle,
@@ -260,18 +295,12 @@ pub async fn send_file_message(
     let full_url = format!("{}/chat/message/send", url);
     println!("[LOG] Enviando arquivo para: {}", full_url);
 
-    // Validar tipo de arquivo
-    let allowed_types = vec![
-        "image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp",
-        "application/pdf", "application/msword", 
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "text/plain", "text/csv"
-    ];
-
-    if !allowed_types.contains(&file_type.as_str()) {
-        return Err(format!("Tipo de arquivo não permitido: {}", file_type));
+    // FIX 1: Add '&' to pass references
+    // FIX 2: Remove 'tx.rollback()' and 'StatusCode'
+    if !is_allowed_file_type(&file_type, &file_name) {
+        let error_msg = format!("Tipo de arquivo não permitido: {} - {}", file_type, file_name);
+        eprintln!("{}", error_msg);
+        return Err(error_msg);
     }
 
     // Validar tamanho do arquivo (máximo 50MB)
@@ -279,7 +308,6 @@ pub async fn send_file_message(
     if file_size > MAX_FILE_SIZE {
         return Err(format!("Arquivo muito grande. Tamanho máximo: 50MB. Tamanho atual: {} bytes", file_size));
     }
-
     // Gerar conteúdo da mensagem baseado no tipo de arquivo
     let content = if file_type.starts_with("image/") {
         format!("📷 {}", file_name)

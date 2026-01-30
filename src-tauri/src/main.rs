@@ -260,6 +260,12 @@ use controller::laboratorio::materia_prima_controller::{
     listar_tipos_materia_prima_tauri,
     listar_unidades_tauri, // <-- A função que estava causando o erro
 };
+use controller::chat::file_controller::{
+    send_file_message_enhanced,
+    get_code_file_content,
+    read_file_as_base64,
+    get_file_info,
+};
 
 use controller::laboratorio::insumo_controller::{
     listar_insumos_tauri,
@@ -839,7 +845,12 @@ fn main() {
             revisar_amostras2,
             bloquear_amostras2,
             publicar_resultados2, 
-            buscar_laboratorios2
+            buscar_laboratorios2,
+               send_file_message_enhanced,
+            get_code_file_content,
+            read_file_as_base64,
+            get_file_info,
+            
             
 
         ])
