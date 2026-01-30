@@ -101,7 +101,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     const initializeWebSocket = async () => {
         try {
             // URL do servidor WebSocket - ajuste conforme necessário
-            const wsUrl = `ws://localhost:8082/ws/call/${userId}`;
+            const wsUrl = `ws://192.168.15.60:8082/ws/call/${userId}`;
             wsRef.current = new WebSocket(wsUrl);
 
             wsRef.current.onopen = () => {
