@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Menu, Check, CheckCheck, X, File, Download, Upload, AlertCircle, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { FileCode, Send, Paperclip, Smile, MoreVertical, Phone, Video, Search, Menu, Check, CheckCheck, X, File, Download, Upload, AlertCircle, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import './style/ChatContainer.css';
-
+import { useVideoCall } from '../../hooks/useVideoCall';
+import { VideoCallComponent } from './VideoCallComponent';
 // --- Interfaces ---
 interface Message {
     id: number;
@@ -130,6 +133,11 @@ interface UserOnlineStatusChangedMessage {
 
 export const ChatContainer: React.FC = () => {
     // --- State Hooks ---
+    // Estados para visualizador de código
+    const [codeViewerOpen, setCodeViewerOpen] = useState(false);
+    const [codeContent, setCodeContent] = useState<string>('');
+    const [codeLanguage, setCodeLanguage] = useState<string>('text');
+    const [currentCodeName, setCurrentCodeName] = useState<string>('');
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [users, setUsers] = useState<BackendUser[]>([]);
@@ -157,6 +165,68 @@ export const ChatContainer: React.FC = () => {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+      const {
+        callState,
+        isCallWsConnected,
+        startAudioCall,
+        startVideoCall,
+        endCall,
+        checkUserAvailability,
+    } = useVideoCall(currentUserId, currentUserName);
+
+     const handleStartAudioCall = async () => {
+        if (!selectedConversation) return;
+
+        const recipientId = selectedConversation.members.find(
+            (m: any) => m.id !== currentUserId
+        )?.id;
+        
+        if (!recipientId) {
+            alert('Não foi possível identificar o destinatário');
+            return;
+        }
+
+        // Verificar disponibilidade
+        const available = await checkUserAvailability(recipientId);
+        if (!available) {
+            alert('Usuário não está disponível para chamadas');
+            return;
+        }
+
+        const recipientName = selectedConversation.members.find(
+            (m: any) => m.id !== currentUserId
+        )?.nome || 'Usuário';
+
+        startAudioCall(recipientId, recipientName, selectedConversation.chatId);
+    };
+
+    // Função para iniciar chamada de vídeo
+    const handleStartVideoCall = async () => {
+        if (!selectedConversation) return;
+
+        const recipientId = selectedConversation.members.find(
+            (m: any) => m.id !== currentUserId
+        )?.id;
+        
+        if (!recipientId) {
+            alert('Não foi possível identificar o destinatário');
+            return;
+        }
+
+        // Verificar disponibilidade
+        const available = await checkUserAvailability(recipientId);
+        if (!available) {
+            alert('Usuário não está disponível para chamadas');
+            return;
+        }
+
+        const recipientName = selectedConversation.members.find(
+            (m: any) => m.id !== currentUserId
+        )?.nome || 'Usuário';
+
+        startVideoCall(recipientId, recipientName, selectedConversation.chatId);
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -314,6 +384,56 @@ export const ChatContainer: React.FC = () => {
                 return conv;
             });
         });
+    };
+    // Detectar linguagem baseada na extensão
+    const getLanguageFromFilename = (filename: string): string => {
+        const ext = filename.split('.').pop()?.toLowerCase();
+        switch (ext) {
+            case 'rs': return 'rust';
+            case 'ts': case 'tsx': return 'typescript';
+            case 'js': case 'jsx': return 'javascript';
+            case 'java': return 'java';
+            case 'php': return 'php';
+            case 'c': return 'c';
+            case 'cpp': case 'h': return 'cpp';
+            case 'cs': return 'csharp';
+            case 'kt': case 'kts': return 'kotlin';
+            case 'py': return 'python';
+            case 'html': return 'html';
+            case 'css': return 'css';
+            case 'json': return 'json';
+            case 'sql': return 'sql';
+            default: return 'text';
+        }
+    };
+
+    // Verificar se é arquivo de código
+    const isCodeFile = (filename: string): boolean => {
+        const extensions = ['rs', 'ts', 'tsx', 'js', 'jsx', 'java', 'php', 'c', 'cpp', 'cs', 'kt', 'py', 'html', 'css', 'json', 'sql', 'xml'];
+        const ext = filename.split('.').pop()?.toLowerCase();
+        return extensions.includes(ext || '');
+    };
+
+    // Abrir o visualizador de código (Faz fetch do conteúdo)
+    const openCodeViewer = async (url: string, filename: string) => {
+        try {
+            // Mostrar loading ou algo similar se necessário
+            const response = await fetch(url);
+            const text = await response.text();
+            
+            setCodeContent(text);
+            setCurrentCodeName(filename);
+            setCodeLanguage(getLanguageFromFilename(filename));
+            setCodeViewerOpen(true);
+        } catch (error) {
+            console.error("Erro ao carregar código:", error);
+            alert("Não foi possível carregar o código fonte.");
+        }
+    };
+
+    const closeCodeViewer = () => {
+        setCodeViewerOpen(false);
+        setCodeContent('');
     };
 
     // Função para atualizar conversa com mensagem direta
@@ -506,25 +626,15 @@ export const ChatContainer: React.FC = () => {
     };
 
     // Funções para manipulação de arquivos
-    const validateFile = (file: File): string | null => {
-        const allowedTypes = [
-            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'application/pdf', 'application/msword', 
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-excel',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'text/plain', 'text/csv'
-        ];
-
-        if (!allowedTypes.includes(file.type)) {
-            return `Tipo de arquivo não permitido: ${file.type}`;
-        }
-
+   const validateFile = (file: File): string | null => {
+        // Permitir tudo que for código ou texto, além das imagens e docs
+        // Lógica simplificada: se não for muito grande, passa.
+        // O backend fará a validação final de segurança.
+        
         const maxSize = 50 * 1024 * 1024; // 50MB
         if (file.size > maxSize) {
             return `Arquivo muito grande. Tamanho máximo: 50MB`;
         }
-
         return null;
     };
 
@@ -611,6 +721,9 @@ export const ChatContainer: React.FC = () => {
 
     const getFileIcon = (fileName: string) => {
         const extension = fileName.split('.').pop()?.toLowerCase();
+        if (isCodeFile(fileName)) {
+            return <FileCode className="text-purple-500" size={24} />;
+        }
         switch (extension) {
             case 'pdf':
                 return <File className="text-red-500" size={24} />;
@@ -1149,8 +1262,24 @@ export const ChatContainer: React.FC = () => {
                             </div>
                             <div className="chat-header-actions">
                                 <button className="action-button"><Search /></button>
-                                <button className="action-button"><Phone /></button>
-                                <button className="action-button"><Video /></button>
+                                 <button
+                            className="call-button audio"
+                            onClick={handleStartAudioCall}
+                            disabled={!isCallWsConnected}
+                            title="Chamada de áudio"
+                        >
+                            <Phone size={20} />
+                        </button>
+                        
+                        {/* Botão de chamada de vídeo */}
+                        <button
+                            className="call-button video"
+                            onClick={handleStartVideoCall}
+                            disabled={!isCallWsConnected}
+                            title="Chamada de vídeo"
+                        >
+                            <Video size={20} />
+                        </button>
                                 <button className="action-button"><MoreVertical /></button>
                             </div>
                         </div>
@@ -1211,37 +1340,51 @@ export const ChatContainer: React.FC = () => {
                                                     </button>
                                                 </div>
                                             </div>
-                                        ) : message.arquivo ? (
-                                            <div className="message-file">
-                                                <div className="message-file-icon">
-                                                    {getFileIcon(message.arquivo_nome || '')}
-                                                </div>
-                                                <div className="message-file-info">
-                                                    <span className="file-name">{message.arquivo_nome}</span>
-                                                    <span className="file-size">
-                                                        {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}
-                                                    </span>
-                                                </div>
-                                                <div className="message-file-actions">
-                                                    {message.arquivo_tipo === 'application/pdf' && message.arquivo_url && (
-                                                        <button 
-                                                            className="file-action-button"
-                                                            onClick={() => openPdfViewer(message.arquivo_url!, message.arquivo_nome || 'PDF')}
-                                                            title="Visualizar PDF"
-                                                        >
-                                                            <Search size={16} />
-                                                        </button>
-                                                    )}
-                                                    <button 
-                                                        className="file-action-button"
-                                                        onClick={() => downloadFile(message.arquivo_url!, message.arquivo_nome || 'arquivo')}
-                                                        title="Baixar arquivo"
-                                                    >
-                                                        <Download size={16} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
+                                       ) : message.arquivo ? (
+    <div className="message-file">
+        <div className="message-file-icon">
+            {getFileIcon(message.arquivo_nome || '')}
+        </div>
+        <div className="message-file-info">
+            <span className="file-name">{message.arquivo_nome}</span>
+            <span className="file-size">
+                {message.arquivo_tamanho ? formatFileSize(message.arquivo_tamanho) : ''}
+            </span>
+        </div>
+        <div className="message-file-actions">
+            {/* Botão de Visualizar Código */}
+            {message.arquivo_nome && isCodeFile(message.arquivo_nome) && message.arquivo_url && (
+                <button 
+                    className="file-action-button"
+                    onClick={() => openCodeViewer(message.arquivo_url!, message.arquivo_nome!)}
+                    title="Visualizar Código"
+                >
+                    <FileCode size={16} />
+                </button>
+            )}
+            
+            {/* Botão de Visualizar PDF (existente) */}
+            {message.arquivo_tipo === 'application/pdf' && message.arquivo_url && (
+                <button 
+                    className="file-action-button"
+                    onClick={() => openPdfViewer(message.arquivo_url!, message.arquivo_nome || 'PDF')}
+                    title="Visualizar PDF"
+                >
+                    <Search size={16} />
+                </button>
+            )}
+            
+            {/* Download (existente) */}
+            <button 
+                className="file-action-button"
+                onClick={() => downloadFile(message.arquivo_url!, message.arquivo_nome || 'arquivo')}
+                title="Baixar arquivo"
+            >
+                <Download size={16} />
+            </button>
+        </div>
+    </div>
+) : (
                                             <p className="message-text">{message.content}</p>
                                         )}
                                         
@@ -1267,6 +1410,20 @@ export const ChatContainer: React.FC = () => {
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
+
+                         {callState.isCallActive && callState.recipientId && callState.recipientName && (
+                <VideoCallComponent
+                    chatId={selectedConversation?.chatId || 0}
+                    userId={currentUserId}
+                    userName={currentUserName}
+                    recipientId={callState.recipientId}
+                    recipientName={callState.recipientName}
+                    onClose={endCall}
+                    initialType={callState.callType || 'audio'}
+                    isIncoming={callState.isIncoming}
+                    incomingOffer={callState.incomingCallData}
+                />
+            )}
 
                         {/* File Preview */}
                         {showFilePreview && selectedFiles.length > 0 && (
@@ -1341,7 +1498,6 @@ export const ChatContainer: React.FC = () => {
                                     ref={fileInputRef}
                                     type="file"
                                     multiple
-                                    accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
                                     onChange={handleFileSelect}
                                     style={{ display: 'none' }}
                                 />
@@ -1434,6 +1590,51 @@ export const ChatContainer: React.FC = () => {
                     </div>
                 </div>
             )}
+            {codeViewerOpen && (
+    <div className="pdf-viewer-overlay" onClick={closeCodeViewer}>
+        <div className="pdf-viewer-container" onClick={(e) => e.stopPropagation()}>
+            <div className="pdf-viewer-header" style={{backgroundColor: '#1e1e1e', borderBottom: '1px solid #333'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
+                    <FileCode size={20} color="#61dafb" />
+                    <h3 className="pdf-viewer-title" style={{color: '#d4d4d4'}}>{currentCodeName}</h3>
+                    <span style={{fontSize: '12px', color: '#888', background: '#2d2d2d', padding: '2px 6px', borderRadius: '4px'}}>
+                        {codeLanguage.toUpperCase()}
+                    </span>
+                </div>
+                <div className="pdf-viewer-controls">
+                    <button 
+                        onClick={() => downloadFile(currentCodeName, currentCodeName)} // Ajuste a URL aqui se tiver salva em state separado
+                        className="viewer-control-button" 
+                        title="Baixar"
+                        style={{background: '#333', color: '#fff', border: 'none'}}
+                    >
+                        <Download size={20} />
+                    </button>
+                    <button onClick={closeCodeViewer} className="viewer-close-button" title="Fechar">
+                        <X size={24} />
+                    </button>
+                </div>
+            </div>
+            <div className="pdf-viewer-content" style={{backgroundColor: '#1e1e1e', overflow: 'auto', display: 'block'}}>
+                <SyntaxHighlighter
+                    language={codeLanguage}
+                    style={vscDarkPlus}
+                    showLineNumbers={true}
+                    customStyle={{
+                        margin: 0,
+                        padding: '20px',
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        backgroundColor: '#1e1e1e',
+                        minHeight: '100%'
+                    }}
+                >
+                    {codeContent}
+                </SyntaxHighlighter>
+            </div>
+        </div>
+    </div>
+)}
 
             {/* Visualizador de PDF */}
             {pdfViewerOpen && (
@@ -1466,4 +1667,67 @@ export const ChatContainer: React.FC = () => {
             )}
         </div>
     );
+
+    const styles = `
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.call-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.call-button:hover:not(:disabled) {
+    background: #e0e0e0;
+    transform: scale(1.1);
+}
+
+.call-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.call-button.audio:hover:not(:disabled) {
+    background: #06d6a0;
+    color: white;
+}
+
+.call-button.video:hover:not(:disabled) {
+    background: #457b9d;
+    color: white;
+}
+
+.ws-status {
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.ws-status.connected {
+    color: #06d6a0;
+}
+
+.ws-status.disconnected {
+    color: #ef476f;
+}
+`;
 };

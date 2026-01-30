@@ -1,4 +1,4 @@
 {
-  "api_url": "http://127.0.0.1:8082",
-  "ws_url": "ws://127.0.0.1:8082/ws/notificacoes"
+  "api_url": "http://192.168.15.60:8082",
+  "ws_url": "ws://192.168.15.60:8082/ws/notificacoes"
 }
