@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 interface CallState {
@@ -22,23 +21,48 @@ export const useVideoCall = (userId: number, userName: string) => {
 
     const callWsRef = useRef<WebSocket | null>(null);
     const [isCallWsConnected, setIsCallWsConnected] = useState(false);
+    const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const isReconnectingRef = useRef(false);
     
     // Estado para modal de chamada recebida
     const [incomingCallInfo, setIncomingCallInfo] = useState<any>(null);
 
+    // Limpar timeout de reconexão
+    const clearReconnectTimeout = useCallback(() => {
+        if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+        }
+    }, []);
+
     // Inicializar WebSocket de chamadas
     const initializeCallWebSocket = useCallback(() => {
-        if (callWsRef.current) {
-            return; // Já está conectado
+        // Evitar múltiplas conexões simultâneas
+        if (callWsRef.current?.readyState === WebSocket.OPEN || 
+            callWsRef.current?.readyState === WebSocket.CONNECTING) {
+            console.log('⚠️ WebSocket já está conectado ou conectando');
+            return;
         }
+
+        // Evitar reconexões durante reconexão
+        if (isReconnectingRef.current) {
+            console.log('⚠️ Já está tentando reconectar');
+            return;
+        }
+
+        isReconnectingRef.current = true;
+        clearReconnectTimeout();
 
         try {
             const wsUrl = `ws://192.168.15.60:8082/ws/call/${userId}`;
+            console.log('🔄 Conectando ao WebSocket de chamadas:', wsUrl);
             const ws = new WebSocket(wsUrl);
 
             ws.onopen = () => {
                 console.log('✅ WebSocket de chamadas conectado');
                 setIsCallWsConnected(true);
+                isReconnectingRef.current = false;
+                clearReconnectTimeout();
             };
 
             ws.onmessage = (event) => {
@@ -52,27 +76,29 @@ export const useVideoCall = (userId: number, userName: string) => {
 
             ws.onerror = (error) => {
                 console.error('❌ Erro no WebSocket de chamadas:', error);
-                setIsCallWsConnected(false);
             };
 
-            ws.onclose = () => {
-                console.log('🔌 WebSocket de chamadas desconectado');
+            ws.onclose = (event) => {
+                console.log('🔌 WebSocket de chamadas desconectado', event.code, event.reason);
                 setIsCallWsConnected(false);
                 callWsRef.current = null;
+                isReconnectingRef.current = false;
                 
-                // Tentar reconectar após 3 segundos
-                setTimeout(() => {
-                    if (!callWsRef.current) {
+                // Tentar reconectar apenas se não foi um fechamento intencional
+                if (event.code !== 1000) {
+                    console.log('🔄 Tentando reconectar em 3 segundos...');
+                    reconnectTimeoutRef.current = setTimeout(() => {
                         initializeCallWebSocket();
-                    }
-                }, 3000);
+                    }, 3000);
+                }
             };
 
             callWsRef.current = ws;
         } catch (error) {
             console.error('❌ Erro ao inicializar WebSocket de chamadas:', error);
+            isReconnectingRef.current = false;
         }
-    }, [userId]);
+    }, [userId, clearReconnectTimeout]);
 
     // Processar sinalizações de chamada
     const handleCallSignaling = useCallback((data: any) => {
@@ -80,8 +106,9 @@ export const useVideoCall = (userId: number, userName: string) => {
 
         switch (data.type) {
             case 'call-offer':
-                // Mostrar modal de chamada recebida
                 console.log('📞 Chamada recebida de:', data.user_name);
+                // Disparar evento customizado para o Layout
+                window.dispatchEvent(new CustomEvent('incoming-call', { detail: data }));
                 setIncomingCallInfo(data);
                 break;
             
@@ -156,7 +183,17 @@ export const useVideoCall = (userId: number, userName: string) => {
 
     // Encerrar chamada
     const endCall = useCallback(() => {
-        console.log('📴 Encerrando chamada');
+        console.log('🔴 Encerrando chamada');
+        
+        // Enviar mensagem de encerramento se houver um destinatário
+        if (callState.recipientId && callWsRef.current?.readyState === WebSocket.OPEN) {
+            callWsRef.current.send(JSON.stringify({
+                type: 'call-ended',
+                from: userId,
+                to: callState.recipientId,
+            }));
+        }
+        
         setCallState({
             isCallActive: false,
             callType: null,
@@ -165,7 +202,7 @@ export const useVideoCall = (userId: number, userName: string) => {
             isIncoming: false,
             incomingCallData: null,
         });
-    }, []);
+    }, [callState.recipientId, userId]);
 
     // Verificar se usuário pode receber chamada
     const checkUserAvailability = useCallback(async (targetUserId: number): Promise<boolean> => {
@@ -179,7 +216,7 @@ export const useVideoCall = (userId: number, userName: string) => {
         }
     }, []);
 
-    // Enviar mensagem de sinalização (expor para VideoCallComponent usar)
+    // Enviar mensagem de sinalização
     const sendSignalingMessage = useCallback((message: any) => {
         if (callWsRef.current && callWsRef.current.readyState === WebSocket.OPEN) {
             callWsRef.current.send(JSON.stringify(message));
@@ -194,12 +231,13 @@ export const useVideoCall = (userId: number, userName: string) => {
         initializeCallWebSocket();
 
         return () => {
+            clearReconnectTimeout();
             if (callWsRef.current) {
-                callWsRef.current.close();
+                callWsRef.current.close(1000, 'Component unmounting');
                 callWsRef.current = null;
             }
         };
-    }, [initializeCallWebSocket]);
+    }, [initializeCallWebSocket, clearReconnectTimeout]);
 
     return {
         callState,
@@ -211,7 +249,7 @@ export const useVideoCall = (userId: number, userName: string) => {
         startVideoCall,
         endCall,
         checkUserAvailability,
-        sendSignalingMessage, // Expor para VideoCallComponent usar
-        callWsRef, // Expor referência do WebSocket
+        sendSignalingMessage,
+        callWsRef,
     };
 };

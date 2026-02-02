@@ -100,7 +100,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
 
     const initializeWebSocket = async () => {
         try {
-            // URL do servidor WebSocket - ajuste conforme necessário
+            // URL do servidor WebSocket
             const wsUrl = `ws://192.168.15.60:8082/ws/call/${userId}`;
             wsRef.current = new WebSocket(wsUrl);
 
@@ -192,9 +192,9 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                     type: 'call-offer',
                     from: userId,
                     to: recipientId,
-                    chatId: chatId,
-                    callType: isVideoEnabled ? 'video' : 'audio',
-                    userName: userName,
+                    chat_id: chatId,
+                    call_type: isVideoEnabled ? 'video' : 'audio',
+                    user_name: userName,
                     offer: offer
                 });
             }

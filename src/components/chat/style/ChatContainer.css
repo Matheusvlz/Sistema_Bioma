@@ -1807,3 +1807,64 @@
     background-color: #6b7280; /* Cinza */
 }
 
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.chat-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.call-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: #f0f0f0;
+    color: #333;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.call-button:hover:not(:disabled) {
+    background: #e0e0e0;
+    transform: scale(1.1);
+}
+
+.call-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.call-button.audio:hover:not(:disabled) {
+    background: #06d6a0;
+    color: white;
+}
+
+.call-button.video:hover:not(:disabled) {
+    background: #457b9d;
+    color: white;
+}
+
+.ws-status {
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.ws-status.connected {
+    color: #06d6a0;
+}
+
+.ws-status.disconnected {
+    color: #ef476f;
+}

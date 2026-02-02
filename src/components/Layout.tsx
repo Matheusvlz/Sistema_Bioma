@@ -10,6 +10,7 @@ import ChatNotification from './ChatNotification';
 import ChatNotificationModal from './ChatNotificationModal';
 import NormalNotification from './NormalNotification';
 import KanbanNotification from './KanbanNotification';
+import { IncomingCallModal } from './chat/IncomingCallModal';
 
 // --- Interfaces ---
 interface WebSocketMessagePayload {
@@ -166,6 +167,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     setShowKanbanPopup(false);
     setKanbanNotification(null);
   };
+    const [incomingCall, setIncomingCall] = useState<any>(null);
 
   const handleOpenChat = (chatId?: number) => {
     console.log(`Opening chat${chatId ? ` with ID: ${chatId}` : ''}`);
@@ -379,6 +381,8 @@ useEffect(() => {
   }, [fetchInicioData]);
 
   useEffect(() => {
+
+    
     const handleStorageChange = () => {
       const savedMode = localStorage.getItem('appDarkMode');
       if (savedMode !== null) {
@@ -391,7 +395,37 @@ useEffect(() => {
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+  useEffect(() => {
+        // Escutar eventos de chamada recebida
+        const handleIncomingCall = (event: CustomEvent) => {
+            console.log('📞 Layout recebeu notificação de chamada:', event.detail);
+            setIncomingCall(event.detail);
+        };
 
+        window.addEventListener('incoming-call' as any, handleIncomingCall);
+
+        return () => {
+            window.removeEventListener('incoming-call' as any, handleIncomingCall);
+        };
+    }, []);
+
+    const handleAcceptCall = () => {
+        if (incomingCall) {
+            console.log('✅ Aceitando chamada no Layout');
+            // Disparar evento para aceitar chamada
+            window.dispatchEvent(new CustomEvent('accept-call', { detail: incomingCall }));
+            setIncomingCall(null);
+        }
+    };
+
+    const handleRejectCall = () => {
+        if (incomingCall) {
+            console.log('❌ Rejeitando chamada no Layout');
+            // Disparar evento para rejeitar chamada
+            window.dispatchEvent(new CustomEvent('reject-call', { detail: incomingCall }));
+            setIncomingCall(null);
+        }
+    };
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -719,7 +753,14 @@ useEffect(() => {
           </div>
         </div>
       </header>
-      
+       {incomingCall && (
+                <IncomingCallModal
+                    callerName={incomingCall.user_name}
+                    callType={incomingCall.call_type}
+                    onAccept={handleAcceptCall}
+                    onReject={handleRejectCall}
+                />
+            )}
       <div className="layout-body">
         <aside className="layout-sidebar">
           <nav className="sidebar-nav">
