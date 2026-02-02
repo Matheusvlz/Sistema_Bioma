@@ -1,0 +1,235 @@
+/* IncomingCallModal.css */
+
+.incoming-call-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.incoming-call-modal {
+    background: linear-gradient(145deg, #1e1e1e 0%, #2d2d2d 100%);
+    border-radius: 24px;
+    padding: 48px 40px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    animation: modalSlideIn 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.caller-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    position: relative;
+    z-index: 2;
+}
+
+.call-info {
+    text-align: center;
+    z-index: 2;
+}
+
+.caller-name {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 12px 0;
+}
+
+.call-type-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    color: #b0b0b0;
+    margin: 0;
+}
+
+.call-type-text svg {
+    color: #667eea;
+}
+
+/* Animação de pulso */
+.calling-animation {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+}
+
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    border: 3px solid rgba(102, 126, 234, 0.6);
+    border-radius: 50%;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.pulse-ring.delay-1 {
+    animation-delay: 0.5s;
+}
+
+.pulse-ring.delay-2 {
+    animation-delay: 1s;
+}
+
+@keyframes pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2.5);
+        opacity: 0;
+    }
+}
+
+/* Botões de ação */
+.call-actions {
+    display: flex;
+    gap: 32px;
+    margin-top: 16px;
+    z-index: 2;
+}
+
+.call-action-button {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.call-action-button::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -4px;
+    right: -4px;
+    bottom: -4px;
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.call-action-button:hover::before {
+    opacity: 1;
+}
+
+.call-action-button.reject {
+    background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
+    color: white;
+}
+
+.call-action-button.reject::before {
+    background: linear-gradient(135deg, #ff4757 0%, #ff6348 100%);
+    filter: blur(8px);
+}
+
+.call-action-button.reject:hover {
+    transform: scale(1.1);
+    box-shadow: 0 12px 30px rgba(255, 71, 87, 0.5);
+}
+
+.call-action-button.accept {
+    background: linear-gradient(135deg, #06d6a0 0%, #00c896 100%);
+    color: white;
+    animation: acceptPulse 2s ease-in-out infinite;
+}
+
+.call-action-button.accept::before {
+    background: linear-gradient(135deg, #06d6a0 0%, #00c896 100%);
+    filter: blur(8px);
+}
+
+.call-action-button.accept:hover {
+    transform: scale(1.15);
+    box-shadow: 0 12px 30px rgba(6, 214, 160, 0.6);
+    animation: none;
+}
+
+@keyframes acceptPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.call-action-button:active {
+    transform: scale(0.95);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .incoming-call-modal {
+        padding: 32px 24px;
+        max-width: 90%;
+    }
+
+    .caller-avatar {
+        width: 80px;
+        height: 80px;
+    }
+
+    .caller-name {
+        font-size: 24px;
+    }
+
+    .call-type-text {
+        font-size: 14px;
+    }
+
+    .call-action-button {
+        width: 60px;
+        height: 60px;
+    }
+
+    .call-actions {
+        gap: 24px;
+    }
+}

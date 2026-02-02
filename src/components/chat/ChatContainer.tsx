@@ -7,6 +7,7 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import './style/ChatContainer.css';
 import { useVideoCall } from '../../hooks/useVideoCall';
 import { VideoCallComponent } from './VideoCallComponent';
+import { IncomingCallModal } from './IncomingCallModal';
 // --- Interfaces ---
 interface Message {
     id: number;
@@ -166,14 +167,48 @@ export const ChatContainer: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-      const {
+        const {
         callState,
         isCallWsConnected,
+        incomingCallInfo,        // NOVO
+        acceptIncomingCall,      // NOVO
+        rejectIncomingCall,      // NOVO
         startAudioCall,
         startVideoCall,
         endCall,
         checkUserAvailability,
+        sendSignalingMessage,    // NOVO
+        callWsRef,               // NOVO
     } = useVideoCall(currentUserId, currentUserName);
+    
+
+
+    VideoCallComponent
+    useEffect(() => {
+        if (!callWsRef.current) return;
+
+        const ws = callWsRef.current;
+        
+        const handleMessage = (event: MessageEvent) => {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // Disparar evento customizado para VideoCallComponent
+                const customEvent = new CustomEvent('call-signaling-message', {
+                    detail: data
+                });
+                window.dispatchEvent(customEvent);
+            } catch (error) {
+                console.error('Erro ao processar mensagem WebSocket:', error);
+            }
+        };
+
+        ws.addEventListener('message', handleMessage);
+
+        return () => {
+            ws.removeEventListener('message', handleMessage);
+        };
+    }, [callWsRef.current]);
 
      const handleStartAudioCall = async () => {
         if (!selectedConversation) return;
@@ -1410,8 +1445,15 @@ export const ChatContainer: React.FC = () => {
                             ))}
                             <div ref={messagesEndRef} />
                         </div>
-
-                         {callState.isCallActive && callState.recipientId && callState.recipientName && (
+                            {incomingCallInfo && (
+                <IncomingCallModal
+                    callerName={incomingCallInfo.user_name}
+                    callType={incomingCallInfo.call_type}
+                    onAccept={() => acceptIncomingCall(incomingCallInfo)}
+                    onReject={() => rejectIncomingCall(incomingCallInfo)}
+                />
+            )}   
+                      {callState.isCallActive && callState.recipientId && callState.recipientName && (
                 <VideoCallComponent
                     chatId={selectedConversation?.chatId || 0}
                     userId={currentUserId}
@@ -1422,6 +1464,7 @@ export const ChatContainer: React.FC = () => {
                     initialType={callState.callType || 'audio'}
                     isIncoming={callState.isIncoming}
                     incomingOffer={callState.incomingCallData}
+                    sendSignalingMessage={sendSignalingMessage} 
                 />
             )}
 

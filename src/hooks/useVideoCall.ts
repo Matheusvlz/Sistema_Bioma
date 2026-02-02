@@ -1,4 +1,3 @@
-// useVideoCall.ts - Hook para gerenciar chamadas de vídeo
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
@@ -23,6 +22,9 @@ export const useVideoCall = (userId: number, userName: string) => {
 
     const callWsRef = useRef<WebSocket | null>(null);
     const [isCallWsConnected, setIsCallWsConnected] = useState(false);
+    
+    // Estado para modal de chamada recebida
+    const [incomingCallInfo, setIncomingCallInfo] = useState<any>(null);
 
     // Inicializar WebSocket de chamadas
     const initializeCallWebSocket = useCallback(() => {
@@ -78,8 +80,9 @@ export const useVideoCall = (userId: number, userName: string) => {
 
         switch (data.type) {
             case 'call-offer':
-                // Chamada recebida
-                handleIncomingCall(data);
+                // Mostrar modal de chamada recebida
+                console.log('📞 Chamada recebida de:', data.user_name);
+                setIncomingCallInfo(data);
                 break;
             
             case 'call-busy':
@@ -98,22 +101,9 @@ export const useVideoCall = (userId: number, userName: string) => {
         }
     }, []);
 
-    // Lidar com chamada recebida
-    const handleIncomingCall = useCallback((data: any) => {
-        // Mostrar notificação ou modal de chamada recebida
-        const shouldAccept = window.confirm(
-            `${data.user_name} está chamando você (${data.call_type}). Aceitar?`
-        );
-
-        if (shouldAccept) {
-            acceptIncomingCall(data);
-        } else {
-            rejectIncomingCall(data);
-        }
-    }, []);
-
     // Aceitar chamada recebida
     const acceptIncomingCall = useCallback((data: any) => {
+        console.log('✅ Aceitando chamada de:', data.user_name);
         setCallState({
             isCallActive: true,
             callType: data.call_type as 'audio' | 'video',
@@ -122,10 +112,12 @@ export const useVideoCall = (userId: number, userName: string) => {
             isIncoming: true,
             incomingCallData: data.offer,
         });
+        setIncomingCallInfo(null);
     }, []);
 
     // Rejeitar chamada recebida
     const rejectIncomingCall = useCallback((data: any) => {
+        console.log('❌ Rejeitando chamada de:', data.user_name);
         if (callWsRef.current && callWsRef.current.readyState === WebSocket.OPEN) {
             callWsRef.current.send(JSON.stringify({
                 type: 'call-rejected',
@@ -133,10 +125,12 @@ export const useVideoCall = (userId: number, userName: string) => {
                 to: data.from,
             }));
         }
+        setIncomingCallInfo(null);
     }, [userId]);
 
     // Iniciar chamada de áudio
     const startAudioCall = useCallback((recipientId: number, recipientName: string, chatId: number) => {
+        console.log('📞 Iniciando chamada de áudio para:', recipientName);
         setCallState({
             isCallActive: true,
             callType: 'audio',
@@ -149,6 +143,7 @@ export const useVideoCall = (userId: number, userName: string) => {
 
     // Iniciar chamada de vídeo
     const startVideoCall = useCallback((recipientId: number, recipientName: string, chatId: number) => {
+        console.log('📹 Iniciando chamada de vídeo para:', recipientName);
         setCallState({
             isCallActive: true,
             callType: 'video',
@@ -161,6 +156,7 @@ export const useVideoCall = (userId: number, userName: string) => {
 
     // Encerrar chamada
     const endCall = useCallback(() => {
+        console.log('📴 Encerrando chamada');
         setCallState({
             isCallActive: false,
             callType: null,
@@ -183,6 +179,16 @@ export const useVideoCall = (userId: number, userName: string) => {
         }
     }, []);
 
+    // Enviar mensagem de sinalização (expor para VideoCallComponent usar)
+    const sendSignalingMessage = useCallback((message: any) => {
+        if (callWsRef.current && callWsRef.current.readyState === WebSocket.OPEN) {
+            callWsRef.current.send(JSON.stringify(message));
+            console.log('📤 Mensagem de sinalização enviada:', message.type);
+        } else {
+            console.error('❌ WebSocket não está conectado');
+        }
+    }, []);
+
     // Inicializar WebSocket quando o componente montar
     useEffect(() => {
         initializeCallWebSocket();
@@ -198,9 +204,14 @@ export const useVideoCall = (userId: number, userName: string) => {
     return {
         callState,
         isCallWsConnected,
+        incomingCallInfo,
+        acceptIncomingCall,
+        rejectIncomingCall,
         startAudioCall,
         startVideoCall,
         endCall,
         checkUserAvailability,
+        sendSignalingMessage, // Expor para VideoCallComponent usar
+        callWsRef, // Expor referência do WebSocket
     };
 };
