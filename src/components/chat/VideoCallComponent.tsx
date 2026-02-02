@@ -60,6 +60,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     // Refs para elementos de vídeo e conexão
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
+    const screenPreviewRef = useRef<HTMLVideoElement>(null); // Preview do compartilhamento de tela
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const screenStreamRef = useRef<MediaStream | null>(null);
@@ -97,6 +98,17 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
             }
         };
     }, [callStatus]);
+
+    // Garantir que a stream de compartilhamento seja atribuída ao vídeo
+    useEffect(() => {
+        if (isScreenSharing && screenStreamRef.current && screenPreviewRef.current) {
+            console.log('🔄 Atualizando preview de compartilhamento de tela');
+            screenPreviewRef.current.srcObject = screenStreamRef.current;
+            screenPreviewRef.current.play().catch(e => {
+                console.warn('⚠️ Erro ao dar play no preview:', e);
+            });
+        }
+    }, [isScreenSharing]);
 
     const initializeWebSocket = async () => {
         try {
@@ -488,6 +500,23 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
 
                 screenStreamRef.current = screenStream;
 
+                // Mostrar preview do compartilhamento de tela
+                if (screenPreviewRef.current) {
+                    screenPreviewRef.current.srcObject = screenStream;
+                    console.log('✅ Preview de compartilhamento atribuído', {
+                        tracks: screenStream.getTracks().length,
+                        videoTracks: screenStream.getVideoTracks().length,
+                        active: screenStream.active
+                    });
+                    
+                    // Forçar play caso o navegador pause automaticamente
+                    screenPreviewRef.current.play().catch(e => {
+                        console.warn('⚠️ Não foi possível dar play automaticamente:', e);
+                    });
+                } else {
+                    console.error('❌ screenPreviewRef.current é null');
+                }
+
                 // Substituir track de vídeo
                 const videoTrack = screenStream.getVideoTracks()[0];
                 const sender = peerConnectionRef.current?.getSenders().find(s => 
@@ -495,7 +524,8 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 );
 
                 if (sender) {
-                    sender.replaceTrack(videoTrack);
+                    await sender.replaceTrack(videoTrack);
+                    console.log('✅ Track de vídeo substituído para tela');
                 }
 
                 // Quando o usuário parar de compartilhar
@@ -517,6 +547,11 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
         if (screenStreamRef.current) {
             screenStreamRef.current.getTracks().forEach(track => track.stop());
             screenStreamRef.current = null;
+        }
+
+        // Limpar preview do compartilhamento de tela
+        if (screenPreviewRef.current) {
+            screenPreviewRef.current.srcObject = null;
         }
 
         // Voltar para câmera
@@ -656,7 +691,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                     </div>
 
                     {/* Vídeo local (picture-in-picture) */}
-                    {isVideoEnabled && (
+                    {isVideoEnabled && !isScreenSharing && (
                         <div className="local-video-wrapper">
                             <video
                                 ref={localVideoRef}
@@ -665,6 +700,23 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                                 muted
                                 className="local-video"
                             />
+                        </div>
+                    )}
+
+                    {/* Preview do compartilhamento de tela */}
+                    {isScreenSharing && (
+                        <div className="local-video-wrapper screen-preview">
+                            <video
+                                ref={screenPreviewRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                className="local-video"
+                            />
+                            <div className="screen-sharing-indicator">
+                                <Monitor size={16} />
+                                <span>Compartilhando tela</span>
+                            </div>
                         </div>
                     )}
                 </div>

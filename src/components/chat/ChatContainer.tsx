@@ -224,10 +224,7 @@ export const ChatContainer: React.FC = () => {
 
         // Verificar disponibilidade
         const available = await checkUserAvailability(recipientId);
-        if (!available) {
-            alert('Usuário não está disponível para chamadas');
-            return;
-        }
+       
 
         const recipientName = selectedConversation.members.find(
             (m: any) => m.id !== currentUserId
@@ -251,10 +248,7 @@ export const ChatContainer: React.FC = () => {
 
         // Verificar disponibilidade
         const available = await checkUserAvailability(recipientId);
-        if (!available) {
-            alert('Usuário não está disponível para chamadas');
-            return;
-        }
+      
 
         const recipientName = selectedConversation.members.find(
             (m: any) => m.id !== currentUserId
@@ -1181,7 +1175,7 @@ export const ChatContainer: React.FC = () => {
                     </div>
                     {/* Search Bar */}
                     <div className="search-container">
-                        <Search className="search-icon" />
+                  
                         <input
                             type="text"
                             placeholder="Pesquisar contatos..."
