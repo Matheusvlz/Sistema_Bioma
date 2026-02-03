@@ -60,7 +60,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     // Refs para elementos de vídeo e conexão
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRef = useRef<HTMLVideoElement>(null);
-    const screenPreviewRef = useRef<HTMLVideoElement>(null); // Preview do compartilhamento de tela
+    const screenPreviewRef = useRef<HTMLVideoElement>(null);
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
     const localStreamRef = useRef<MediaStream | null>(null);
     const screenStreamRef = useRef<MediaStream | null>(null);
@@ -99,7 +99,16 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
         };
     }, [callStatus]);
 
-    // Garantir que a stream de compartilhamento seja atribuída ao vídeo
+    // Garantir que streams sejam atribuídas aos vídeos
+    useEffect(() => {
+        if (localStreamRef.current && localVideoRef.current && !isScreenSharing) {
+            localVideoRef.current.srcObject = localStreamRef.current;
+            localVideoRef.current.play().catch(e => {
+                console.warn('⚠️ Erro ao dar play no vídeo local:', e);
+            });
+        }
+    }, [localStreamRef.current, isScreenSharing]);
+
     useEffect(() => {
         if (isScreenSharing && screenStreamRef.current && screenPreviewRef.current) {
             console.log('🔄 Atualizando preview de compartilhamento de tela');
@@ -108,11 +117,10 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 console.warn('⚠️ Erro ao dar play no preview:', e);
             });
         }
-    }, [isScreenSharing]);
+    }, [isScreenSharing, screenStreamRef.current]);
 
     const initializeWebSocket = async () => {
         try {
-            // URL do servidor WebSocket
             const wsUrl = `ws://192.168.15.60:8082/ws/call/${userId}`;
             wsRef.current = new WebSocket(wsUrl);
 
@@ -194,7 +202,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
             if (peerConnectionRef.current) {
                 const offer = await peerConnectionRef.current.createOffer({
                     offerToReceiveAudio: true,
-                    offerToReceiveVideo: isVideoEnabled
+                    offerToReceiveVideo: true // SEMPRE true para receber vídeo do outro lado
                 });
                 
                 await peerConnectionRef.current.setLocalDescription(offer);
@@ -232,14 +240,21 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 } : false
             };
 
+            console.log('🎥 Solicitando mídia com constraints:', constraints);
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             localStreamRef.current = stream;
 
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
+            console.log('✅ Mídia local obtida:', {
+                audioTracks: stream.getAudioTracks().length,
+                videoTracks: stream.getVideoTracks().length
+            });
 
-            console.log('✅ Mídia local obtida');
+            // Atribuir stream ao elemento de vídeo local
+            if (localVideoRef.current && isVideoEnabled) {
+                localVideoRef.current.srcObject = stream;
+                await localVideoRef.current.play();
+                console.log('✅ Vídeo local sendo exibido');
+            }
         } catch (error) {
             console.error('❌ Erro ao obter mídia local:', error);
             throw error;
@@ -248,40 +263,64 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
 
     const createPeerConnection = () => {
         const config: RTCConfiguration = {
-            iceServers: iceServers
+            iceServers: iceServers,
+            // Adicionar configurações para melhorar conectividade
+            iceCandidatePoolSize: 10,
+            bundlePolicy: 'max-bundle',
+            rtcpMuxPolicy: 'require'
         };
 
         peerConnectionRef.current = new RTCPeerConnection(config);
 
-        // Adicionar tracks locais à conexão
-        localStreamRef.current?.getTracks().forEach(track => {
-            if (localStreamRef.current && peerConnectionRef.current) {
-                peerConnectionRef.current.addTrack(track, localStreamRef.current);
-                console.log('➕ Track adicionado:', track.kind);
-            }
-        });
+        // CRÍTICO: Adicionar tracks locais à conexão ANTES de criar offer/answer
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+                if (localStreamRef.current && peerConnectionRef.current) {
+                    const sender = peerConnectionRef.current.addTrack(track, localStreamRef.current);
+                    console.log('➕ Track adicionado ao peer:', {
+                        kind: track.kind,
+                        enabled: track.enabled,
+                        readyState: track.readyState,
+                        label: track.label
+                    });
+                }
+            });
+        }
 
         // Lidar com tracks remotos
         peerConnectionRef.current.ontrack = (event) => {
-            console.log('📥 Track remoto recebido:', event.track.kind);
-            if (remoteVideoRef.current) {
+            console.log('📥 Track remoto recebido:', {
+                kind: event.track.kind,
+                streams: event.streams.length,
+                track: event.track
+            });
+            
+            if (remoteVideoRef.current && event.streams[0]) {
                 remoteVideoRef.current.srcObject = event.streams[0];
+                remoteVideoRef.current.play().catch(e => {
+                    console.error('❌ Erro ao dar play no vídeo remoto:', e);
+                });
+                
                 if (callStatus !== 'connected') {
                     setCallStatus('connected');
                 }
+                
+                console.log('✅ Stream remoto atribuído ao vídeo');
             }
         };
 
         // Lidar com candidatos ICE
         peerConnectionRef.current.onicecandidate = (event) => {
             if (event.candidate) {
-                console.log('🧊 ICE candidate gerado');
+                console.log('🧊 ICE candidate gerado:', event.candidate.type);
                 sendSignalingMessage({
                     type: 'ice-candidate',
                     candidate: event.candidate,
                     from: userId,
                     to: recipientId
                 });
+            } else {
+                console.log('✅ Todos os ICE candidates foram coletados');
             }
         };
 
@@ -292,7 +331,14 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
             
             if (state === 'connected') {
                 setCallStatus('connected');
-            } else if (state === 'disconnected' || state === 'failed' || state === 'closed') {
+                console.log('✅ Conexão WebRTC estabelecida!');
+            } else if (state === 'disconnected' || state === 'failed') {
+                console.error('❌ Conexão falhou ou desconectou:', state);
+                // Tentar reconectar antes de desistir
+                if (state === 'failed') {
+                    endCall();
+                }
+            } else if (state === 'closed') {
                 endCall();
             }
         };
@@ -301,14 +347,35 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
         peerConnectionRef.current.oniceconnectionstatechange = () => {
             const state = peerConnectionRef.current?.iceConnectionState;
             console.log('🧊 Estado ICE:', state);
+            
+            if (state === 'failed') {
+                console.error('❌ Falha na conexão ICE - possível problema de firewall/NAT');
+            }
         };
 
-        console.log('✅ Peer connection criada');
+        // Monitorar estado de gathering ICE
+        peerConnectionRef.current.onicegatheringstatechange = () => {
+            const state = peerConnectionRef.current?.iceGatheringState;
+            console.log('🔍 Estado de coleta ICE:', state);
+        };
+
+        // Monitorar estado de sinalização
+        peerConnectionRef.current.onsignalingstatechange = () => {
+            const state = peerConnectionRef.current?.signalingState;
+            console.log('📡 Estado de sinalização:', state);
+        };
+
+        // Log de negociação
+        peerConnectionRef.current.onnegotiationneeded = async () => {
+            console.log('🔄 Negociação necessária');
+        };
+
+        console.log('✅ Peer connection criada com configuração:', config);
     };
 
     const handleSignalingMessage = async (data: any) => {
         try {
-            console.log('📨 Mensagem recebida:', data.type);
+            console.log('📨 Mensagem de sinalização recebida:', data.type);
             
             switch (data.type) {
                 case 'call-answer':
@@ -346,21 +413,25 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
 
     const handleCallOffer = async (data: any) => {
         try {
+            console.log('📨 Processando oferta recebida');
             if (peerConnectionRef.current && data.offer) {
                 await peerConnectionRef.current.setRemoteDescription(
                     new RTCSessionDescription(data.offer)
                 );
+                console.log('✅ Remote description definida (offer)');
                 
                 // Processar candidatos ICE enfileirados
                 while (iceCandidatesQueue.current.length > 0) {
                     const candidate = iceCandidatesQueue.current.shift();
                     if (candidate) {
                         await peerConnectionRef.current.addIceCandidate(candidate);
+                        console.log('✅ ICE candidate da fila processado');
                     }
                 }
                 
                 const answer = await peerConnectionRef.current.createAnswer();
                 await peerConnectionRef.current.setLocalDescription(answer);
+                console.log('✅ Answer criada e local description definida');
                 
                 sendSignalingMessage({
                     type: 'call-answer',
@@ -376,20 +447,21 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
 
     const handleCallAnswer = async (data: any) => {
         try {
+            console.log('📨 Processando resposta recebida');
             if (peerConnectionRef.current && data.answer) {
                 await peerConnectionRef.current.setRemoteDescription(
                     new RTCSessionDescription(data.answer)
                 );
+                console.log('✅ Remote description definida (answer)');
                 
                 // Processar candidatos ICE enfileirados
                 while (iceCandidatesQueue.current.length > 0) {
                     const candidate = iceCandidatesQueue.current.shift();
                     if (candidate) {
                         await peerConnectionRef.current.addIceCandidate(candidate);
+                        console.log('✅ ICE candidate da fila processado');
                     }
                 }
-                
-                console.log('✅ Resposta de chamada processada');
             }
         } catch (error) {
             console.error('❌ Erro ao processar resposta:', error);
@@ -403,11 +475,11 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 
                 if (peerConnectionRef.current?.remoteDescription) {
                     await peerConnectionRef.current.addIceCandidate(candidate);
-                    console.log('✅ ICE candidate adicionado');
+                    console.log('✅ ICE candidate adicionado:', candidate.type);
                 } else {
                     // Enfileirar candidatos se ainda não temos descrição remota
                     iceCandidatesQueue.current.push(candidate);
-                    console.log('⏳ ICE candidate enfileirado');
+                    console.log('⏳ ICE candidate enfileirado (aguardando remote description)');
                 }
             }
         } catch (error) {
@@ -418,9 +490,9 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     const sendSignalingMessage = (message: any) => {
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.send(JSON.stringify(message));
-            console.log('📤 Mensagem enviada:', message.type);
+            console.log('📤 Mensagem de sinalização enviada:', message.type);
         } else {
-            console.error('❌ WebSocket não está conectado');
+            console.error('❌ WebSocket não está conectado, não é possível enviar:', message.type);
         }
     };
 
@@ -454,44 +526,35 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                         }
                     });
                     
-                    const newVideoTrack = videoStream.getVideoTracks()[0];
-                    localStreamRef.current.addTrack(newVideoTrack);
+                    const videoTrack = videoStream.getVideoTracks()[0];
+                    localStreamRef.current.addTrack(videoTrack);
                     
-                    const sender = peerConnectionRef.current?.getSenders().find(s => 
-                        s.track?.kind === 'video'
-                    );
-                    
-                    if (sender) {
-                        sender.replaceTrack(newVideoTrack);
-                    } else {
-                        peerConnectionRef.current?.addTrack(newVideoTrack, localStreamRef.current);
+                    // Adicionar à conexão peer
+                    if (peerConnectionRef.current) {
+                        const sender = peerConnectionRef.current.addTrack(videoTrack, localStreamRef.current);
+                        console.log('➕ Track de vídeo adicionado dinamicamente');
                     }
                     
                     if (localVideoRef.current) {
                         localVideoRef.current.srcObject = localStreamRef.current;
+                        await localVideoRef.current.play();
                     }
                     
                     setIsVideoEnabled(true);
                 } catch (error) {
-                    console.error('❌ Erro ao ativar vídeo:', error);
+                    console.error('❌ Erro ao adicionar vídeo:', error);
+                    alert('Não foi possível ativar a câmera');
                 }
             }
-        }
-    };
-
-    const toggleSpeaker = () => {
-        if (remoteVideoRef.current) {
-            remoteVideoRef.current.muted = !remoteVideoRef.current.muted;
-            setIsSpeakerOn(!remoteVideoRef.current.muted);
-            console.log(remoteVideoRef.current.muted ? '🔇 Som desligado' : '🔊 Som ligado');
         }
     };
 
     const toggleScreenShare = async () => {
         if (!isScreenSharing) {
             try {
+                // Solicitar compartilhamento de tela
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: { 
+                    video: {
                         cursor: 'always',
                         displaySurface: 'monitor'
                     },
@@ -499,37 +562,29 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 });
 
                 screenStreamRef.current = screenStream;
-
-                // Mostrar preview do compartilhamento de tela
-                if (screenPreviewRef.current) {
-                    screenPreviewRef.current.srcObject = screenStream;
-                    console.log('✅ Preview de compartilhamento atribuído', {
-                        tracks: screenStream.getTracks().length,
-                        videoTracks: screenStream.getVideoTracks().length,
-                        active: screenStream.active
-                    });
-                    
-                    // Forçar play caso o navegador pause automaticamente
-                    screenPreviewRef.current.play().catch(e => {
-                        console.warn('⚠️ Não foi possível dar play automaticamente:', e);
-                    });
-                } else {
-                    console.error('❌ screenPreviewRef.current é null');
-                }
-
-                // Substituir track de vídeo
-                const videoTrack = screenStream.getVideoTracks()[0];
+                
+                // Obter track de vídeo da tela
+                const screenTrack = screenStream.getVideoTracks()[0];
+                
+                // Encontrar o sender de vídeo atual
                 const sender = peerConnectionRef.current?.getSenders().find(s => 
                     s.track?.kind === 'video'
                 );
 
                 if (sender) {
-                    await sender.replaceTrack(videoTrack);
-                    console.log('✅ Track de vídeo substituído para tela');
+                    // Substituir track da câmera pela da tela
+                    await sender.replaceTrack(screenTrack);
+                    console.log('✅ Track de vídeo substituído por compartilhamento de tela');
                 }
 
-                // Quando o usuário parar de compartilhar
-                videoTrack.onended = () => {
+                // Atualizar preview
+                if (screenPreviewRef.current) {
+                    screenPreviewRef.current.srcObject = screenStream;
+                    await screenPreviewRef.current.play();
+                }
+
+                // Detectar quando usuário para o compartilhamento
+                screenTrack.onended = () => {
                     stopScreenShare();
                 };
 
@@ -537,6 +592,7 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
                 console.log('🖥️ Compartilhamento de tela iniciado');
             } catch (error) {
                 console.error('❌ Erro ao compartilhar tela:', error);
+                alert('Não foi possível compartilhar a tela');
             }
         } else {
             stopScreenShare();
@@ -544,30 +600,48 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     };
 
     const stopScreenShare = async () => {
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach(track => track.stop());
-            screenStreamRef.current = null;
-        }
+        if (!screenStreamRef.current) return;
 
-        // Limpar preview do compartilhamento de tela
+        // Parar tracks de compartilhamento
+        screenStreamRef.current.getTracks().forEach(track => track.stop());
+        screenStreamRef.current = null;
+
+        // Limpar preview
         if (screenPreviewRef.current) {
             screenPreviewRef.current.srcObject = null;
         }
 
         // Voltar para câmera
-        if (localStreamRef.current) {
+        if (localStreamRef.current && isVideoEnabled) {
             const videoTrack = localStreamRef.current.getVideoTracks()[0];
             const sender = peerConnectionRef.current?.getSenders().find(s => 
                 s.track?.kind === 'video'
             );
 
             if (sender && videoTrack) {
-                sender.replaceTrack(videoTrack);
+                await sender.replaceTrack(videoTrack);
+                console.log('✅ Voltou para câmera');
+            }
+        } else {
+            // Se não tem vídeo habilitado, remover track de vídeo
+            const sender = peerConnectionRef.current?.getSenders().find(s => 
+                s.track?.kind === 'video'
+            );
+            if (sender) {
+                await sender.replaceTrack(null);
             }
         }
 
         setIsScreenSharing(false);
         console.log('🖥️ Compartilhamento de tela encerrado');
+    };
+
+    const toggleSpeaker = () => {
+        if (remoteVideoRef.current) {
+            remoteVideoRef.current.muted = !isSpeakerOn;
+            setIsSpeakerOn(!isSpeakerOn);
+            console.log(isSpeakerOn ? '🔇 Som desligado' : '🔊 Som ligado');
+        }
     };
 
     const rejectCall = () => {
@@ -599,27 +673,52 @@ export const VideoCallComponent: React.FC<VideoCallProps> = ({
     };
 
     const cleanup = () => {
-        // Parar todas as tracks
+        console.log('🧹 Iniciando limpeza...');
+        
+        // Parar todas as tracks locais
         localStreamRef.current?.getTracks().forEach(track => {
             track.stop();
-            console.log('⏹️ Track parado:', track.kind);
+            console.log('⏹️ Track local parado:', track.kind);
         });
-        screenStreamRef.current?.getTracks().forEach(track => track.stop());
+        
+        // Parar tracks de compartilhamento
+        screenStreamRef.current?.getTracks().forEach(track => {
+            track.stop();
+            console.log('⏹️ Track de tela parado:', track.kind);
+        });
+        
+        // Limpar elementos de vídeo
+        if (localVideoRef.current) {
+            localVideoRef.current.srcObject = null;
+        }
+        if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = null;
+        }
+        if (screenPreviewRef.current) {
+            screenPreviewRef.current.srcObject = null;
+        }
         
         // Fechar conexão peer
-        peerConnectionRef.current?.close();
+        if (peerConnectionRef.current) {
+            peerConnectionRef.current.close();
+            peerConnectionRef.current = null;
+            console.log('❌ Peer connection fechada');
+        }
         
         // Fechar WebSocket
         if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
             wsRef.current.close();
+            wsRef.current = null;
+            console.log('❌ WebSocket fechado');
         }
         
         // Limpar timer
         if (callTimerRef.current) {
             clearInterval(callTimerRef.current);
+            callTimerRef.current = null;
         }
 
-        console.log('🧹 Limpeza concluída');
+        console.log('✅ Limpeza concluída');
     };
 
     const formatDuration = (seconds: number): string => {
