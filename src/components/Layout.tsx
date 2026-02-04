@@ -250,28 +250,38 @@ useEffect(() => {
 
     const unlistenPromise = listen<string>('nova_mensagem_ws', (event) => {
       console.log('[Tauri Event] Mensagem WS recebida:', event.payload);
+      
       try {
         const messagePayload = JSON.parse(event.payload);
-        const { type, ...data } = messagePayload;
+        const { type } = messagePayload;
 
-        // Enhanced notification routing
-        if (type === 'chat_message_notification') {
-          const chatNotificationData = data as MessageNotificationPayload;
-          console.log('Recebida notificação de chat:', chatNotificationData);
+        // --- 1. CHAMADA DE ATENÇÃO (APENAS ESTE ABRE O POPUP DE CHAT) ---
+        if (type === 'attention_call') {
+          console.log('[WS] Tipo: attention_call detectado.');
+          const chatNotificationData = messagePayload as MessageNotificationPayload;
           
           setChatNotification(chatNotificationData);
           setShowChatPopup(true);
-          messages =  messages + 1;
-          // Auto-hide popup after 6 seconds
+          setMessages(prev => prev + 1);
+
           setTimeout(() => {
             setShowChatPopup(false);
           }, 6000);
+          return; // IMPORTANTE: Encerra aqui para não processar mais nada
+        }
 
-        } else if (type === "new_kanban_card" && messagePayload.data) {
+        // --- 2. NOVA MENSAGEM DE CHAT (INCREMENTA APENAS O CONTADOR) ---
+        if (type === 'chat_message_notification') {
+          console.log('[WS] Tipo: chat_message_notification detectado. Incrementando contador.');
+          setMessages(prev => prev + 1);
+          return; // IMPORTANTE: Encerra aqui
+        }
+
+        // --- 3. NOVO CARD KANBAN ---
+        if (type === "new_kanban_card" && messagePayload.data) {
+          console.log('[WS] Tipo: new_kanban_card detectado.');
           const newKanbanCard: SavedKanbanCard = messagePayload.data;
-          console.log("Recebido novo Kanban Card:", newKanbanCard);
 
-          // Update tasks state
           setTasks(prevTasks => {
             const newTask: Task = {
               id: newKanbanCard.id,
@@ -286,62 +296,44 @@ useEffect(() => {
             return [newTask, ...prevTasks];
           });
 
-          // Show Kanban notification
-          const kanbanNotificationData: WebSocketMessagePayload = {
+          setKanbanNotification({
             type: "new_kanban_card",
             title: `Nova Tarefa: ${newKanbanCard.title}`,
             description: newKanbanCard.description || 'Nenhuma descrição.',
             icon: 'ticket',
             isNew: true,
             data: newKanbanCard
-          };
-          
-          setKanbanNotification(kanbanNotificationData);
+          });
           setShowKanbanPopup(true);
-
-        } else if (type === "new_ticket") {
-          // Handle normal notifications
-          const newNotification: WebSocketMessagePayload = { ...messagePayload, isNew: true };
-          setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
-          
-          setNormalNotification(newNotification);
-          setShowNormalPopup(true);
-
-        } else {
-          // Handle unknown notification types as normal notifications
-          console.warn("Mensagem WebSocket com tipo desconhecido:", messagePayload);
-          
-          const unknownNotification: WebSocketMessagePayload = { 
-            title: messagePayload.title || "Nova Notificação", 
-            description: messagePayload.description || "Notificação recebida", 
-            icon: messagePayload.icon || "info", 
-            type: messagePayload.type || "info", 
-            isNew: true 
-          };
-          
-          setNormalNotification(unknownNotification);
-          setShowNormalPopup(true);
+          return; // IMPORTANTE: Encerra aqui
         }
 
+        // --- 4. NEW TICKET (NOTIFICAÇÃO NORMAL) ---
+        if (type === "new_ticket") {
+          console.log('[WS] Tipo: new_ticket detectado.');
+          const newNotification: WebSocketMessagePayload = { ...messagePayload, isNew: true };
+          
+          setNewNotifications((prevNotifications) => [newNotification, ...prevNotifications]);
+          setNormalNotification(newNotification);
+          setShowNormalPopup(true); // Abre apenas o NormalNotification, não o chat
+          return; // IMPORTANTE: Encerra aqui
+        }
+
+        // --- 5. OUTROS TIPOS ---
+        console.log(`[WS] Tipo "${type}" recebido, mas sem ação de popup vinculada.`);
+
       } catch (e) {
-        console.error("Erro ao parsear mensagem JSON do WebSocket:", e);
-        const errorNotification: WebSocketMessagePayload = { 
-          title: "Erro de Comunicação", 
-          description: "Erro ao processar mensagem do servidor", 
-          icon: "alert", 
-          type: "error", 
-          isNew: true 
-        };
-        
-        setNormalNotification(errorNotification);
-        setShowNormalPopup(true);
+        // Se a mensagem não for um JSON válido (ex: strings de status do Rust), 
+        // apenas logamos e não abrimos nenhum popup.
+        console.log("[WS] Mensagem ignorada (não é um comando JSON):", event.payload);
       }
     });
 
     return () => {
       console.log('[Frontend] Desregistrando listener Tauri.');
       (async () => {
-        (await unlistenPromise)();
+        const unlisten = await unlistenPromise;
+        unlisten();
       })();
       tauriListenerRegistered.current = false;
     };
@@ -357,39 +349,7 @@ const handleAttentionCall = async (payload: AttentionCallPayload) => {
   }
 };
 // Listener para mensagens de chamar atenção
-useEffect(() => {
-  if (!usuario) return;
 
-  const setupAttentionListener = async () => {
-    const unlisten = await listen<string>('attention_call', (event) => {
-      try {
-        const payload: AttentionCallPayload = JSON.parse(event.payload);
-        
-        console.log('[Layout] Chamada de atenção recebida:', payload);
-        
-        if (payload.sender_id !== usuario.id) {
-          handleAttentionCall(payload);
-        }
-      } catch (error) {
-        console.error('[Layout] Erro ao processar chamada de atenção:', error);
-      }
-    });
-
-    return unlisten;
-  };
-
-  let unlistenFunc: (() => void) | null = null;
-
-  setupAttentionListener().then((unlisten) => {
-    unlistenFunc = unlisten;
-  });
-
-  return () => {
-    if (unlistenFunc) {
-      unlistenFunc();
-    }
-  };
-}, [usuario]);
 
   useEffect(() => {
     if (!initialDataLoaded.current) {
