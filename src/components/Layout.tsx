@@ -22,6 +22,13 @@ interface WebSocketMessagePayload {
   data?: SavedKanbanCard;
 }
 
+interface AttentionCallPayload {
+  type: string;
+  sender_id: number;
+  sender_name: string;
+  chat_id: number;
+}
+
 interface MessageNotificationPayload {
     type: string;
     sender_id: number;
@@ -340,6 +347,15 @@ useEffect(() => {
     };
   }
 }, []);
+const handleAttentionCall = async (payload: AttentionCallPayload) => {
+  console.log(`[Layout] Processando chamada de atenção de ${payload.sender_name} no chat ${payload.chat_id}`);
+  
+  try {
+    await WindowManager.openChatWithAttention(payload.chat_id);
+  } catch (error) {
+    console.error('[Layout] Erro ao abrir chat:', error);
+  }
+};
 
   useEffect(() => {
     if (!initialDataLoaded.current) {

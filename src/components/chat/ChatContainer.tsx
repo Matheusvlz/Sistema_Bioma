@@ -8,6 +8,8 @@ import './style/ChatContainer.css';
 import { useVideoCall } from '../../hooks/useVideoCall';
 import { VideoCallComponent } from './VideoCallComponent';
 import { IncomingCallModal } from './IncomingCallModal';
+import { AttentionButton } from './AttentionButton';
+import './style/AttentionAnimations.css';
 // --- Interfaces ---
 interface Message {
     id: number;
@@ -135,6 +137,9 @@ interface UserOnlineStatusChangedMessage {
 export const ChatContainer: React.FC = () => {
     // --- State Hooks ---
     // Estados para visualizador de código
+    const [isShaking, setIsShaking] = useState(false);
+const [highlightChatId, setHighlightChatId] = useState<number | null>(null);
+
     const [codeViewerOpen, setCodeViewerOpen] = useState(false);
     const [codeContent, setCodeContent] = useState<string>('');
     const [codeLanguage, setCodeLanguage] = useState<string>('text');
@@ -1162,8 +1167,86 @@ export const ChatContainer: React.FC = () => {
         return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
 
+    // Listener para eventos de atenção
+    const triggerShakeAnimation = () => {
+  setIsShaking(true);
+  
+  try {
+    const audio = new Audio('/notification.mp3');
+    audio.play().catch(e => console.log('Som não disponível'));
+  } catch (e) {
+    console.log('Som não disponível');
+  }
+  
+  setTimeout(() => {
+    setIsShaking(false);
+  }, 2000);
+};
+
+useEffect(() => {
+  const setupAttentionListener = async () => {
+    const unlisten = await listen<{ chatId?: number }>('trigger-attention', (event) => {
+      const { chatId } = event.payload;
+      
+      console.log('[Chat] Evento de atenção recebido para chat:', chatId);
+      
+      triggerShakeAnimation();
+      
+      if (chatId) {
+        setHighlightChatId(chatId);
+        const conversation = conversations.find(c => c.chatId === chatId);
+        if (conversation) {
+          setSelectedConversation(conversation);
+        }
+        
+        setTimeout(() => {
+          setHighlightChatId(null);
+        }, 5000);
+      }
+    });
+
+    return unlisten;
+  };
+
+  let unlistenFunc: (() => void) | null = null;
+
+  setupAttentionListener().then((unlisten) => {
+    unlistenFunc = unlisten;
+  });
+
+  return () => {
+    if (unlistenFunc) {
+      unlistenFunc();
+    }
+  };
+}, [conversations]);
+
+// Verifica parâmetros da URL ao montar
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const attention = params.get('attention');
+  const chatId = params.get('chatId');
+  
+  if (attention === 'true') {
+    triggerShakeAnimation();
+    
+    if (chatId) {
+      const chatIdNum = parseInt(chatId);
+      setHighlightChatId(chatIdNum);
+      const conversation = conversations.find(c => c.chatId === chatIdNum);
+      if (conversation) {
+        setSelectedConversation(conversation);
+      }
+      
+      setTimeout(() => {
+        setHighlightChatId(null);
+      }, 5000);
+    }
+  }
+}, []);
+
     return (
-        <div className="chat-container">
+        <div className={`chat-container ${isShaking ? 'chat-attention-shake' : ''}`}>
        
 
             {/* Sidebar */}
@@ -1291,6 +1374,12 @@ export const ChatContainer: React.FC = () => {
                             </div>
                             <div className="chat-header-actions">
                                 <button className="action-button"><Search /></button>
+                                {selectedConversation && (
+    <AttentionButton 
+      chatId={selectedConversation.chatId} 
+      disabled={!selectedConversation}
+    />
+  )}
                                  <button
                             className="call-button audio"
                             onClick={handleStartAudioCall}

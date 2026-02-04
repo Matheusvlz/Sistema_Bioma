@@ -1,0 +1,222 @@
+/* AttentionAnimations.css */
+
+/* Animação de tremor horizontal para a janela */
+@keyframes shake-window {
+  0%, 100% { 
+    transform: translate(0, 0); 
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: translate(-8px, 0); 
+  }
+  20%, 40%, 60%, 80% { 
+    transform: translate(8px, 0); 
+  }
+}
+
+/* Animação de tremor vertical */
+@keyframes shake-vertical {
+  0%, 100% { 
+    transform: translate(0, 0); 
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: translate(0, -4px); 
+  }
+  20%, 40%, 60%, 80% { 
+    transform: translate(0, 4px); 
+  }
+}
+
+/* Animação de pulsação */
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1); 
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.05); 
+    opacity: 0.8;
+  }
+}
+
+/* Animação de flash/destaque */
+@keyframes attention-flash {
+  0%, 100% { 
+    background-color: transparent; 
+    box-shadow: none;
+  }
+  25%, 75% { 
+    background-color: rgba(255, 193, 7, 0.15); 
+    box-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
+  }
+  50% { 
+    background-color: rgba(255, 193, 7, 0.25); 
+    box-shadow: 0 0 25px rgba(255, 193, 7, 0.5);
+  }
+}
+
+/* Animação do sino */
+@keyframes shake-bell {
+  0%, 100% { 
+    transform: rotate(0deg); 
+  }
+  10%, 30%, 50%, 70%, 90% { 
+    transform: rotate(-15deg); 
+  }
+  20%, 40%, 60%, 80% { 
+    transform: rotate(15deg); 
+  }
+}
+
+/* Animação de brilho */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(255, 193, 7, 0.8), 
+                0 0 30px rgba(255, 193, 7, 0.6);
+  }
+}
+
+/* Classes para aplicar as animações */
+
+.chat-attention-shake {
+  animation: shake-window 0.5s ease-in-out 3;
+}
+
+.chat-attention-container {
+  animation: shake-vertical 0.3s ease-in-out 5;
+}
+
+.chat-attention-flash {
+  animation: attention-flash 2s ease-in-out 3;
+  border-left: 3px solid #FFC107 !important;
+  transition: all 0.3s ease;
+}
+
+.chat-attention-pulse {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.attention-button {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.attention-button:hover:not(:disabled) {
+  background-color: rgba(255, 193, 7, 0.1);
+}
+
+.attention-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.attention-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.attention-button.sending svg {
+  animation: shake-bell 0.5s ease-in-out infinite;
+}
+
+.attention-button.glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Overlay de atenção para toda a janela */
+.attention-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 9999;
+  animation: attention-flash 2s ease-in-out 3;
+}
+
+/* Badge de notificação de atenção */
+.attention-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: #FFC107;
+  color: #000;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Indicador visual para conversas com atenção pendente */
+.conversation-item.has-attention {
+  position: relative;
+}
+
+.conversation-item.has-attention::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: #FFC107;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Efeito de destaque para mensagens importantes */
+.message-attention-highlight {
+  background-color: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid #FFC107;
+  padding-left: 8px;
+  animation: attention-flash 1s ease-in-out 1;
+}
+
+/* Estilo para o ícone do sino quando há atenção pendente */
+.attention-icon-pending {
+  color: #FFC107;
+  animation: shake-bell 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 3px rgba(255, 193, 7, 0.6));
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  @keyframes shake-window {
+    0%, 100% { 
+      transform: translate(0, 0); 
+    }
+    10%, 30%, 50%, 70%, 90% { 
+      transform: translate(-4px, 0); 
+    }
+    20%, 40%, 60%, 80% { 
+      transform: translate(4px, 0); 
+    }
+  }
+}
+
+/* Transições suaves */
+.chat-container,
+.conversation-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Previne que a animação quebre o layout */
+.chat-attention-shake,
+.chat-attention-container {
+  will-change: transform;
+  backface-visibility: hidden;
+}

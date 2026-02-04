@@ -403,7 +403,7 @@ use controller::components::search_controller::{
 use controller::login_controller::{fazer_login, validate_user_credentials};
 use model::usuario::{usuario_logado, verificar_autenticacao, get_usuario_nome};
 use controller::settings_controller::update_user_settings;
-use socket_listener::send_ws_message;
+use socket_listener::{ send_ws_message, send_attention_call  };
 use controller::chat::chat_controller::{
     get_users, create_chat, get_user_chats, send_message, 
     get_chat_messages, create_direct_chat, send_file_message
@@ -765,6 +765,7 @@ fn main() {
             get_usuario_nome,
             update_user_settings,
             send_ws_message,
+            send_attention_call,
             get_users, 
             create_chat, 
             get_user_chats, 

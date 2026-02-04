@@ -1169,6 +1169,39 @@ static async openTabelaFinalizada(): Promise<WebviewWindow> {
   });
 }
 
+static async openChatWithAttention(chatId?: number): Promise<WebviewWindow> {
+  const config: WindowConfig = {
+    label: 'chat',
+    title: 'Chat',
+    url: chatId ? `/#/chat?chatId=${chatId}&attention=true` : '/#/chat?attention=true',
+    width: 1200,
+    height: 600,
+    allowMultiple: false,
+    data: { chatId, attention: true }
+  };
+
+  try {
+    const existingWindow = this.getWindow('chat');
+    if (existingWindow) {
+      await existingWindow.setFocus();
+      await existingWindow.emit('trigger-attention', { chatId });
+      
+      // Efeito de piscar a janela
+      for (let i = 0; i < 5; i++) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        await existingWindow.setFocus();
+      }
+      
+      return existingWindow;
+    }
+
+    return await this.openWindow(config);
+  } catch (error) {
+    console.error('Erro ao abrir chat com atenção:', error);
+    throw error;
+  }
+}
+
 
 static async openTabelaIniciada(): Promise<WebviewWindow> {
   return this.openWindow({
