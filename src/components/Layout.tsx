@@ -356,6 +356,40 @@ const handleAttentionCall = async (payload: AttentionCallPayload) => {
     console.error('[Layout] Erro ao abrir chat:', error);
   }
 };
+// Listener para mensagens de chamar atenção
+useEffect(() => {
+  if (!usuario) return;
+
+  const setupAttentionListener = async () => {
+    const unlisten = await listen<string>('attention_call', (event) => {
+      try {
+        const payload: AttentionCallPayload = JSON.parse(event.payload);
+        
+        console.log('[Layout] Chamada de atenção recebida:', payload);
+        
+        if (payload.sender_id !== usuario.id) {
+          handleAttentionCall(payload);
+        }
+      } catch (error) {
+        console.error('[Layout] Erro ao processar chamada de atenção:', error);
+      }
+    });
+
+    return unlisten;
+  };
+
+  let unlistenFunc: (() => void) | null = null;
+
+  setupAttentionListener().then((unlisten) => {
+    unlistenFunc = unlisten;
+  });
+
+  return () => {
+    if (unlistenFunc) {
+      unlistenFunc();
+    }
+  };
+}, [usuario]);
 
   useEffect(() => {
     if (!initialDataLoaded.current) {
